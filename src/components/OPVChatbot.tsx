@@ -17,6 +17,7 @@ import { ChatSidebar } from './ChatSidebar';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { EnquiryModal } from './EnquiryModal';
+import { PropertyDetailModal } from './PropertyDetailModal';
 import { AccountModal } from './AccountModal';
 import {
   ChatMessageItem,
@@ -27,7 +28,8 @@ import {
   AttachedFile
 } from '../types/chat';
 import { processChatQuery } from '../utils/aiEngine';
-import { getPropertiesForQuery, OPV_PROPERTIES, OPV_FALLBACK_IMAGE } from '../data/propertyData';
+import { getPropertiesForQuery, OPV_PROPERTIES, OPV_FALLBACK_IMAGE, updateActiveProperties } from '../data/propertyData';
+import { fetchLiveSupabaseProperties } from '../services/supabaseService';
 
 export const OPVChatbot: React.FC = () => {
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
@@ -37,6 +39,7 @@ export const OPVChatbot: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('opv_dark_mode') === 'true';
   });
+  const [supabasePropertiesCount, setSupabasePropertiesCount] = useState<number>(0);
 
   // Shortlist State
   const [favorites, setFavorites] = useState<PropertyItem[]>(() => {
@@ -52,9 +55,25 @@ export const OPVChatbot: React.FC = () => {
   });
   const [isShortlistOpen, setIsShortlistOpen] = useState(false);
 
+  // Load live Supabase properties on mount
+  useEffect(() => {
+    fetchLiveSupabaseProperties()
+      .then(liveList => {
+        if (liveList && liveList.length > 0) {
+          updateActiveProperties(liveList);
+          setSupabasePropertiesCount(liveList.length);
+          if (!localStorage.getItem('opv_favorites_list')) {
+            setFavorites(liveList.slice(0, 2));
+          }
+        }
+      })
+      .catch(err => console.warn('Could not load live Supabase properties:', err));
+  }, []);
+
   // Modals state
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
   const [selectedPropertyForEnquiry, setSelectedPropertyForEnquiry] = useState<PropertyItem | null>(null);
+  const [detailModalProperty, setDetailModalProperty] = useState<PropertyItem | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   // User Account Details (Aarna Infra Developers)
@@ -393,8 +412,20 @@ export const OPVChatbot: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Corner: Login and window controls removed as requested */}
-          <div className="flex items-center gap-2" />
+          {/* Right Corner: Live Supabase Status Badge */}
+          <div className="flex items-center gap-2">
+            {supabasePropertiesCount > 0 ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live DB ({supabasePropertiesCount} Properties)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Connected</span>
+              </span>
+            )}
+          </div>
         </header>
 
         {/* Main Content Area: Welcome to OPV Plots Hero Landing if no messages, or Conversation Stream if active */}
@@ -458,6 +489,7 @@ export const OPVChatbot: React.FC = () => {
                     onSelectPropertyDetails={handleSelectPropertyDetails}
                     onEnquireProperty={handleEnquireProperty}
                     onToggleFavorite={handleToggleFavorite}
+                    onOpenPropertyModal={prop => setDetailModalProperty(prop)}
                   />
                 ))}
 
@@ -587,6 +619,17 @@ export const OPVChatbot: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Comprehensive Property Details Modal Popup */}
+      <PropertyDetailModal
+        isOpen={!!detailModalProperty}
+        onClose={() => setDetailModalProperty(null)}
+        property={detailModalProperty}
+        onEnquire={prop => {
+          setDetailModalProperty(null);
+          handleEnquireProperty(prop);
+        }}
+      />
 
       {/* Enquiry Modal */}
       <EnquiryModal

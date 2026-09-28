@@ -32,6 +32,22 @@ export interface ActionLink {
   icon?: string;
 }
 
+export interface StructuredPropertyDetails {
+  postedDate?: string;
+  postedTime?: string;
+  propId?: string;
+  propertyType?: string;
+  quotedPrice?: string;
+  plotSize?: string;
+  totalPrice?: string;
+  projectName?: string;
+  city?: string;
+  zone?: string;
+  location?: string;
+  landmark?: string;
+  facing?: string;
+}
+
 export interface PropertyItem {
   id: string;
   title: string;
@@ -40,7 +56,7 @@ export interface PropertyItem {
   priceNumeric?: number;
   status: 'For Sale' | 'For Rent';
   badge?: string; // e.g. 'Ready to move', 'Owner · no brokerage'
-  type: 'plot' | 'apartment' | 'villa';
+  type: 'plot' | 'apartment' | 'villa' | 'commercial' | 'farmland' | string;
   area: string; // e.g. '171 Sq.Yd.', '1326 Sq.Ft.'
   config?: string; // e.g. '2 BHK', 'Plot'
   facing?: string; // e.g. 'East', 'North-East'
@@ -60,7 +76,10 @@ export interface PropertyItem {
   nearby: string[];
   reraNumber?: string;
   approval?: string;
+  possession?: string;
+  bhk?: number | string;
   isFavorite?: boolean;
+  rawDetails?: StructuredPropertyDetails;
 }
 
 export interface AttachedFile {

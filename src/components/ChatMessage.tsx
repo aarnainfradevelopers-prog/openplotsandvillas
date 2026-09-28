@@ -25,6 +25,7 @@ interface ChatMessageProps {
   onSelectPropertyDetails: (property: PropertyItem) => void;
   onEnquireProperty: (property: PropertyItem) => void;
   onToggleFavorite?: (property: PropertyItem) => void;
+  onOpenPropertyModal?: (property: PropertyItem) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -32,7 +33,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   currentLanguage,
   onSelectPropertyDetails,
   onEnquireProperty,
-  onToggleFavorite
+  onToggleFavorite,
+  onOpenPropertyModal
 }) => {
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -207,6 +209,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <PropertyDetailView
                 property={message.selectedPropertyDetail}
                 onEnquire={onEnquireProperty}
+                onDetails={onOpenPropertyModal || onSelectPropertyDetails}
               />
             </div>
           )}
@@ -215,7 +218,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {message.properties && message.properties.length > 0 && !message.selectedPropertyDetail && (
             <div className="mt-4">
               <h3 className="text-[15px] font-bold text-slate-800 dark:text-white mb-3">
-                Properties for you
+                Projects for you
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-2">
                 {message.properties.map(property => (
@@ -232,7 +235,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
 
           {/* Action Chips */}
-          {message.actions && message.actions.length > 0 && (
+          {message.actions && message.actions.length > 0 && !message.selectedPropertyDetail && (
             <div className="mt-3 flex flex-wrap gap-2">
               {message.actions.map((act, i) => (
                 <a
