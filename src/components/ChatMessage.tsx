@@ -146,7 +146,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // If this is a User Message: render yellow bubble matching Images 2 & 3
   if (!isAssistant) {
     return (
-      <div className="py-2 px-2 sm:px-4 max-w-4xl mx-auto flex items-center justify-end gap-2.5">
+      <div className="py-2 px-2 sm:px-4 w-full flex items-center justify-end gap-2.5">
         <div className="flex flex-col items-end max-w-xl">
           {/* User message attachments if any */}
           {message.attachments && message.attachments.length > 0 && (
@@ -185,7 +185,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Assistant Message: Clean Square Yards layout
   return (
-    <div className="py-2 px-2 sm:px-4 max-w-4xl mx-auto">
+    <div className="py-2 px-2 sm:px-4 w-full">
       {/* Square Yards style row: Avatar OPV (like SY) + Speech Bubble */}
       <div className="flex items-start gap-3">
         {/* Dark Circle/Square Avatar with OPV / SY */}

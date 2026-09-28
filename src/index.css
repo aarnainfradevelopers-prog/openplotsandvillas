@@ -23,6 +23,7 @@ body {
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   overflow: hidden;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   -webkit-font-smoothing: antialiased;
 }

@@ -111,14 +111,28 @@ export const OPVChatbot: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return parsed.map((s: any) => ({
-          ...s,
-          createdAt: new Date(s.createdAt),
-          messages: s.messages.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp)
-          }))
-        }));
+        const valid = parsed
+          .filter((s: any) => s.title !== 'New Search' && s.messages && s.messages.length > 0)
+          .map((s: any) => ({
+            ...s,
+            createdAt: new Date(s.createdAt),
+            messages: s.messages.map((m: any) => ({
+              ...m,
+              timestamp: new Date(m.timestamp)
+            }))
+          }));
+        if (valid.length > 0) {
+          return [
+            {
+              id: 'session-welcome',
+              title: 'Welcome to OPV',
+              createdAt: new Date(),
+              language: 'en',
+              messages: []
+            },
+            ...valid
+          ];
+        }
       } catch (e) {
         console.error('Failed to parse saved sessions', e);
       }
@@ -145,9 +159,10 @@ export const OPVChatbot: React.FC = () => {
     messages: []
   };
 
-  // Sync state to LocalStorage
+  // Sync state to LocalStorage (only persist actual chats with messages, avoiding blank "New Search" stacking)
   useEffect(() => {
-    localStorage.setItem('opv_chat_sessions_v6', JSON.stringify(sessions));
+    const persistable = sessions.filter(s => s.messages && s.messages.length > 0 && s.title !== 'New Search');
+    localStorage.setItem('opv_chat_sessions_v6', JSON.stringify(persistable));
   }, [sessions]);
 
   useEffect(() => {
@@ -288,14 +303,18 @@ export const OPVChatbot: React.FC = () => {
   };
 
   const handleNewChat = () => {
+    if (currentSession.messages.length === 0) {
+      return;
+    }
+    const cleanSessions = sessions.filter(s => s.messages && s.messages.length > 0 && s.title !== 'New Search');
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
-      title: 'New Search',
+      title: 'New Chat',
       createdAt: new Date(),
       language: currentLanguage,
       messages: []
     };
-    setSessions(prev => [newSession, ...prev]);
+    setSessions([newSession, ...cleanSessions]);
     setCurrentSessionId(newSession.id);
   };
 
@@ -305,7 +324,7 @@ export const OPVChatbot: React.FC = () => {
       if (filtered.length === 0) {
         const fresh: ChatSession = {
           id: `session-${Date.now()}`,
-          title: 'New Search',
+          title: 'New Chat',
           createdAt: new Date(),
           language: currentLanguage,
           messages: []
@@ -321,16 +340,17 @@ export const OPVChatbot: React.FC = () => {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm('Clear all search history?')) {
+    if (window.confirm('Clear all chat history?')) {
       const freshSession: ChatSession = {
         id: `session-${Date.now()}`,
-        title: 'New Search',
+        title: 'New Chat',
         createdAt: new Date(),
         language: currentLanguage,
         messages: []
       };
       setSessions([freshSession]);
       setCurrentSessionId(freshSession.id);
+      localStorage.removeItem('opv_chat_sessions_v6');
     }
   };
 
@@ -348,17 +368,37 @@ export const OPVChatbot: React.FC = () => {
     );
   };
 
-  // Quick suggestion chips matching reference image
+  // Quick suggestion button options in square form matching reference
   const suggestionChips = [
-    { label: 'Apartments in Hyderabad', query: 'apartments in hyd' },
-    { label: 'Open Plots in Lemoor & Shadnagar', query: 'open plots in lemoor & shadnagar' },
-    { label: 'Gated Luxury Villas', query: 'gated luxury villas in hyderabad' },
-    { label: '360° Elite Services', query: '360 elite services & properties' }
+    {
+      label: 'Apartments in Hyderabad',
+      query: 'apartments in hyd',
+      icon: Building2,
+      subtitle: '2, 3 & 4 BHK High-rises'
+    },
+    {
+      label: 'Open Plots in Lemoor & Shadnagar',
+      query: 'open plots in lemoor & shadnagar',
+      icon: MapPin,
+      subtitle: 'HMDA & DTCP Approved'
+    },
+    {
+      label: 'Gated Luxury Villas',
+      query: 'gated luxury villas in hyderabad',
+      icon: Home,
+      subtitle: 'Kokapet, Tellapur, Mokila'
+    },
+    {
+      label: '360° Elite Services',
+      query: '360 elite services & properties',
+      icon: Sparkles,
+      subtitle: 'Legal, Loans & Vastu'
+    }
   ];
 
   return (
     <div
-      className={`flex h-screen w-screen overflow-hidden ${
+      className={`flex h-screen h-[100dvh] w-screen overflow-hidden ${
         isDarkMode ? 'dark bg-[#0e131f] text-slate-100' : 'bg-[#fafafa] text-slate-900'
       } font-sans`}
     >
@@ -412,20 +452,8 @@ export const OPVChatbot: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Corner: Live Supabase Status Badge */}
-          <div className="flex items-center gap-2">
-            {supabasePropertiesCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Live DB ({supabasePropertiesCount} Properties)</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Connected</span>
-              </span>
-            )}
-          </div>
+          {/* Right Corner: Empty container keeping header alignment clean */}
+          <div className="flex items-center gap-2" />
         </header>
 
         {/* Main Content Area: Welcome to OPV Plots Hero Landing if no messages, or Conversation Stream if active */}
@@ -461,26 +489,30 @@ export const OPVChatbot: React.FC = () => {
                 />
               </div>
 
-              {/* Prominent, comfortable 4 Feature Chips (size kept a little bit bigger) */}
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mt-6 sm:mt-7 w-full max-w-4xl px-2">
-                {suggestionChips.map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSendMessage(chip.query)}
-                    className="px-5 py-2.5 sm:px-6 sm:py-3.5 rounded-full text-sm sm:text-[15px] font-semibold bg-white dark:bg-slate-800 border-2 border-slate-200/90 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 text-slate-800 dark:text-slate-100 hover:text-slate-950 dark:hover:text-white shadow-xs hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+              {/* Feature Suggestion Buttons matching Reference Image 2 (Horizontal Icon + Label like View Number) */}
+              <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3.5 mt-5 sm:mt-6 w-full max-w-4xl px-2">
+                {suggestionChips.map((chip, idx) => {
+                  const ChipIcon = chip.icon;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSendMessage(chip.query)}
+                      className="inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#151c2c] border-2 border-slate-200/90 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 text-slate-800 dark:text-slate-100 hover:text-slate-950 dark:hover:text-white shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 text-xs sm:text-[13.5px] font-bold"
+                    >
+                      <ChipIcon className="w-4 h-4 text-amber-500 shrink-0 stroke-[2.2]" />
+                      <span>{chip.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         ) : (
           <>
-            {/* Scrollable Conversation Stream */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 px-3 sm:px-6 py-6">
-              <div className="max-w-4xl mx-auto space-y-5">
+            {/* Scrollable Conversation Stream - Centered in middle screen */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 px-3 sm:px-6 py-6 flex flex-col items-center">
+              <div className="w-full max-w-4xl space-y-6">
                 {currentSession.messages.map(msg => (
                   <ChatMessage
                     key={msg.id}
@@ -495,7 +527,7 @@ export const OPVChatbot: React.FC = () => {
 
                 {/* Loading Indicator */}
                 {isLoading && (
-                  <div className="pl-11 py-2 flex items-center gap-2.5 text-xs text-slate-500">
+                  <div className="py-2 flex items-center justify-center gap-2.5 text-xs text-slate-500">
                     <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     <span>Searching verified listings from openplotsandvillas.com...</span>
                   </div>
@@ -504,16 +536,36 @@ export const OPVChatbot: React.FC = () => {
               </div>
             </div>
 
-            {/* Pinned Bottom Input Bar */}
-            <div className="bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0e131f] dark:via-[#0e131f]/95 dark:to-transparent pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <ChatInput
-                currentLanguage={currentLanguage}
-                onLanguageChange={handleLanguageChange}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                selectedCity={selectedCity}
-                isDarkMode={isDarkMode}
-              />
+            {/* Pinned Bottom Input Bar - Centered in middle screen */}
+            <div className="w-full bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0e131f] dark:via-[#0e131f]/95 dark:to-transparent pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col items-center justify-center">
+              {/* Quick Suggestion Square Button Options */}
+              <div className="w-full max-w-4xl px-3 sm:px-6 pb-2 overflow-x-auto scrollbar-none flex items-center gap-2">
+                {suggestionChips.map((chip, idx) => {
+                  const ChipIcon = chip.icon;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSendMessage(chip.query)}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer hover:scale-[1.02] active:scale-98 transition-all"
+                    >
+                      <ChipIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="truncate">{chip.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="w-full max-w-4xl">
+                <ChatInput
+                  currentLanguage={currentLanguage}
+                  onLanguageChange={handleLanguageChange}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  selectedCity={selectedCity}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
             </div>
           </>
         )}
