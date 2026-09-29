@@ -50,8 +50,8 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   const configText = property.bhk
     ? `${property.bhk} BHK`
     : property.type === 'plot'
-    ? 'Residential Plot'
-    : (property.config || (property.type === 'villa' ? 'Villa' : 'Independent Unit'));
+      ? 'Residential Plot'
+      : (property.config || (property.type === 'villa' ? 'Villa' : 'Independent Unit'));
 
   // 2. Genuine Status / Possession from property specifications / metadata
   const getStatusText = (): string => {
@@ -62,7 +62,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
       return 'Ready to Move';
     }
     // Check specifications array
-    const specPossession = property.specifications?.find(s => 
+    const specPossession = property.specifications?.find(s =>
       s.label.toLowerCase() === 'possession'
     )?.value;
     if (specPossession) return specPossession;
@@ -84,7 +84,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   // 4. Genuine Why Consider list directly from property facts
   const getWhyConsiderItems = (): string[] => {
     const items: string[] = [];
-    
+
     // Status
     items.push(statusText);
 
@@ -153,9 +153,8 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
             className="absolute top-3.5 right-3.5 z-10 w-8 h-8 rounded-full bg-white/95 backdrop-blur-xs hover:bg-white flex items-center justify-center text-slate-800 shadow-sm transition-transform active:scale-90 cursor-pointer"
           >
             <Heart
-              className={`w-4 h-4 transition-colors ${
-                isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-800'
-              }`}
+              className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-800'
+                }`}
             />
           </button>
 
@@ -266,11 +265,10 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-2 transition-all whitespace-nowrap relative cursor-pointer ${
-                    activeTab === tab
+                  className={`pb-2 transition-all whitespace-nowrap relative cursor-pointer ${activeTab === tab
                       ? 'text-slate-950 dark:text-white font-extrabold'
                       : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
-                  }`}
+                    }`}
                 >
                   {tab}
                   {activeTab === tab && (
@@ -452,3 +450,5 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
     </div>
   );
 };
+
+

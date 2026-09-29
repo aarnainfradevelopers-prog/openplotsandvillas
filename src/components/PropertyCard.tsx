@@ -85,9 +85,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-900 shadow-md flex items-center justify-center text-slate-700 dark:text-slate-300 hover:text-rose-500 transition-transform active:scale-90 cursor-pointer"
         >
           <Heart
-            className={`w-4 h-4 transition-colors ${
-              isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-300'
-            }`}
+            className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-slate-300'
+              }`}
           />
         </button>
 
@@ -204,3 +203,6 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     </div>
   );
 };
+
+
+
