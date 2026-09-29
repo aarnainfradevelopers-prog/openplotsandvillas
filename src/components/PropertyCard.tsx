@@ -118,12 +118,12 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         <div>
           {/* Logo & Title Row */}
           <div className="flex items-start gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-slate-800 border border-amber-200/80 dark:border-slate-700 flex items-center justify-center shrink-0 text-amber-700 dark:text-amber-400 mt-0.5 shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-slate-800 border border-emerald-200/80 dark:border-slate-700 flex items-center justify-center shrink-0 text-emerald-700 dark:text-emerald-400 mt-0.5 shadow-2xs">
               <Building2 className="w-4 h-4" />
             </div>
             <div className="min-w-0 flex-1">
               <h3
-                className="text-[14px] sm:text-[15px] font-bold text-slate-900 dark:text-white leading-tight line-clamp-1 cursor-pointer hover:text-amber-600 transition-colors"
+                className="text-[14px] sm:text-[15px] font-bold text-slate-900 dark:text-white leading-tight line-clamp-1 cursor-pointer hover:text-emerald-600 transition-colors"
                 onClick={() => onDetails(property)}
                 title={property.title}
               >
@@ -139,8 +139,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
 
           {/* Distance Indicator (Matching Reference Image) */}
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 mb-2">
-            <Navigation className="w-3 h-3 text-amber-500 rotate-45 shrink-0" />
+          <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
+            <Navigation className="w-3 h-3 text-emerald-500 rotate-45 shrink-0" />
             <span>0.53 km away • Prime Zone</span>
           </div>
 
@@ -193,7 +193,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           <button
             type="button"
             onClick={() => onEnquire(property)}
-            className="w-full h-10 rounded-xl bg-[#f5c344] hover:bg-[#eab308] text-slate-950 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Phone className="w-3.5 h-3.5" />
             <span>Enquire</span>

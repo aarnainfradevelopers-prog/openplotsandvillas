@@ -77,7 +77,7 @@ export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
                   }}
                   className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center justify-between group ${
                     isSelected
-                      ? 'bg-slate-100 text-slate-950 font-bold border-l-2 border-[#eab308]'
+                      ? 'bg-slate-100 text-slate-950 font-bold border-l-2 border-emerald-500'
                       : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                   role="option"
@@ -87,7 +87,7 @@ export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
                     {lang.label}
                   </span>
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-amber-600 shrink-0 ml-2" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-2" />
                   )}
                 </button>
               );

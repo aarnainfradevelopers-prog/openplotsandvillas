@@ -82,7 +82,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               required
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -97,7 +97,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               required
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -112,7 +112,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               required
               value={formData.phone}
               onChange={e => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -124,7 +124,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             <select
               value={formData.preferredType}
               onChange={e => setFormData({ ...formData, preferredType: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="Open Plots & Commercial Lands">Open Plots & Commercial Lands (HMDA/DTCP)</option>
               <option value="Gated Community Luxury Villas">Gated Community Luxury Villas</option>
@@ -144,7 +144,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               placeholder="e.g. Lemoor, Mokila, Shadnagar, Kollur, Financial District"
               value={formData.preferredLocation}
               onChange={e => setFormData({ ...formData, preferredLocation: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -157,7 +157,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             <select
               value={formData.budgetRange}
               onChange={e => setFormData({ ...formData, budgetRange: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#eab308]"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="₹25 Lakhs - ₹50 Lakhs">₹25 Lakhs - ₹50 Lakhs (Open Plots)</option>
               <option value="₹50 Lakhs - ₹1 Crore">₹50 Lakhs - ₹1 Crore</option>
@@ -172,7 +172,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               type="submit"
               className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
             >
-              <Save className="w-4 h-4 text-[#eab308]" />
+              <Save className="w-4 h-4 text-emerald-400" />
               <span>Save Account Profile</span>
             </button>
           </div>

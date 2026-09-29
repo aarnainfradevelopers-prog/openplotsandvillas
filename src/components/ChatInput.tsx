@@ -100,12 +100,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         className="hidden"
       />
 
-      {/* Distinctive Square Yards golden-yellow bordered input box */}
+      {/* Distinctive green bordered input box matching OPV Plots brand */}
       <div
         className={`relative rounded-2xl border-2 transition-all duration-200 ${
           isDarkMode
-            ? 'bg-[#151c2c] border-[#f5c344] text-slate-100 shadow-sm'
-            : 'bg-white border-[#f5c344] text-slate-800 shadow-xs'
+            ? 'bg-[#151c2c] border-emerald-500 text-slate-100 shadow-sm'
+            : 'bg-white border-emerald-500 text-slate-800 shadow-xs'
         } p-2.5 sm:p-3`}
       >
         {/* Attached Files Preview Bar */}
@@ -117,7 +117,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className="flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs shadow-2xs"
               >
                 {file.type.startsWith('image/') ? (
-                  <ImageIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <ImageIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 ) : (
                   <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                 )}
@@ -175,7 +175,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               dropDirection="up"
             />
 
-            {/* 3. Golden-Yellow Send Button matching Square Yards reference */}
+            {/* 3. Green Send Button matching OPV Plots brand */}
             <button
               type="button"
               onClick={handleSubmit}
@@ -184,8 +184,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               title="Send message"
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer shadow-xs ${
                 (inputText.trim() || attachedFiles.length > 0) && !isLoading
-                  ? 'bg-[#f5c344] hover:bg-[#eab308] text-slate-950 scale-105 active:scale-95'
-                  : 'bg-[#f5c344] text-slate-900 opacity-90 hover:opacity-100'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white scale-105 active:scale-95'
+                  : 'bg-emerald-600 text-white opacity-90 hover:opacity-100'
               }`}
             >
               <svg
@@ -193,13 +193,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 height="15"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#1a1718"
+                stroke="#ffffff"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" fill="#1a1718" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" fill="#ffffff" />
               </svg>
             </button>
           </div>

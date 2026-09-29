@@ -82,7 +82,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       case 'legal':
         return <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />;
       case 'loan':
-        return <Landmark className="w-3.5 h-3.5 text-amber-600" />;
+        return <Landmark className="w-3.5 h-3.5 text-emerald-600" />;
       default:
         return <ExternalLink className="w-3.5 h-3.5 text-slate-500" />;
     }
@@ -110,7 +110,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         return (
           <blockquote
             key={idx}
-            className="my-2 pl-3 py-1 border-l-2 border-[#eab308] bg-amber-50/60 text-slate-800 text-xs sm:text-sm rounded-r-md"
+            className="my-2 pl-3 py-1 border-l-2 border-emerald-500 bg-emerald-50/60 text-slate-800 text-xs sm:text-sm rounded-r-md"
           >
             {line.replace('> ', '')}
           </blockquote>
@@ -140,7 +140,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-950">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em class="italic text-slate-600">$1</em>')
       .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-xs">$1</code>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-amber-700 hover:text-amber-800 underline underline-offset-2 font-semibold">$1</a>');
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-800 underline underline-offset-2 font-semibold">$1</a>');
   };
 
   // If this is a User Message: render yellow bubble matching Images 2 & 3
@@ -157,7 +157,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-300 text-xs text-slate-800 shadow-2xs"
                 >
                   {att.type.startsWith('image/') ? (
-                    <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                    <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
                   ) : att.type.startsWith('audio/') ? (
                     <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
                   ) : (
@@ -172,8 +172,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </div>
           )}
 
-          {/* Yellow User Message Bubble (matching Reference Image 2 & 3: bg-[#f5c344]) */}
-          <div className="bg-[#f5c344] text-[#1a1718] px-5 py-2.5 rounded-2xl shadow-xs text-sm sm:text-[15px] font-medium break-words">
+          {/* User Message Bubble matching card specs: White bg, thin dark-gray border, rounded 10px, 40px height, ~140px width */}
+          <div
+            className="inline-flex items-center justify-center min-h-[40px] min-w-[140px] px-4 py-2 rounded-[10px] bg-white text-slate-900 border border-slate-300 shadow-2xs text-xs sm:text-[13px] font-semibold break-words text-center"
+            style={{
+              backgroundColor: '#ffffff',
+              borderColor: '#cbd5e1',
+              borderRadius: '10px',
+              minHeight: '40px',
+              minWidth: '140px'
+            }}
+          >
             {message.content}
           </div>
         </div>
@@ -221,7 +230,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* If this message has property cards list (Images 2 & 3) */}
           {message.properties && message.properties.length > 0 && !message.selectedPropertyDetail && (
-            <div className="mt-4">
+            <div className={message.content ? "mt-4" : "mt-0"}>
               <h3 className="text-[15px] font-bold text-slate-800 dark:text-white mb-3">
                 Projects for you
               </h3>

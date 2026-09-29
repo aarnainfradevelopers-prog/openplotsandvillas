@@ -220,10 +220,10 @@ export const OPVChatbot: React.FC = () => {
       prev.map(s =>
         s.id === currentSession.id
           ? {
-              ...s,
-              title: newTitle,
-              messages: [...s.messages, userMsg]
-            }
+            ...s,
+            title: newTitle,
+            messages: [...s.messages, userMsg]
+          }
           : s
       )
     );
@@ -249,9 +249,9 @@ export const OPVChatbot: React.FC = () => {
         prev.map(s =>
           s.id === currentSession.id
             ? {
-                ...s,
-                messages: [...s.messages, assistantMsg]
-              }
+              ...s,
+              messages: [...s.messages, assistantMsg]
+            }
             : s
         )
       );
@@ -289,9 +289,9 @@ export const OPVChatbot: React.FC = () => {
       prev.map(s =>
         s.id === currentSession.id
           ? {
-              ...s,
-              messages: [...s.messages, userMsg, assistantMsg]
-            }
+            ...s,
+            messages: [...s.messages, userMsg, assistantMsg]
+          }
           : s
       )
     );
@@ -360,9 +360,9 @@ export const OPVChatbot: React.FC = () => {
       prev.map(s =>
         s.id === currentSession.id
           ? {
-              ...s,
-              language: lang
-            }
+            ...s,
+            language: lang
+          }
           : s
       )
     );
@@ -377,8 +377,8 @@ export const OPVChatbot: React.FC = () => {
       subtitle: '2, 3 & 4 BHK High-rises'
     },
     {
-      label: 'Open Plots in Lemoor & Shadnagar',
-      query: 'open plots in lemoor & shadnagar',
+      label: 'Open Plots in Hyd',
+      query: 'open plots in Hyd',
       icon: MapPin,
       subtitle: 'HMDA & DTCP Approved'
     },
@@ -398,9 +398,8 @@ export const OPVChatbot: React.FC = () => {
 
   return (
     <div
-      className={`flex h-screen h-[100dvh] w-screen overflow-hidden ${
-        isDarkMode ? 'dark bg-[#0e131f] text-slate-100' : 'bg-[#fafafa] text-slate-900'
-      } font-sans`}
+      className={`flex h-screen h-[100dvh] w-screen overflow-hidden ${isDarkMode ? 'dark bg-[#0e131f] text-slate-100' : 'bg-[#fafafa] text-slate-900'
+        } font-sans`}
     >
       {/* Square Yards Style Sidebar */}
       <ChatSidebar
@@ -424,7 +423,7 @@ export const OPVChatbot: React.FC = () => {
 
       {/* Main Chat Workspace matching Square Yards AI layout */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-[#ffffff] dark:bg-[#0e131f] relative overflow-hidden">
-        
+
         {/* Top Header */}
         <header className="h-[60px] shrink-0 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#0e131f]/95 backdrop-blur-md sticky top-0 z-20">
           {/* Left: Mobile hamburger + Status dot + Title & Subtitle */}
@@ -538,7 +537,7 @@ export const OPVChatbot: React.FC = () => {
                 {/* Loading Indicator */}
                 {isLoading && (
                   <div className="py-2 flex items-center justify-center gap-2.5 text-xs text-slate-500">
-                    <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                     <span>Searching verified listings from openplotsandvillas.com...</span>
                   </div>
                 )}
@@ -557,10 +556,17 @@ export const OPVChatbot: React.FC = () => {
                       key={idx}
                       type="button"
                       onClick={() => handleSendMessage(chip.query)}
-                      className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-white dark:bg-[#151c2c] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs shrink-0 cursor-pointer transition-all duration-150 text-xs font-bold"
+                      className="inline-flex items-center justify-center gap-2 h-[40px] min-w-[140px] px-3.5 rounded-[10px] bg-white hover:bg-slate-50 dark:bg-[#151c2c] dark:hover:bg-[#1e2738] text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer text-xs font-semibold shrink-0"
+                      style={{
+                        backgroundColor: '#ffffff',
+                        borderColor: '#cbd5e1',
+                        borderRadius: '10px',
+                        height: '40px',
+                        minWidth: '140px'
+                      }}
                     >
-                      <ChipIcon className="w-4 h-4 text-slate-900 dark:text-white shrink-0 stroke-[2.2]" />
-                      <span className="truncate">{chip.label}</span>
+                      <ChipIcon className="w-4 h-4 text-slate-800 dark:text-slate-200 shrink-0 stroke-[2]" />
+                      <span className="whitespace-nowrap">{chip.label}</span>
                     </button>
                   );
                 })}
@@ -660,7 +666,7 @@ export const OPVChatbot: React.FC = () => {
                             setIsShortlistOpen(false);
                             handleEnquireProperty(property);
                           }}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#f5be00] hover:bg-[#eab308] text-slate-950 cursor-pointer"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                         >
                           Enquire
                         </button>

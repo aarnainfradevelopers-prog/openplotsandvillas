@@ -12,8 +12,10 @@
   color-scheme: light;
   --bg-primary: #ffffff;
   --bg-sidebar: #f9f9f9;
-  --yellow-accent: #facc15;
-  --yellow-button: #eab308;
+  --green-accent: #10b981;
+  --green-button: #059669;
+  --yellow-accent: #10b981;
+  --yellow-button: #059669;
   --border-color: #e2e8f0;
 }
 

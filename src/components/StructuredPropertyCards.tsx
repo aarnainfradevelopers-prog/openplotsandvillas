@@ -40,7 +40,7 @@ export const StructuredPropertyCards: React.FC<StructuredPropertyCardsProps> = (
         <div>
           {/* Card Header */}
           <div className="flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-700/80 mb-0.5">
-            <div className="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/50 flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
               <Info className="w-3.5 h-3.5 stroke-[2.5]" />
             </div>
             <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white tracking-tight">
@@ -94,7 +94,7 @@ export const StructuredPropertyCards: React.FC<StructuredPropertyCardsProps> = (
 
             <div className="flex items-center justify-between py-2 border-b-0">
               <span className="text-slate-500 dark:text-slate-400 font-medium">Total Price:</span>
-              <span className="font-extrabold text-amber-600 dark:text-amber-400 text-xs sm:text-sm text-right">
+              <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm text-right">
                 {details.totalPrice || property.price}
               </span>
             </div>
@@ -107,7 +107,7 @@ export const StructuredPropertyCards: React.FC<StructuredPropertyCardsProps> = (
         <div>
           {/* Card Header */}
           <div className="flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-700/80 mb-0.5">
-            <div className="w-6 h-6 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/50 flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
               <Building2 className="w-3.5 h-3.5 stroke-[2.5]" />
             </div>
             <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white tracking-tight">

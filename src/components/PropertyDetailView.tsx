@@ -138,9 +138,9 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
 
-          {/* Top-Left: Yellow PROJECT badge */}
+          {/* Top-Left: Green PROJECT badge */}
           <div className="absolute top-3.5 left-3.5 z-10">
-            <span className="px-2.5 py-1 rounded-sm bg-[#f5c344] text-slate-950 text-[11px] font-black tracking-wider uppercase shadow-xs">
+            <span className="px-2.5 py-1 rounded-sm bg-emerald-600 text-white text-[11px] font-black tracking-wider uppercase shadow-xs">
               PROJECT
             </span>
           </div>
@@ -272,7 +272,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                 >
                   {tab}
                   {activeTab === tab && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#f5c344] rounded-full" />
+                    <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-emerald-600 rounded-full" />
                   )}
                 </button>
               ))}
@@ -282,13 +282,13 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
             <div className="min-h-[140px] text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               {activeTab === 'Overview' && (
                 <div className="space-y-3">
-                  {/* One-Liner Box with amber left accent: Actual Website Knowledge */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border-l-3 border-[#f5c344] text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+                  {/* One-Liner Box with emerald left accent: Actual Website Knowledge */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border-l-3 border-emerald-500 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
                     {overviewText}
                   </div>
 
                   {/* Why consider this? Highlight Card: Real Website Facts */}
-                  <div className="bg-[#fffdf0] dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-xl p-3.5 space-y-2">
+                  <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 rounded-xl p-3.5 space-y-2">
                     <h5 className="text-xs font-bold text-slate-900 dark:text-white">
                       Why consider this?
                     </h5>
@@ -393,7 +393,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                   {property.nearby && property.nearby.length > 0 ? (
                     property.nearby.map((loc, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-slate-700 dark:text-slate-300 text-xs">
-                        <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                         <span>{loc}</span>
                       </div>
                     ))
@@ -411,7 +411,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
           <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
             {/* Left: Verified Badge */}
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f5c344] text-slate-950 flex items-center justify-center font-black shrink-0 shadow-xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
                 <Check className="w-4 h-4 stroke-[3]" />
               </div>
               <div className="flex flex-col leading-tight">
@@ -438,7 +438,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
               <button
                 type="button"
                 onClick={() => onEnquire(property)}
-                className="px-4 sm:px-5 py-2 rounded-xl bg-[#f5c344] hover:bg-[#eab308] text-slate-950 text-xs font-black flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                className="px-4 sm:px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
               >
                 <span>Enquire</span>
                 <span className="text-sm leading-none font-bold">→</span>

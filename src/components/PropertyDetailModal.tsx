@@ -60,7 +60,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] flex items-center justify-between shrink-0 sticky top-0 z-20">
           <div className="min-w-0 pr-4">
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
                 {property.status}
               </span>
               {property.badge && (
@@ -290,7 +290,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 onClose();
                 onEnquire(property);
               }}
-              className="py-2.5 px-4 sm:px-5 rounded-xl bg-[#eab308] hover:bg-[#ca8a04] text-slate-950 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="py-2.5 px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               <span>Book Site Visit / Enquire</span>

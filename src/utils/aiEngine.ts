@@ -230,18 +230,7 @@ export function processChatQuery(
 
   if (isApartmentFeature || isPlotFeature || isVillaFeature || is360Feature) {
     return {
-      content: `I am your Open Plots & Villas AI assistant. You can ask me about verified plots, luxury villas, 360° Elite Services, home loans, or property legal checks.
-
-**About Open Plots & Villas (OPV):**
-Open Plots & Villas is **India’s First AI-Powered Real Estate Platform**, headquartered in **Madhapur, Hyderabad** (#101, Road No: 10, Jaya Kesav Avenue, Kakatiya Hills).
-
-We provide end-to-end solutions:
-• **Property Discovery:** Verified Open Plots, Luxury Villas, Apartments, Farmlands, and Commercial spaces.
-• **360° Elite Services:** Architectural 3D drawings, Home Loans, GPS Land Survey, Legal title check & EC, Vastu, Bhoomi Pooja ceremony, Gruhapravesam, and Asset protection.
-
-**Direct Support:**
-📞 Phone: **${profile.contact.phonePrimary}** | **${profile.contact.phoneSecondary}**  
-✉️ Email: **${profile.contact.email}**`,
+      content: '',
       actions: [
         { label: '📞 Call Support', url: `tel:${profile.contact.phonePrimary.replace(/\s+/g, '')}`, action: 'call' },
         { label: '💬 WhatsApp Chat', url: `https://wa.me/${profile.contact.whatsapp.replace('+', '')}?text=Hello%20OPV%2C%20I%20have%20an%20inquiry%20regarding%20properties`, action: 'whatsapp' },
@@ -643,18 +632,7 @@ What would you like to explore today?`,
 
   // Default intelligent fallback based on knowledge base
   return {
-    content: `${snip.defaultHelp}
-
-**About Open Plots & Villas (OPV):**
-Open Plots & Villas is **India’s First AI-Powered Real Estate Platform**, headquartered in **Madhapur, Hyderabad** (#101, Road No: 10, Jaya Kesav Avenue, Kakatiya Hills).
-
-We provide end-to-end solutions:
-• **Property Discovery:** Verified Open Plots, Luxury Villas, Apartments, Farmlands, and Commercial spaces.
-• **360° Elite Services:** Architectural 3D drawings, Home Loans, GPS Land Survey, Legal title check & EC, Vastu, Bhoomi Pooja ceremony, Gruhapravesam, and Asset protection.
-
-**Direct Support:**
-📞 Phone: **${profile.contact.phonePrimary}** | **${profile.contact.phoneSecondary}**  
-✉️ Email: **${profile.contact.email}**`,
+    content: snip.defaultHelp,
     actions: [
       { label: '📞 Call Support', url: `tel:${profile.contact.phonePrimary.replace(/\s+/g, '')}`, action: 'call' },
       { label: '💬 WhatsApp Chat', url: `https://wa.me/${profile.contact.whatsapp.replace('+', '')}?text=Hello%20OPV%2C%20I%20have%20an%20inquiry`, action: 'whatsapp' },

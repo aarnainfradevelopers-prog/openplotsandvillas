@@ -143,7 +143,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   }}
                   className={`group w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between gap-2 transition-all duration-150 cursor-pointer border ${
                     session.id === currentSessionId
-                      ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700/80 text-amber-950 dark:text-amber-100 font-bold shadow-2xs'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/80 text-emerald-950 dark:text-emerald-100 font-bold shadow-2xs'
                       : 'bg-white dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-950 dark:hover:text-white shadow-2xs'
                   }`}
                 >
@@ -151,7 +151,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <MessageSquare
                       className={`w-3.5 h-3.5 shrink-0 ${
                         session.id === currentSessionId
-                          ? 'text-amber-600 dark:text-amber-400'
+                          ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                       }`}
                     />

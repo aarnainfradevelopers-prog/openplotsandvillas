@@ -77,7 +77,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
         {/* Header */}
         <div className="px-4 py-3 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#eab308] text-slate-950 flex items-center justify-center font-bold shadow-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
               <Phone className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0">
@@ -94,12 +94,12 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
           </button>
         </div>
 
-        {/* Selected Property Banner (Enlarged second part matching reference crop) */}
+        {/* Selected Property Banner */}
         {property && (
-          <div className="bg-[#fef9c3] dark:bg-amber-950/40 border-b border-amber-200/90 dark:border-amber-800/40 px-4.5 py-3 sm:py-3.5 flex items-center justify-between gap-3 shrink-0">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200/90 dark:border-emerald-800/40 px-4.5 py-3 sm:py-3.5 flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-amber-200/90 dark:bg-amber-900/60 flex items-center justify-center shrink-0 shadow-2xs">
-                <Building className="w-5 h-5 text-amber-950 dark:text-amber-200" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center shrink-0 shadow-2xs">
+                <Building className="w-5 h-5 text-emerald-950 dark:text-emerald-200" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-white truncate leading-snug">
@@ -111,7 +111,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 </div>
               </div>
             </div>
-            <div className="text-sm sm:text-[15px] font-extrabold text-slate-950 dark:text-amber-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-2xs shrink-0 tracking-tight">
+            <div className="text-sm sm:text-[15px] font-extrabold text-slate-950 dark:text-emerald-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border-2 border-emerald-300 dark:border-emerald-600 shadow-2xs shrink-0 tracking-tight">
               {property.price}
             </div>
           </div>
@@ -129,7 +129,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="mt-2 px-7 py-2 rounded-xl bg-[#eab308] hover:bg-[#ca8a04] text-slate-950 text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
+              className="mt-2 px-7 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer"
             >
               Done
             </button>
@@ -168,7 +168,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   placeholder="e.g. Ramesh Varma"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
@@ -182,7 +182,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   placeholder="e.g. +91 98765 43210"
                   value={phoneNumber}
                   onChange={e => setPhoneNumber(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             </div>
@@ -197,7 +197,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 placeholder="e.g. ramesh@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308]"
+                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
@@ -209,7 +209,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               <select
                 value={serviceType}
                 onChange={e => setServiceType(e.target.value)}
-                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308] cursor-pointer"
+                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
                 <option value="Free Site Visit with Cab Facility">Free Site Visit with AC Cab Facility</option>
                 <option value="Price Sheet & Cost Breakup">Price Sheet &amp; Complete Cost Breakup</option>
@@ -229,7 +229,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 type="date"
                 value={preferredDate}
                 onChange={e => setPreferredDate(e.target.value)}
-                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308] cursor-pointer"
+                className="w-full h-9 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               />
             </div>
 
@@ -243,7 +243,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                 placeholder="Mention budget, preferred facing, or any questions..."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full p-2.5 rounded-lg border border-amber-400 dark:border-amber-500 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-[#eab308] resize-none h-14"
+                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none h-14"
               />
             </div>
 
@@ -252,10 +252,10 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-10 rounded-xl bg-[#eab308] hover:bg-[#ca8a04] disabled:opacity-70 text-slate-950 font-extrabold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 text-white font-extrabold text-xs sm:text-sm shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isSubmitting ? (
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Sparkles className="w-4 h-4" />
                 )}
