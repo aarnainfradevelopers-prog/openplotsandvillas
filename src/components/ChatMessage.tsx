@@ -158,10 +158,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 >
                   {att.type.startsWith('image/') ? (
                     <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                  ) : att.type.startsWith('audio/') ? (
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
                   ) : (
                     <FileText className="w-3.5 h-3.5 text-blue-600" />
                   )}
                   <span className="font-semibold">{att.name}</span>
+                  {att.type.startsWith('audio/') && (
+                    <audio src={att.url} controls className="h-6 w-36 ml-1" />
+                  )}
                 </div>
               ))}
             </div>

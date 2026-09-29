@@ -12,10 +12,13 @@ import {
   Sparkles,
   Lock,
   Radio,
-  Play
+  Play,
+  Send,
+  Square,
+  Globe
 } from 'lucide-react';
 import { OPV_LANGUAGES } from '../data/opvKnowledge';
-import { LanguageCode } from '../types/chat';
+import { LanguageCode, AttachedFile } from '../types/chat';
 
 declare global {
   interface Window {
@@ -27,15 +30,19 @@ declare global {
 interface MicrophoneButtonProps {
   currentLanguage: LanguageCode;
   onTranscript: (transcript: string) => void;
+  onSendMessage?: (content: string, attachments?: AttachedFile[]) => void;
   disabled?: boolean;
 }
 
 export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   currentLanguage,
   onTranscript,
+  onSendMessage,
   disabled = false
 }) => {
   const [isListening, setIsListening] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isSupported, setIsSupported] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -51,9 +58,16 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const [testResult, setTestResult] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<any>(null);
+
   const errorTimerRef = useRef<any>(null);
   const lastSpokenTextRef = useRef('');
   const committedTextRef = useRef('');
+  const noSpeechRetryCountRef = useRef(0);
+  const isSecure = typeof window !== 'undefined' && window.isSecureContext;
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -75,7 +89,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setIsSupported(!!SpeechRecognition);
 
-    // Check navigator permission for microphone if supported
     if (navigator.permissions && navigator.permissions.query) {
       try {
         const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -92,7 +105,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       }
     }
 
-    // Check if any audio input device (physical mic) exists
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -108,12 +120,17 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     checkPermissionsAndDevices();
   }, [checkPermissionsAndDevices]);
 
-  // Clean up any active recognition or audio contexts on unmount
+  // Clean up
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
+        } catch (_) {}
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
         } catch (_) {}
       }
       if (audioStreamRef.current) {
@@ -128,16 +145,101 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         cancelAnimationFrame(animFrameRef.current);
       }
       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
     };
   }, []);
 
+  // Mode 2: Universal Audio Recording with MediaRecorder (Works in 100% of browsers)
+  const startAudioRecordingMode = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Microphone access is not supported in this browser.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      audioChunksRef.current = [];
+
+      let mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+      }
+
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const type = recorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        const voiceFile: AttachedFile = {
+          name: `Voice_Query_${new Date().toLocaleTimeString().replace(/:/g, '-')}.webm`,
+          size: `${Math.round(audioBlob.size / 1024)} KB`,
+          type: type,
+          url: audioUrl
+        };
+
+        if (onSendMessage) {
+          onSendMessage('🎤 Voice Note: Property inquiry in ' + selectedLang.label, [voiceFile]);
+        }
+
+        stream.getTracks().forEach(track => track.stop());
+        setIsRecordingAudio(false);
+        setRecordingSeconds(0);
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      };
+
+      recorder.start(250);
+      setIsRecordingAudio(true);
+      setRecordingSeconds(0);
+      setErrorMessage(null);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      console.warn('MediaRecorder error:', err);
+      setIsRecordingAudio(false);
+      if (err.name === 'NotAllowedError') {
+        setPermissionState('denied');
+        triggerError('Microphone permission blocked. Click "How to fix" or unlock address bar.');
+      } else {
+        triggerError(`Mic error: ${err.message || err.name}`);
+      }
+    }
+  };
+
+  const stopAudioRecordingMode = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (_) {}
+    }
+    setIsRecordingAudio(false);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+  };
+
   // Stop listening cleanly and commit any pending speech
   const stopListening = useCallback(() => {
-    // If there was uncommitted interim speech, commit it before stopping
-    if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
-      onTranscript(lastSpokenTextRef.current);
-      committedTextRef.current = lastSpokenTextRef.current;
+    const speechToCommit = lastSpokenTextRef.current.trim();
+    if (speechToCommit && speechToCommit !== committedTextRef.current) {
+      onTranscript(speechToCommit);
+      committedTextRef.current = speechToCommit;
       lastSpokenTextRef.current = '';
+
+      // Auto-send voice query if onSendMessage is available
+      if (onSendMessage) {
+        setTimeout(() => {
+          onSendMessage(speechToCommit);
+        }, 300);
+      }
     }
 
     if (recognitionRef.current) {
@@ -147,139 +249,162 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
     setIsListening(false);
     setInterimText('');
-  }, [onTranscript]);
+  }, [onTranscript, onSendMessage]);
 
-  // Start listening with fresh SpeechRecognition instance
-  const startListening = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setIsSupported(false);
-      setShowHelpModal(true);
-      return;
-    }
+  // Mode 1: Native Speech Recognition with safe fallback
+  const startListening = useCallback(
+    (retryWithFallbackLang = false) => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // Stop any existing instance
-    if (recognitionRef.current) {
+      // If Web Speech API not supported (Firefox, Brave, WebViews), automatically use MediaRecorder!
+      if (!SpeechRecognition) {
+        console.warn('SpeechRecognition unavailable in this browser; starting audio recorder mode.');
+        startAudioRecordingMode();
+        return;
+      }
+
+      // Stop any existing instance
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (_) {}
+        recognitionRef.current = null;
+      }
+
+      setErrorMessage(null);
+      setInterimText('');
+      lastSpokenTextRef.current = '';
+      committedTextRef.current = '';
+
       try {
-        recognitionRef.current.abort();
-      } catch (_) {}
-      recognitionRef.current = null;
-    }
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
 
-    setErrorMessage(null);
-    setInterimText('');
-    lastSpokenTextRef.current = '';
-    committedTextRef.current = '';
+        // Try selected language speech code, with graceful fallback to en-US / en-IN
+        let langCode = selectedLang.speechCode;
+        if (retryWithFallbackLang) {
+          langCode = 'en-US';
+        } else if (selectedLang.code === 'en') {
+          langCode = 'en-IN';
+        }
+        recognition.lang = langCode;
 
-    try {
-      const recognition = new SpeechRecognition();
-      // continuous = false ensures browser reliably finalizes sentences when user pauses
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
+        recognition.onstart = () => {
+          setIsListening(true);
+          setErrorMessage(null);
+          noSpeechRetryCountRef.current = 0;
+        };
 
-      // For English in India, en-IN is much more accurate for Indian accent
-      let langCode = selectedLang.speechCode;
-      if (selectedLang.code === 'en') {
-        langCode = 'en-IN';
-      }
-      recognition.lang = langCode;
+        recognition.onresult = (event: any) => {
+          let interim = '';
+          let finalPiece = '';
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        setErrorMessage(null);
-      };
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const result = event.results[i];
+            const text = result[0]?.transcript || '';
+            if (result.isFinal) {
+              finalPiece += (finalPiece ? ' ' : '') + text.trim();
+            } else {
+              interim += text;
+            }
+          }
 
-      recognition.onresult = (event: any) => {
-        let interim = '';
-        let finalPiece = '';
+          if (finalPiece) {
+            onTranscript(finalPiece);
+            committedTextRef.current = finalPiece;
+            lastSpokenTextRef.current = '';
+            // Auto-send when final sentence is completed
+            if (onSendMessage) {
+              setTimeout(() => {
+                onSendMessage(finalPiece);
+              }, 400);
+            }
+          } else if (interim.trim()) {
+            lastSpokenTextRef.current = interim.trim();
+          }
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const result = event.results[i];
-          const text = result[0]?.transcript || '';
-          if (result.isFinal) {
-            finalPiece += (finalPiece ? ' ' : '') + text.trim();
+          setInterimText(interim);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn('Speech recognition error:', event.error);
+          const err = event.error;
+
+          if (err === 'not-allowed' || err === 'permission-denied') {
+            setPermissionState('denied');
+            triggerError('Microphone blocked. Click "How to fix" to allow access and reload.', 12000);
+            setIsListening(false);
+          } else if (err === 'language-not-supported' && !retryWithFallbackLang) {
+            // Auto-retry with universal en-US
+            startListening(true);
+            return;
+          } else if (err === 'no-speech') {
+            // Give user another 3 seconds if they paused before speaking
+            if (noSpeechRetryCountRef.current < 1 && !lastSpokenTextRef.current) {
+              noSpeechRetryCountRef.current++;
+              try {
+                recognition.start();
+                return;
+              } catch (_) {}
+            }
+            if (!lastSpokenTextRef.current) {
+              triggerError('No speech detected. Tap mic again and speak clearly.', 4000);
+            }
+            setIsListening(false);
+          } else if (err === 'network') {
+            // On Google Speech API network error, seamlessly fallback to Audio Recorder mode!
+            console.warn('Speech service network error; falling back to Audio Recorder mode');
+            setIsListening(false);
+            startAudioRecordingMode();
+            return;
+          } else if (err === 'aborted') {
+            setIsListening(false);
           } else {
-            interim += text;
+            triggerError(`Voice notice: ${err}`);
+            setIsListening(false);
           }
-        }
 
-        if (finalPiece) {
-          onTranscript(finalPiece);
-          committedTextRef.current = finalPiece;
-          lastSpokenTextRef.current = '';
-        } else if (interim.trim()) {
-          lastSpokenTextRef.current = interim.trim();
-        }
-
-        setInterimText(interim);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.warn('Speech recognition error event:', event.error);
-        const err = event.error;
-
-        if (err === 'not-allowed' || err === 'permission-denied') {
-          setPermissionState('denied');
-          triggerError(
-            'Microphone permission blocked or not applied. Click "Fix / Reload" to allow.',
-            12000
-          );
-        } else if (err === 'audio-capture') {
-          triggerError('No microphone detected. Please plug in a microphone or headset.', 8000);
-        } else if (err === 'network') {
-          triggerError('Speech service network error. Check your internet connection or try prompts below.', 8000);
-        } else if (err === 'no-speech') {
-          // If no speech was heard at all
-          if (!lastSpokenTextRef.current) {
-            triggerError('No speech detected. Tap mic again and speak clearly.', 4000);
+          // Commit pending text
+          if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
+            onTranscript(lastSpokenTextRef.current);
+            committedTextRef.current = lastSpokenTextRef.current;
+            if (onSendMessage) {
+              onSendMessage(lastSpokenTextRef.current);
+            }
+            lastSpokenTextRef.current = '';
           }
-        } else if (err === 'aborted') {
-          // Normal user abort
-        } else {
-          triggerError(`Voice notice: ${err}`);
-        }
+        };
 
-        // Commit any speech received before the error
-        if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
-          onTranscript(lastSpokenTextRef.current);
-          committedTextRef.current = lastSpokenTextRef.current;
-          lastSpokenTextRef.current = '';
-        }
+        recognition.onend = () => {
+          if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
+            onTranscript(lastSpokenTextRef.current);
+            committedTextRef.current = lastSpokenTextRef.current;
+            if (onSendMessage) {
+              onSendMessage(lastSpokenTextRef.current);
+            }
+            lastSpokenTextRef.current = '';
+          }
+          setIsListening(false);
+          setInterimText('');
+        };
 
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        // Guarantee no spoken text is dropped if onend fired before isFinal
-        if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
-          onTranscript(lastSpokenTextRef.current);
-          committedTextRef.current = lastSpokenTextRef.current;
-          lastSpokenTextRef.current = '';
-        }
-        setIsListening(false);
-        setInterimText('');
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err: any) {
-      console.error('Failed to start SpeechRecognition:', err);
-      if (err.name === 'NotAllowedError') {
-        setPermissionState('denied');
-        triggerError('Microphone blocked. Click "How to fix" to allow and reload page.');
-      } else {
-        triggerError('Could not start microphone. Click "How to fix" for solutions.');
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err: any) {
+        console.warn('SpeechRecognition failed to start; switching to audio recorder mode:', err);
+        startAudioRecordingMode();
       }
-      setIsListening(false);
-    }
-  }, [selectedLang.speechCode, selectedLang.code, onTranscript, triggerError]);
+    },
+    [selectedLang.speechCode, selectedLang.code, onTranscript, onSendMessage, triggerError]
+  );
 
   const toggleListening = () => {
     if (disabled) return;
 
-    if (!isSupported) {
-      setShowHelpModal(true);
+    if (isRecordingAudio) {
+      stopAudioRecordingMode();
       return;
     }
 
@@ -290,11 +415,9 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
   };
 
-  // Real-time Sound Decibel / Volume Test using Web Audio API
+  // Sound Decibel / Volume Test using Web Audio API
   const startAudioTest = async () => {
-    // Stop any existing test
     stopAudioTest();
-
     setIsTestingAudio(true);
     setAudioVolume(0);
     setSoundDetected(false);
@@ -302,7 +425,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('getUserMedia not supported in this browser');
+        throw new Error('Microphone API not supported');
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -320,7 +443,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
-
       let heardSound = false;
 
       const checkVolume = () => {
@@ -347,13 +469,12 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       setPermissionState('granted');
       setTestResult('Microphone connected! Speak into your mic to test the green volume bar.');
 
-      // Automatically stop test after 10 seconds
       setTimeout(() => {
         if (heardSound) {
           setTestResult('Success! Sound was detected from your microphone.');
         } else {
           setTestResult(
-            'Microphone access is allowed, but input volume remained 0. Check your physical mic switch or Windows volume.'
+            'Microphone access is allowed, but input volume remained 0. Check physical mic switch or Windows volume.'
           );
         }
         stopAudioTest();
@@ -392,6 +513,9 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
   const handleSelectQuickPrompt = (prompt: string) => {
     onTranscript(prompt);
+    if (onSendMessage) {
+      onSendMessage(prompt);
+    }
     setShowHelpModal(false);
   };
 
@@ -403,35 +527,41 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           type="button"
           onClick={toggleListening}
           disabled={disabled}
-          aria-label={isListening ? 'Stop voice recording' : 'Start voice recording'}
+          aria-label={
+            isListening || isRecordingAudio ? 'Stop voice recording' : 'Start voice recording'
+          }
           title={
-            isListening
-              ? `Listening in ${selectedLang.label}... Click to finish`
+            isRecordingAudio
+              ? `Recording Voice Note (${recordingSeconds}s)... Click to send`
+              : isListening
+              ? `Listening in ${selectedLang.label}... Click to send`
               : `Click to Speak in ${selectedLang.label}`
           }
           className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-200 flex items-center justify-center cursor-pointer ${
-            isListening
+            isListening || isRecordingAudio
               ? 'bg-rose-600 text-white shadow-[0_0_20px_rgba(225,29,72,0.6)] scale-105'
               : permissionState === 'denied'
               ? 'text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-300'
               : 'text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200/90 border border-slate-300/80 shadow-2xs'
           }`}
         >
-          {isListening && (
+          {(isListening || isRecordingAudio) && (
             <>
               <span className="absolute -inset-1 rounded-full bg-rose-500/40 animate-ping" />
               <span className="absolute -inset-2 rounded-full bg-rose-500/20 animate-pulse" />
             </>
           )}
 
-          {isListening ? (
+          {isRecordingAudio ? (
+            <Square className="w-4 h-4 sm:w-4.5 sm:h-4.5 relative z-10 fill-current" />
+          ) : isListening ? (
             <MicOff className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
           ) : (
             <Mic className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
           )}
 
           {/* Blocked indicator badge */}
-          {permissionState === 'denied' && !isListening && (
+          {permissionState === 'denied' && !isListening && !isRecordingAudio && (
             <span
               className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-600 ring-2 ring-white"
               title="Microphone blocked. Click to unblock."
@@ -439,7 +569,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           )}
         </button>
 
-        {/* Live Speech Recognition Floating Banner with Animated Soundwave */}
+        {/* Live Speech Recognition Floating Banner */}
         {isListening && (
           <div className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 px-3.5 py-2 bg-slate-950 text-white text-xs rounded-2xl shadow-2xl flex items-center gap-2.5 whitespace-nowrap z-50 border border-slate-800 animate-in fade-in duration-150">
             <span className="flex items-center gap-0.5 h-3.5 shrink-0">
@@ -463,15 +593,40 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             <button
               type="button"
               onClick={stopListening}
-              className="px-2 py-0.5 bg-rose-900/90 hover:bg-rose-800 text-white text-[10px] font-bold rounded-lg ml-1 cursor-pointer transition-colors"
+              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg ml-1 cursor-pointer transition-colors flex items-center gap-1"
             >
-              Done
+              <Send className="w-2.5 h-2.5" />
+              Send
+            </button>
+          </div>
+        )}
+
+        {/* Live Audio Recording Mode Floating Banner (Universal Fallback) */}
+        {isRecordingAudio && (
+          <div className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 px-3.5 py-2 bg-rose-950 text-white text-xs rounded-2xl shadow-2xl flex items-center gap-2.5 whitespace-nowrap z-50 border border-rose-700 animate-in fade-in duration-150">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                <span>Recording Voice Query</span>
+                <span className="text-[10px] font-mono bg-rose-900 px-1.5 py-0.5 rounded">
+                  0:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds}
+                </span>
+              </span>
+              <span className="text-[10px] text-rose-200">Speak now, tap Send when done</span>
+            </div>
+            <button
+              type="button"
+              onClick={stopAudioRecordingMode}
+              className="px-2.5 py-1 bg-white hover:bg-slate-100 text-rose-950 text-[10px] font-bold rounded-lg ml-1 cursor-pointer transition-colors flex items-center gap-1 shadow-xs"
+            >
+              <Send className="w-2.5 h-2.5 fill-current" />
+              Send Note
             </button>
           </div>
         )}
 
         {/* Floating Error Toast with 1-click Reload and Fix */}
-        {errorMessage && !isListening && (
+        {errorMessage && !isListening && !isRecordingAudio && (
           <div className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 px-3 py-2 bg-rose-950 text-white text-xs rounded-xl shadow-2xl flex items-center gap-2 z-50 whitespace-nowrap border border-rose-700 animate-in fade-in duration-200">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span className="text-[11px] font-medium max-w-[240px] sm:max-w-xs truncate">
@@ -520,10 +675,10 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                    Microphone Diagnostics & Setup
+                    Voice Assistant & Microphone Setup
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Fix microphone permission or test real-time sound input
+                    Diagnostics for Vercel, browser permissions, and instant voice queries
                   </p>
                 </div>
               </div>
@@ -542,11 +697,31 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             {/* Diagnostic Status Box */}
             <div className="mt-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-2">
-                Live Status Diagnostics
+                Live Environment Diagnostics
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-600 dark:text-slate-400">Browser Permission:</span>
+                  <span className="text-slate-600 dark:text-slate-400">Connection:</span>
+                  <span className="font-bold text-emerald-600 flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5" /> {isSecure ? 'Secure (HTTPS)' : 'HTTP Local'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-600 dark:text-slate-400">Speech Engine:</span>
+                  {isSupported ? (
+                    <span className="font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Web Speech
+                    </span>
+                  ) : (
+                    <span className="font-bold text-amber-600 flex items-center gap-1">
+                      <Volume2 className="w-3.5 h-3.5" /> Audio Recorder
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-600 dark:text-slate-400">Mic Permission:</span>
                   {permissionState === 'granted' ? (
                     <span className="font-bold text-emerald-600 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Allowed
@@ -581,7 +756,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Radio className={`w-3.5 h-3.5 ${isTestingAudio ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`} />
-                    Live Audio Level Test
+                    Live Microphone Hardware & Audio Test
                   </span>
                   {isTestingAudio && (
                     <span className="text-[10px] font-bold text-rose-500 animate-pulse">
@@ -608,7 +783,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                       className="flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Play className="w-3 h-3 fill-current" />
-                      Start 10-Sec Mic Sound Test
+                      Test Mic Sound (10s)
                     </button>
                   ) : (
                     <button
@@ -627,7 +802,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                     title="Reload page to apply address bar permissions"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    Reload Page
+                    Reload
                   </button>
                 </div>
 
@@ -644,6 +819,36 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
               </div>
             </div>
 
+            {/* Quick Action: Universal Voice Note / Queries */}
+            <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Instant Voice Queries (1-Click Tap)
+                </span>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">
+                  Language: {selectedLang.label}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 mb-2.5">
+                Tap any question to speak and immediately ask the AI assistant:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {selectedLang.suggestions.slice(0, 4).map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectQuickPrompt(suggestion)}
+                    className="text-left text-[11px] p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 text-slate-900 dark:text-slate-100 border border-amber-200 dark:border-slate-700 font-medium transition-all cursor-pointer hover:scale-[1.01] active:scale-98 flex items-center gap-1.5"
+                  >
+                    <Mic className="w-3 h-3 text-amber-600 shrink-0" />
+                    <span className="truncate">"{suggestion}"</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Step-by-Step Instructions Tabs */}
             <div className="mt-4">
               <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -657,7 +862,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                   }`}
                 >
                   <Sliders className="w-3.5 h-3.5" />
-                  <span>Browser Address Bar</span>
+                  <span>On Vercel / Chrome / Edge</span>
                 </button>
                 <button
                   type="button"
@@ -669,21 +874,21 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                   }`}
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Windows 10/11 Privacy</span>
+                  <span>Windows 10/11 Privacy Lock</span>
                 </button>
               </div>
 
               {activeTab === 'browser' ? (
                 <div className="space-y-2.5 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Why "Already Allowed" can still fail:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Why it blocks after deployment:</span>
                     <p className="mt-1 text-slate-600 dark:text-slate-400">
-                      When you switch permissions in Chrome/Edge, <strong>you must reload the tab</strong>. Without reloading, Chrome keeps the old blocked permission in memory!
+                      When deployed to Vercel (<code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[10px] text-slate-900 dark:text-slate-100">{window.location.host}</code>), browsers treat it as a new domain. If permission is changed from Block to Allow, <strong>you must reload the tab</strong>.
                     </p>
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> In the address bar above, click the <strong>Tune / Lock icon</strong> on the far left of <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[11px] text-slate-900 dark:text-slate-100">{window.location.host || 'localhost:5173'}</code>.
+                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> Click the <strong>Tune / Lock icon</strong> on the far left of the address bar at the top of your screen.
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
@@ -691,7 +896,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Click the <strong>Reload Page</strong> button above (or press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">F5</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Ctrl+R</kbd>) to activate it!
+                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Click <strong>Reload Page</strong> (or press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">F5</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Ctrl+R</kbd>) to activate!
                   </div>
                 </div>
               ) : (
@@ -713,30 +918,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Instant Voice Query Fallback (Always Works!) */}
-            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Instant Voice Fallback: Tap to ask without typing</span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
-                Click any question below to immediately ask the chatbot in {selectedLang.label}:
-              </p>
-
-              <div className="flex flex-wrap gap-1.5">
-                {selectedLang.suggestions.slice(0, 4).map((suggestion, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSelectQuickPrompt(suggestion)}
-                    className="text-left text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/60 font-medium transition-all cursor-pointer hover:scale-[1.01] active:scale-98"
-                  >
-                    "{suggestion}"
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Footer Done Button */}

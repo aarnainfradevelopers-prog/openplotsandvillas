@@ -163,6 +163,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <MicrophoneButton
               currentLanguage={currentLanguage}
               onTranscript={handleVoiceTranscript}
+              onSendMessage={onSendMessage}
             />
 
             {/* 2. Language Dropdown after microphone */}
