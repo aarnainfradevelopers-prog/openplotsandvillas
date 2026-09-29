@@ -489,22 +489,26 @@ export const OPVChatbot: React.FC = () => {
                 />
               </div>
 
-              {/* Feature Suggestion Buttons matching Reference Image 2 (Horizontal Icon + Label like View Number) */}
-              <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3.5 mt-5 sm:mt-6 w-full max-w-4xl px-2">
-                {suggestionChips.map((chip, idx) => {
-                  const ChipIcon = chip.icon;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSendMessage(chip.query)}
-                      className="inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl bg-white dark:bg-[#151c2c] border-2 border-slate-200/90 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 text-slate-800 dark:text-slate-100 hover:text-slate-950 dark:hover:text-white shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 text-xs sm:text-[13.5px] font-bold"
-                    >
-                      <ChipIcon className="w-4 h-4 text-amber-500 shrink-0 stroke-[2.2]" />
-                      <span>{chip.label}</span>
-                    </button>
-                  );
-                })}
+              {/* Modern AI Assistant Quick-Option Suggestion Cards matching Reference Style */}
+              <div className="w-full max-w-4xl px-2 sm:px-4 mt-5 sm:mt-6">
+                <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap max-sm:flex-nowrap max-sm:justify-start max-sm:overflow-x-auto max-sm:pb-2 max-sm:px-1 scrollbar-none">
+                  {suggestionChips.map((chip, idx) => {
+                    const ChipIcon = chip.icon;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSendMessage(chip.query)}
+                        className="inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 rounded-[18px] bg-[#dce5dc] hover:bg-[#ccd9cd] dark:bg-[#1c2921] dark:hover:bg-[#23352a] text-slate-800 dark:text-slate-100 min-h-[44px] sm:min-h-[46px] transition-colors duration-200 cursor-pointer shrink-0 border-0 outline-none"
+                      >
+                        <ChipIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-slate-700 dark:text-emerald-200/90 shrink-0 stroke-[1.9]" />
+                        <span className="text-xs sm:text-[13.5px] font-medium sm:font-semibold tracking-tight whitespace-nowrap">
+                          {chip.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -538,8 +542,8 @@ export const OPVChatbot: React.FC = () => {
 
             {/* Pinned Bottom Input Bar - Centered in middle screen */}
             <div className="w-full bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0e131f] dark:via-[#0e131f]/95 dark:to-transparent pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-col items-center justify-center">
-              {/* Quick Suggestion Square Button Options */}
-              <div className="w-full max-w-4xl px-3 sm:px-6 pb-2 overflow-x-auto scrollbar-none flex items-center gap-2">
+              {/* Quick Suggestion Options matching Reference Style */}
+              <div className="w-full max-w-4xl px-3 sm:px-6 pb-2 overflow-x-auto scrollbar-none flex items-center gap-2 sm:gap-2.5">
                 {suggestionChips.map((chip, idx) => {
                   const ChipIcon = chip.icon;
                   return (
@@ -547,9 +551,9 @@ export const OPVChatbot: React.FC = () => {
                       key={idx}
                       type="button"
                       onClick={() => handleSendMessage(chip.query)}
-                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer hover:scale-[1.02] active:scale-98 transition-all"
+                      className="px-3.5 py-2 rounded-[16px] bg-[#dce5dc] hover:bg-[#ccd9cd] dark:bg-[#1c2921] dark:hover:bg-[#23352a] text-slate-800 dark:text-slate-100 text-xs font-medium sm:font-semibold flex items-center gap-2 shrink-0 cursor-pointer transition-colors duration-200 border-0 outline-none"
                     >
-                      <ChipIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <ChipIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 dark:text-emerald-200/90 shrink-0 stroke-[1.9]" />
                       <span className="truncate">{chip.label}</span>
                     </button>
                   );
