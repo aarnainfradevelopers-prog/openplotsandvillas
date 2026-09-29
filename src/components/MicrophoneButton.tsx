@@ -15,7 +15,10 @@ import {
   Play,
   Send,
   Square,
-  Globe
+  Globe,
+  Monitor,
+  Smartphone,
+  ChevronDown
 } from 'lucide-react';
 import { OPV_LANGUAGES } from '../data/opvKnowledge';
 import { LanguageCode, AttachedFile } from '../types/chat';
@@ -48,8 +51,11 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [interimText, setInterimText] = useState('');
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied' | 'unknown'>('unknown');
-  const [hasAudioDevice, setHasAudioDevice] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'browser' | 'windows' | 'test'>('browser');
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'windows' | 'browser' | 'test'>('windows');
+  const [preferredMode, setPreferredMode] = useState<'auto' | 'speech' | 'audio'>('auto');
+  const [showModeMenu, setShowModeMenu] = useState(false);
 
   // Live Sound Decibel Test State
   const [isTestingAudio, setIsTestingAudio] = useState(false);
@@ -65,7 +71,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const errorTimerRef = useRef<any>(null);
   const lastSpokenTextRef = useRef('');
   const committedTextRef = useRef('');
-  const noSpeechRetryCountRef = useRef(0);
   const isSecure = typeof window !== 'undefined' && window.isSecureContext;
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -84,7 +89,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
   }, []);
 
-  // Check speech recognition support and microphone permission status
+  // Enumerate devices and check permissions
   const checkPermissionsAndDevices = useCallback(async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     setIsSupported(!!SpeechRecognition);
@@ -109,12 +114,15 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter(d => d.kind === 'audioinput');
-        setHasAudioDevice(audioInputs.length > 0);
+        setAudioDevices(audioInputs);
+        if (audioInputs.length > 0 && !selectedDeviceId) {
+          setSelectedDeviceId(audioInputs[0].deviceId);
+        }
       } catch {
-        setHasAudioDevice(null);
+        setAudioDevices([]);
       }
     }
-  }, []);
+  }, [selectedDeviceId]);
 
   useEffect(() => {
     checkPermissionsAndDevices();
@@ -149,14 +157,18 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
   }, []);
 
-  // Mode 2: Universal Audio Recording with MediaRecorder (Works in 100% of browsers)
-  const startAudioRecordingMode = async () => {
+  // Universal MediaRecorder Audio Recording Mode (Works on 100% of browsers & Windows desktops)
+  const startAudioRecordingMode = async (deviceId?: string) => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Microphone access is not supported in this browser.');
+        throw new Error('Microphone access is not supported by your browser.');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: deviceId ? { deviceId: { exact: deviceId } } : true
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       audioStreamRef.current = stream;
       audioChunksRef.current = [];
 
@@ -187,7 +199,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         };
 
         if (onSendMessage) {
-          onSendMessage('🎤 Voice Note: Property inquiry in ' + selectedLang.label, [voiceFile]);
+          onSendMessage('🎤 Voice Inquiry: Property Assistance in ' + selectedLang.label, [voiceFile]);
         }
 
         stream.getTracks().forEach(track => track.stop());
@@ -205,13 +217,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         setRecordingSeconds(prev => prev + 1);
       }, 1000);
     } catch (err: any) {
-      console.warn('MediaRecorder error:', err);
+      console.warn('Audio recording error:', err);
       setIsRecordingAudio(false);
       if (err.name === 'NotAllowedError') {
         setPermissionState('denied');
-        triggerError('Microphone permission blocked. Click "How to fix" or unlock address bar.');
+        triggerError('Microphone blocked. Check Windows Settings & address bar.');
+        setShowHelpModal(true);
       } else {
-        triggerError(`Mic error: ${err.message || err.name}`);
+        triggerError(`Microphone notice: ${err.message || err.name}`);
       }
     }
   };
@@ -234,7 +247,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       committedTextRef.current = speechToCommit;
       lastSpokenTextRef.current = '';
 
-      // Auto-send voice query if onSendMessage is available
       if (onSendMessage) {
         setTimeout(() => {
           onSendMessage(speechToCommit);
@@ -251,19 +263,24 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     setInterimText('');
   }, [onTranscript, onSendMessage]);
 
-  // Mode 1: Native Speech Recognition with safe fallback
+  // Speech Recognition Mode with automatic desktop fallback to Audio Recorder
   const startListening = useCallback(
     (retryWithFallbackLang = false) => {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      // If Web Speech API not supported (Firefox, Brave, WebViews), automatically use MediaRecorder!
-      if (!SpeechRecognition) {
-        console.warn('SpeechRecognition unavailable in this browser; starting audio recorder mode.');
-        startAudioRecordingMode();
+      // If user selected Audio Recording mode directly
+      if (preferredMode === 'audio') {
+        startAudioRecordingMode(selectedDeviceId);
         return;
       }
 
-      // Stop any existing instance
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      // If SpeechRecognition not available, automatically use audio recorder
+      if (!SpeechRecognition) {
+        console.warn('SpeechRecognition unavailable; using universal audio recorder.');
+        startAudioRecordingMode(selectedDeviceId);
+        return;
+      }
+
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
@@ -282,7 +299,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
-        // Try selected language speech code, with graceful fallback to en-US / en-IN
         let langCode = selectedLang.speechCode;
         if (retryWithFallbackLang) {
           langCode = 'en-US';
@@ -294,7 +310,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         recognition.onstart = () => {
           setIsListening(true);
           setErrorMessage(null);
-          noSpeechRetryCountRef.current = 0;
         };
 
         recognition.onresult = (event: any) => {
@@ -315,7 +330,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             onTranscript(finalPiece);
             committedTextRef.current = finalPiece;
             lastSpokenTextRef.current = '';
-            // Auto-send when final sentence is completed
+
             if (onSendMessage) {
               setTimeout(() => {
                 onSendMessage(finalPiece);
@@ -329,44 +344,36 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         };
 
         recognition.onerror = (event: any) => {
-          console.warn('Speech recognition error:', event.error);
+          console.warn('Speech recognition error on desktop:', event.error);
           const err = event.error;
 
-          if (err === 'not-allowed' || err === 'permission-denied') {
-            setPermissionState('denied');
-            triggerError('Microphone blocked. Click "How to fix" to allow access and reload.', 12000);
+          // If speech recognition failed on desktop/laptop (network, not-allowed, service-not-allowed),
+          // DO NOT LEAVE USER STRANDED! Seamlessly fallback to MediaRecorder audio recording!
+          if (
+            err === 'network' ||
+            err === 'service-not-allowed' ||
+            err === 'audio-capture' ||
+            err === 'not-allowed'
+          ) {
+            console.info('Switching to universal Audio Recorder mode due to:', err);
             setIsListening(false);
-          } else if (err === 'language-not-supported' && !retryWithFallbackLang) {
-            // Auto-retry with universal en-US
-            startListening(true);
+            startAudioRecordingMode(selectedDeviceId);
             return;
-          } else if (err === 'no-speech') {
-            // Give user another 3 seconds if they paused before speaking
-            if (noSpeechRetryCountRef.current < 1 && !lastSpokenTextRef.current) {
-              noSpeechRetryCountRef.current++;
-              try {
-                recognition.start();
-                return;
-              } catch (_) {}
-            }
-            if (!lastSpokenTextRef.current) {
-              triggerError('No speech detected. Tap mic again and speak clearly.', 4000);
-            }
-            setIsListening(false);
-          } else if (err === 'network') {
-            // On Google Speech API network error, seamlessly fallback to Audio Recorder mode!
-            console.warn('Speech service network error; falling back to Audio Recorder mode');
-            setIsListening(false);
-            startAudioRecordingMode();
-            return;
-          } else if (err === 'aborted') {
-            setIsListening(false);
-          } else {
-            triggerError(`Voice notice: ${err}`);
-            setIsListening(false);
           }
 
-          // Commit pending text
+          if (err === 'language-not-supported' && !retryWithFallbackLang) {
+            startListening(true);
+            return;
+          }
+
+          if (err === 'no-speech') {
+            if (!lastSpokenTextRef.current) {
+              triggerError('No speech detected. Speak closer to your microphone or test mic volume.', 5000);
+            }
+          } else if (err !== 'aborted') {
+            triggerError(`Voice notice: ${err}`);
+          }
+
           if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
             onTranscript(lastSpokenTextRef.current);
             committedTextRef.current = lastSpokenTextRef.current;
@@ -375,6 +382,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             }
             lastSpokenTextRef.current = '';
           }
+
+          setIsListening(false);
         };
 
         recognition.onend = () => {
@@ -393,11 +402,11 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         recognitionRef.current = recognition;
         recognition.start();
       } catch (err: any) {
-        console.warn('SpeechRecognition failed to start; switching to audio recorder mode:', err);
-        startAudioRecordingMode();
+        console.warn('SpeechRecognition failed on desktop; switching to audio recorder mode:', err);
+        startAudioRecordingMode(selectedDeviceId);
       }
     },
-    [selectedLang.speechCode, selectedLang.code, onTranscript, onSendMessage, triggerError]
+    [preferredMode, selectedDeviceId, selectedLang.speechCode, selectedLang.code, onTranscript, onSendMessage, triggerError]
   );
 
   const toggleListening = () => {
@@ -428,7 +437,11 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         throw new Error('Microphone API not supported');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       audioStreamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -467,14 +480,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
       checkVolume();
       setPermissionState('granted');
-      setTestResult('Microphone connected! Speak into your mic to test the green volume bar.');
+      setTestResult('Microphone connected! Speak into your laptop/desktop mic now.');
 
       setTimeout(() => {
         if (heardSound) {
-          setTestResult('Success! Sound was detected from your microphone.');
+          setTestResult('Success! Sound detected from your desktop/laptop microphone.');
         } else {
           setTestResult(
-            'Microphone access is allowed, but input volume remained 0. Check physical mic switch or Windows volume.'
+            'Microphone connected, but sound level stayed 0. Please check your physical mic mute switch or Windows Sound volume.'
           );
         }
         stopAudioTest();
@@ -484,9 +497,9 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       setIsTestingAudio(false);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setPermissionState('denied');
-        setTestResult('Permission Denied: Browser blocked microphone. Please follow Step 1 below and reload.');
+        setTestResult('Windows Privacy or Browser Blocked: Follow the Windows tab below to unblock.');
       } else if (err.name === 'NotFoundError') {
-        setTestResult('No physical microphone hardware detected on your computer.');
+        setTestResult('No physical microphone detected. Connect a headset or USB mic to your PC.');
       } else {
         setTestResult(`Error: ${err.message || err.name}`);
       }
@@ -564,7 +577,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           {permissionState === 'denied' && !isListening && !isRecordingAudio && (
             <span
               className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-600 ring-2 ring-white"
-              title="Microphone blocked. Click to unblock."
+              title="Microphone blocked. Click for desktop setup."
             />
           )}
         </button>
@@ -587,7 +600,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                   "{interimText}"
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400">Speak your question clearly</span>
+                <span className="text-[10px] text-slate-400">Speak your property question</span>
               )}
             </div>
             <button
@@ -601,13 +614,13 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           </div>
         )}
 
-        {/* Live Audio Recording Mode Floating Banner (Universal Fallback) */}
+        {/* Live Audio Recording Mode Floating Banner (Universal Fallback for Desktops) */}
         {isRecordingAudio && (
           <div className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 px-3.5 py-2 bg-rose-950 text-white text-xs rounded-2xl shadow-2xl flex items-center gap-2.5 whitespace-nowrap z-50 border border-rose-700 animate-in fade-in duration-150">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
             <div className="flex flex-col">
               <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
-                <span>Recording Voice Query</span>
+                <span>Desktop Voice Note</span>
                 <span className="text-[10px] font-mono bg-rose-900 px-1.5 py-0.5 rounded">
                   0:{recordingSeconds < 10 ? `0${recordingSeconds}` : recordingSeconds}
                 </span>
@@ -625,7 +638,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           </div>
         )}
 
-        {/* Floating Error Toast with 1-click Reload and Fix */}
+        {/* Floating Error Toast with 1-click Desktop Fix */}
         {errorMessage && !isListening && !isRecordingAudio && (
           <div className="absolute bottom-full mb-3 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 px-3 py-2 bg-rose-950 text-white text-xs rounded-xl shadow-2xl flex items-center gap-2 z-50 whitespace-nowrap border border-rose-700 animate-in fade-in duration-200">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -634,22 +647,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => window.location.reload()}
-              className="px-2 py-0.5 rounded bg-rose-800 hover:bg-rose-700 text-white text-[10px] font-bold shrink-0 cursor-pointer flex items-center gap-1"
-              title="Reload page to apply permission changes"
-            >
-              <RefreshCw className="w-2.5 h-2.5" />
-              Reload
-            </button>
-            <button
-              type="button"
               onClick={() => {
                 setShowHelpModal(true);
+                setActiveTab('windows');
                 setErrorMessage(null);
               }}
               className="px-2 py-0.5 rounded bg-rose-900 hover:bg-rose-800 text-white text-[10px] font-bold underline shrink-0 cursor-pointer"
             >
-              How to fix
+              Desktop Fix
             </button>
             <button
               type="button"
@@ -663,7 +668,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         )}
       </div>
 
-      {/* Comprehensive Voice Troubleshooter & Live Sound Meter Modal */}
+      {/* Comprehensive Desktop & Laptop Voice Troubleshooter Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-5 text-slate-900 dark:text-slate-100 relative max-h-[90vh] overflow-y-auto">
@@ -671,14 +676,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                  <Mic className="w-4 h-4" />
+                  <Monitor className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                    Voice Assistant & Microphone Setup
+                    Desktop & Laptop Microphone Fix
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Diagnostics for Vercel, browser permissions, and instant voice queries
+                    Fix Windows desktop mic settings or record voice notes directly
                   </p>
                 </div>
               </div>
@@ -694,73 +699,57 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
               </button>
             </div>
 
-            {/* Diagnostic Status Box */}
-            <div className="mt-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            {/* Why Mobile Works but Desktop Fails Notice */}
+            <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-xs">
+              <div className="font-bold text-blue-950 dark:text-blue-200 flex items-center gap-1.5 mb-1">
+                <Smartphone className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span>Why mobile works but desktop/laptop fails:</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]">
+                Mobile phones use integrated OS speech services. On Windows laptops and desktops, <strong>Windows Privacy Settings</strong> or hardware audio routing often blocks Chrome desktop apps from accessing the physical mic.
+              </p>
+            </div>
+
+            {/* Desktop Device Selector & Live Sound Test */}
+            <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400 mb-2">
-                Live Environment Diagnostics
+                Desktop Audio Input Device
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-600 dark:text-slate-400">Connection:</span>
-                  <span className="font-bold text-emerald-600 flex items-center gap-1">
-                    <Globe className="w-3.5 h-3.5" /> {isSecure ? 'Secure (HTTPS)' : 'HTTP Local'}
-                  </span>
-                </div>
 
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-600 dark:text-slate-400">Speech Engine:</span>
-                  {isSupported ? (
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Web Speech
-                    </span>
-                  ) : (
-                    <span className="font-bold text-amber-600 flex items-center gap-1">
-                      <Volume2 className="w-3.5 h-3.5" /> Audio Recorder
-                    </span>
-                  )}
+              {audioDevices.length > 0 ? (
+                <div className="mb-3">
+                  <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">
+                    Select Laptop/PC Microphone:
+                  </label>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={e => setSelectedDeviceId(e.target.value)}
+                    className="w-full text-xs p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium"
+                  >
+                    {audioDevices.map(d => (
+                      <option key={d.deviceId} value={d.deviceId}>
+                        {d.label || `Microphone ${d.deviceId.slice(0, 5)}...`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-600 dark:text-slate-400">Mic Permission:</span>
-                  {permissionState === 'granted' ? (
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Allowed
-                    </span>
-                  ) : permissionState === 'denied' ? (
-                    <span className="font-bold text-rose-600 flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" /> Blocked
-                    </span>
-                  ) : (
-                    <span className="font-bold text-amber-600 flex items-center gap-1">
-                      <HelpCircle className="w-3.5 h-3.5" /> Ask (Default)
-                    </span>
-                  )}
+              ) : (
+                <div className="mb-2 text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>No microphone labels detected yet. Click "Test Mic Sound" below to request device names.</span>
                 </div>
-
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-                  <span className="text-slate-600 dark:text-slate-400">Mic Hardware:</span>
-                  {hasAudioDevice === false ? (
-                    <span className="font-bold text-rose-600 flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" /> Not Found
-                    </span>
-                  ) : (
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">
-                      <Volume2 className="w-3.5 h-3.5" /> Detected
-                    </span>
-                  )}
-                </div>
-              </div>
+              )}
 
               {/* LIVE SOUND VOLUME TESTER */}
-              <div className="mt-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Radio className={`w-3.5 h-3.5 ${isTestingAudio ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`} />
-                    Live Microphone Hardware & Audio Test
+                    Test Laptop/Desktop Mic Sound
                   </span>
                   {isTestingAudio && (
                     <span className="text-[10px] font-bold text-rose-500 animate-pulse">
-                      Listening... Speak now
+                      Listening... Speak loudly
                     </span>
                   )}
                 </div>
@@ -797,12 +786,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => window.location.reload()}
-                    className="py-1.5 px-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5"
-                    title="Reload page to apply address bar permissions"
+                    onClick={() => {
+                      setShowHelpModal(false);
+                      startAudioRecordingMode(selectedDeviceId);
+                    }}
+                    className="py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-xs"
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    Reload
+                    <Mic className="w-3 h-3" />
+                    Record Voice Note
                   </button>
                 </div>
 
@@ -819,20 +810,72 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
               </div>
             </div>
 
-            {/* Quick Action: Universal Voice Note / Queries */}
-            <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Instant Voice Queries (1-Click Tap)
-                </span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">
-                  Language: {selectedLang.label}
-                </span>
+            {/* Step-by-Step Instructions Tabs */}
+            <div className="mt-4">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('windows')}
+                  className={`text-xs font-bold pb-1 cursor-pointer transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'windows'
+                      ? 'text-amber-600 border-b-2 border-amber-500'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Windows 10/11 Privacy Lock (Critical)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('browser')}
+                  className={`text-xs font-bold pb-1 cursor-pointer transition-colors flex items-center gap-1.5 ml-2 ${
+                    activeTab === 'browser'
+                      ? 'text-amber-600 border-b-2 border-amber-500'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Browser Address Bar</span>
+                </button>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-300 mb-2.5">
-                Tap any question to speak and immediately ask the AI assistant:
-              </p>
+
+              {activeTab === 'windows' ? (
+                <div className="space-y-2.5 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 font-medium text-amber-900 dark:text-amber-200">
+                    ⚠️ The #1 reason microphones fail on Windows desktops: Windows OS disables desktop apps from using the mic by default.
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> Press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Windows Key + I</kbd> on your keyboard to open Settings.
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 2:</span> Go to <strong>Privacy & Security</strong> → <strong>Microphone</strong>.
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Turn ON <strong>"Microphone access"</strong> AND scroll down to turn ON <strong>"Let desktop apps access your microphone"</strong> (ensure Google Chrome/Edge is enabled).
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> Look at the top of your browser address bar on <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[10px] text-slate-900 dark:text-slate-100">{window.location.host}</code>.
+                    Click the <strong>Tune / Lock icon</strong> on the far left.
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 2:</span> Verify <strong>Microphone</strong> is set to <strong>Allow</strong>.
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
+                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Refresh the page (<kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">F5</kbd>) to activate changes.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Instant Voice Query Fallback (Always Works on Desktop!) */}
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Instant Voice Queries (Tap to ask without hardware):</span>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {selectedLang.suggestions.slice(0, 4).map((suggestion, idx) => (
@@ -840,84 +883,13 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
                     key={idx}
                     type="button"
                     onClick={() => handleSelectQuickPrompt(suggestion)}
-                    className="text-left text-[11px] p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 text-slate-900 dark:text-slate-100 border border-amber-200 dark:border-slate-700 font-medium transition-all cursor-pointer hover:scale-[1.01] active:scale-98 flex items-center gap-1.5"
+                    className="text-left text-[11px] p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800/60 font-medium transition-all cursor-pointer hover:scale-[1.01] active:scale-98 flex items-center gap-1.5"
                   >
                     <Mic className="w-3 h-3 text-amber-600 shrink-0" />
                     <span className="truncate">"{suggestion}"</span>
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Step-by-Step Instructions Tabs */}
-            <div className="mt-4">
-              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('browser')}
-                  className={`text-xs font-bold pb-1 cursor-pointer transition-colors flex items-center gap-1.5 ${
-                    activeTab === 'browser'
-                      ? 'text-amber-600 border-b-2 border-amber-500'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>On Vercel / Chrome / Edge</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('windows')}
-                  className={`text-xs font-bold pb-1 cursor-pointer transition-colors flex items-center gap-1.5 ml-2 ${
-                    activeTab === 'windows'
-                      ? 'text-amber-600 border-b-2 border-amber-500'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Windows 10/11 Privacy Lock</span>
-                </button>
-              </div>
-
-              {activeTab === 'browser' ? (
-                <div className="space-y-2.5 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Why it blocks after deployment:</span>
-                    <p className="mt-1 text-slate-600 dark:text-slate-400">
-                      When deployed to Vercel (<code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded font-mono text-[10px] text-slate-900 dark:text-slate-100">{window.location.host}</code>), browsers treat it as a new domain. If permission is changed from Block to Allow, <strong>you must reload the tab</strong>.
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> Click the <strong>Tune / Lock icon</strong> on the far left of the address bar at the top of your screen.
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 2:</span> Verify <strong>Microphone</strong> is toggled to <strong>Allow</strong> (or click <em>Reset permissions</em>).
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Click <strong>Reload Page</strong> (or press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">F5</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Ctrl+R</kbd>) to activate!
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2.5 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Check Windows Privacy Lock:</span>
-                    <p className="mt-1 text-slate-600 dark:text-slate-400">
-                      Even if Chrome shows "Allowed", Windows OS may be blocking desktop applications from accessing your hardware microphone.
-                    </p>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 1:</span> Press <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Windows Key + I</kbd> to open Windows Settings.
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 2:</span> Navigate to <strong>Privacy & Security</strong> → <strong>Microphone</strong>.
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-white">Step 3:</span> Ensure both <strong>"Microphone access"</strong> and <strong>"Let desktop apps access your microphone"</strong> are toggled <strong>ON</strong>.
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Footer Done Button */}
