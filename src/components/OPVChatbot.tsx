@@ -11,7 +11,10 @@ import {
   MapPin,
   Building2,
   Home,
-  CheckCircle2
+  Sprout,
+  Store,
+
+
 } from 'lucide-react';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessage } from './ChatMessage';
@@ -232,7 +235,8 @@ export const OPVChatbot: React.FC = () => {
 
     setTimeout(() => {
       const aiResponse = processChatQuery(text, currentLanguage);
-      const matchedProperties = getPropertiesForQuery(text);
+      const matchedProperties =
+        aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(text);
 
       const assistantMsg: ChatMessageItem = {
         id: `assistant-${Date.now()}`,
@@ -242,7 +246,7 @@ export const OPVChatbot: React.FC = () => {
         language: currentLanguage,
         actions: aiResponse.actions,
         category: aiResponse.category,
-        properties: matchedProperties
+        properties: matchedProperties && matchedProperties.length > 0 ? matchedProperties : undefined
       };
 
       setSessions(prev =>
@@ -393,7 +397,20 @@ export const OPVChatbot: React.FC = () => {
       query: '360 elite services & properties',
       icon: Sparkles,
       subtitle: 'Legal, Loans & Vastu'
+    },
+    {
+      label: 'Farm Lands',
+      query: 'farm lands in hyderabad',
+      icon: Sprout,
+      subtitle: 'Agriculture & Farm Houses'
+    },
+    {
+      label: 'Commercial Plots',
+      query: 'commercial properties in hyd',
+      icon: Store,
+      subtitle: 'offices & Retail Shops'
     }
+
   ];
 
   return (

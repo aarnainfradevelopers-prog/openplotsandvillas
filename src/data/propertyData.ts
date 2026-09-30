@@ -1,4 +1,5 @@
 import { PropertyItem } from '../types/chat';
+import { normalizeQuery } from '../utils/intentClassifier';
 
 export const OPV_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80';
 
@@ -135,6 +136,140 @@ export const OPV_PROPERTIES: PropertyItem[] = [
     ],
     reraNumber: 'P02400004991',
     approval: 'Verified Clear Title'
+  },
+  {
+    id: 'prop-plot-shadnagar-150',
+    title: '150 Sq.Yd. Plot in Shadnagar Town',
+    location: 'Shadnagar, Hyderabad',
+    price: '₹ 22.5L',
+    priceNumeric: 2250000,
+    status: 'For Sale',
+    badge: 'Ready to move',
+    type: 'plot',
+    area: '150 Sq.Yd.',
+    config: 'Plot',
+    facing: 'East Facing',
+    possession: 'Immediate Registration',
+    amenities: ["Kids' Play Areas", "24 × 7 Security", "Avenue Plantation"],
+    moreAmenitiesCount: 2,
+    images: [
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+    ],
+    agent: {
+      name: 'MANCHALA DAIVAPRAKASH',
+      phone: '+91 9963513939',
+      role: 'Senior Property Advisor • OPV',
+      avatar: 'M'
+    },
+    overview: '150 Sq.Yd. · in Shadnagar. ₹22.5L. 100% HMDA & RERA Approved Layout with immediate registration on Bangalore Highway (NH-44).',
+    specifications: [
+      { label: 'Project', value: 'Golden Valley Shadnagar' },
+      { label: 'Plot Area', value: '150 Sq.Yd.' },
+      { label: 'Facing', value: 'East Facing' },
+      { label: 'Road Width', value: '40 Feet Blacktop Road' },
+      { label: 'Approval', value: 'HMDA & RERA Approved' },
+      { label: 'Possession', value: 'Immediate Registration' }
+    ],
+    about: 'Prime residential plot situated right in the high-growth Shadnagar corridor along the Bangalore Highway (NH-44). Features 40ft wide blacktop roads, underground electricity, drainage, and clear 30-year link search reports.',
+    nearby: [
+      '5 Mins to Shadnagar Town & Railway Station',
+      '15 Mins to Regional Ring Road (RRR) Junction',
+      '20 Mins to Rajiv Gandhi International Airport (RGIA)',
+      'Near Symbiosis International University'
+    ],
+    reraNumber: 'P02400005118',
+    approval: 'HMDA & RERA Approved'
+  },
+  {
+    id: 'prop-plot-golden-terra-200',
+    title: 'Golden Terra – Premium HMDA Plots in Shadnagar',
+    location: 'Shadnagar, Hyderabad',
+    price: '₹ 56L',
+    priceNumeric: 5600000,
+    status: 'For Sale',
+    badge: 'HMDA & RERA',
+    type: 'plot',
+    area: '200 Sq.Yd.',
+    config: 'Plot',
+    facing: 'East Facing',
+    possession: 'Immediate Registration',
+    amenities: ['Grand Entrance Arch', '40ft BT Roads', 'Underground Drainage', 'Avenue Plantation'],
+    moreAmenitiesCount: 4,
+    images: [
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+    ],
+    agent: {
+      name: 'MANCHALA DAIVAPRAKASH',
+      phone: '+91 9963513939',
+      role: 'Senior Property Advisor • OPV',
+      avatar: 'M'
+    },
+    overview: '200 Sq.Yd. · in Shadnagar. ₹56L. 100% HMDA & RERA Approved Layout with immediate registration on Bangalore Highway (NH-44).',
+    specifications: [
+      { label: 'Project', value: 'Golden Terra Shadnagar' },
+      { label: 'Plot Area', value: '200 Sq.Yd.' },
+      { label: 'Facing', value: 'East Facing' },
+      { label: 'Road Width', value: '40 Feet Blacktop Road' },
+      { label: 'Approval', value: 'HMDA & RERA Approved' },
+      { label: 'Possession', value: 'Immediate Registration' }
+    ],
+    about: 'Golden Terra is an HMDA & RERA approved mega-township layout situated right in the high-growth Shadnagar corridor along the Bangalore Highway (NH-44). Features 40ft wide blacktop roads, underground electricity, drainage, and clear 30-year link search reports.',
+    nearby: [
+      '5 Mins to Shadnagar Town & Railway Station',
+      '15 Mins to Regional Ring Road (RRR) Junction',
+      '20 Mins to Rajiv Gandhi International Airport (RGIA)',
+      'Near Symbiosis International University'
+    ],
+    reraNumber: 'P02400005118',
+    approval: 'HMDA & RERA Approved'
+  },
+  {
+    id: 'prop-plot-shadnagar-200',
+    title: '200 Sq.Yd. Plot in Shadnagar Highway Corridor',
+    location: 'Shadnagar, Hyderabad',
+    price: '₹ 28L',
+    priceNumeric: 2800000,
+    status: 'For Sale',
+    badge: 'Owner · no brokerage',
+    type: 'plot',
+    area: '200 Sq.Yd.',
+    config: 'Plot',
+    facing: 'North-East',
+    possession: 'Immediate Registration',
+    amenities: ['Wide BT Roads', '24 × 7 Security', 'Overhead Water Tank'],
+    moreAmenitiesCount: 3,
+    images: [
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+    ],
+    agent: {
+      name: 'K. RAMESH BABU',
+      phone: '+91 9963513939',
+      role: 'Direct Owner Representative • OPV',
+      avatar: 'R'
+    },
+    overview: '200 Sq.Yd. · in Shadnagar. ₹28L. Premium DTCP & RERA approved corner plot with clear title, ideal for immediate construction.',
+    specifications: [
+      { label: 'Project', value: 'Highway County Shadnagar' },
+      { label: 'Plot Area', value: '200 Sq.Yd.' },
+      { label: 'Facing', value: 'North-East' },
+      { label: 'Road Width', value: '33 Feet BT Road' },
+      { label: 'Approval', value: 'DTCP & RERA Approved' },
+      { label: 'Possession', value: 'Immediate Registration' }
+    ],
+    about: 'Highway County in Shadnagar offers rapid capital appreciation and complete legal title security. 100% Vaastu compliant with street lighting, compound wall, and underground water supply lines.',
+    nearby: [
+      '7 Mins to Shadnagar MMTS Station',
+      'Direct access to Bangalore NH-44 Highway',
+      'Near Microsoft & Amazon Data Centers'
+    ],
+    reraNumber: 'P02400005782',
+    approval: 'DTCP Approved'
   },
   {
     id: 'prop-apt-aparna-1326',
@@ -409,87 +544,329 @@ export const OPV_PROPERTIES: PropertyItem[] = [
   }
 ];
 
+let isLiveSupabaseLoaded = false;
 let activeProperties: PropertyItem[] = [...OPV_PROPERTIES];
 
 export function updateActiveProperties(properties: PropertyItem[]) {
-  if (properties && properties.length > 0) {
+  if (properties && Array.isArray(properties) && properties.length > 0) {
     activeProperties = [...properties];
+    isLiveSupabaseLoaded = true;
   }
+}
+
+export function isUsingLiveSupabase(): boolean {
+  return isLiveSupabaseLoaded;
 }
 
 export function getActiveProperties(): PropertyItem[] {
   return activeProperties;
 }
 
-export function getPropertiesForQuery(query: string): PropertyItem[] {
-  const q = query.toLowerCase().trim();
-  const source = activeProperties.length > 0 ? activeProperties : OPV_PROPERTIES;
+export function getFallbackProperties(): PropertyItem[] {
+  return OPV_PROPERTIES;
+}
 
-  // 1. Search by specific location keywords
-  const locationMatches = source.filter(p => {
-    const loc = p.location.toLowerCase();
-    const title = p.title.toLowerCase();
-    return (
-      (q.includes('shadnagar') && (loc.includes('shadnagar') || title.includes('shadnagar'))) ||
-      (q.includes('kokapet') && (loc.includes('kokapet') || title.includes('kokapet'))) ||
-      (q.includes('madhapur') && (loc.includes('madhapur') || title.includes('madhapur'))) ||
-      (q.includes('balanagar') && (loc.includes('balanagar') || title.includes('balanagar'))) ||
-      (q.includes('kothur') && (loc.includes('kothur') || title.includes('kothur'))) ||
-      (q.includes('mokila') && (loc.includes('mokila') || title.includes('mokila'))) ||
-      (q.includes('shamshabad') && (loc.includes('shamshabad') || title.includes('shamshabad'))) ||
-      (q.includes('sadashivpet') && (loc.includes('sadashivpet') || title.includes('sadashivpet'))) ||
-      (q.includes('kadthal') && (loc.includes('kadthal') || title.includes('kadthal'))) ||
-      (q.includes('lemoor') && (loc.includes('lemoor') || title.includes('lemoor'))) ||
-      (q.includes('tellapur') && (loc.includes('tellapur') || title.includes('tellapur'))) ||
-      (q.includes('kollur') && (loc.includes('kollur') || title.includes('kollur'))) ||
-      (q.includes('tenali') && (loc.includes('tenali') || title.includes('tenali')))
-    );
-  });
-  if (locationMatches.length > 0) {
-    return locationMatches.slice(0, 4);
+/**
+ * Parses budget constraints like 'under 30 lakhs', 'below 50L', 'under 1 cr', 'between 20 and 40 lakhs'
+ */
+export function parseBudgetLimits(query: string): { minPrice?: number; maxPrice?: number } | null {
+  const q = query.toLowerCase();
+
+  const parseUnit = (numStr: string, unitStr: string): number => {
+    const n = parseFloat(numStr);
+    const u = (unitStr || '').toLowerCase();
+    if (u.startsWith('cr')) return Math.round(n * 10000000);
+    return Math.round(n * 100000);
+  };
+
+  // 1. Range: "between 20 and 40 lakhs", "20 to 50 lakhs", "20 - 40L"
+  const rangeMatch = q.match(/between\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(?:lakhs?|lacs?|lac|lakh|cr|crores?|crore|l)?\s*(?:and|to|-)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakhs?|lacs?|lac|lakh|cr|crores?|crore|l\b)/i);
+  if (rangeMatch) {
+    const unit = rangeMatch[3];
+    return {
+      minPrice: parseUnit(rangeMatch[1], unit),
+      maxPrice: parseUnit(rangeMatch[2], unit)
+    };
   }
 
-  // 2. If query is specifically about apartments / flats / rent
-  if (q.includes('apartment') || q.includes('flat') || q.includes('bhk') || q.includes('rent')) {
-    const apts = source.filter(p => p.type === 'apartment' || (p.config && p.config.includes('BHK')));
-    if (apts.length > 0) return apts.slice(0, 3);
+  // 2. Under/Below/Within/Up to: "under 30 lakhs", "below 50L", "within 35 lakhs", "< 40 lakhs", "budget 30 lakhs"
+  const underMatch =
+    q.match(/(?:under|below|within|less than|up to|upto|budget(?:\s+of)?(?:\s+is)?|<|maximum|max)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakhs?|lacs?|lac|lakh|cr|crores?|crore|l\b)/i) ||
+    q.match(/(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakhs?|lacs?|lac|lakh|cr|crores?|crore|l\b)\s*(?:budget|or less|max|maximum|under|below)/i);
+
+  if (underMatch) {
+    return { maxPrice: parseUnit(underMatch[1], underMatch[2]) };
   }
 
-  // 3. If query is specifically about open plots / land
-  if (
+  // 3. Above/More than: "above 50 lakhs", "> 1 cr"
+  const aboveMatch = q.match(/(?:above|more than|greater than|>|minimum|min)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakhs?|lacs?|lac|lakh|cr|crores?|crore|l\b)/i);
+  if (aboveMatch) {
+    return { minPrice: parseUnit(aboveMatch[1], aboveMatch[2]) };
+  }
+
+  return null;
+}
+
+/**
+ * Determines whether the user is actively searching for real estate property listings/projects,
+ * rather than asking general educational or OPV business questions.
+ */
+export function isPropertySearchQuery(query: string): boolean {
+  const q = normalizeQuery(query).toLowerCase().trim();
+
+  // Check for specific project mentions FIRST so project inquiries like "Tell me about Golden Terra"
+  // are recognized rather than blocked by pure informational checks.
+  const hasProjectMention =
+    q.includes('golden terra') ||
+    q.includes('sanjeevani') ||
+    q.includes('nri green county') ||
+    q.includes('katyayani') ||
+    q.includes('vasavi') ||
+    q.includes('archana county') ||
+    q.includes('tellapur neopolis');
+
+  if (hasProjectMention) return true;
+
+  // Single-word regulatory queries
+  if (q === 'hmda' || q === 'dtcp' || q === 'rera' || q === 'ec' || q === 'mutation' || q === 'loan') {
+    return false;
+  }
+
+  // Pure informational, legal, process, regulatory or service questions must NEVER trigger property cards
+  const isPureInformational =
+    q.includes('what is') ||
+    q.includes('what are') ||
+    q.includes('means') ||
+    q.includes('who is') ||
+    q.includes('who are') ||
+    q.includes('service') ||
+    q.includes('services') ||
+    q.includes('mission') ||
+    q.includes('vision') ||
+    q.includes('about opv') ||
+    q.includes('what hmda') ||
+    q.includes('what dtcp') ||
+    q.includes('what rera') ||
+    q.includes('what ec') ||
+    q.includes('what mutation') ||
+    q.includes('process') ||
+    q.includes('guidance') ||
+    q.includes('guide') ||
+    q.includes('checklist') ||
+    q.includes('how to buy') ||
+    q.includes('how to sell') ||
+    q.includes('how to rent') ||
+    q.includes('home loan') ||
+    q.includes('vastu') ||
+    q.includes('bhoomi pooja') ||
+    q.includes('gruhapravesam') ||
+    q.includes('contact') ||
+    q.includes('phone') ||
+    q.includes('address') ||
+    q.includes('headquarters') ||
+    q.includes('office') ||
+    q.includes('registration') ||
+    q.includes('stamp duty') ||
+    q.includes('verification') ||
+    q.includes('verify') ||
+    q.includes('encumbrance') ||
+    q.includes('mutation');
+
+  if (isPureInformational) {
+    // Exception: If user specifically combined approval with specific location and search action
+    const hasSpecificLocation = [
+      'shadnagar', 'mokila', 'kokapet', 'tellapur', 'kothur',
+      'lemoor', 'sadashivpet', 'patancheru', 'kadthal', 'gachibowli', 'shamshabad'
+    ].some(loc => q.includes(loc));
+    const hasSpecificBudget = /\b(under|budget|lakh|cr)\b/i.test(q) || /\b\d+(\.\d+)?\s*(l|cr|lakh|crore)\b/i.test(q);
+    const hasSearchAction = /\b(show|find|list|buy plot|buy villa|buy apartment)\b/i.test(q);
+
+    if (hasSpecificLocation && (hasSpecificBudget || hasSearchAction || q.includes('plot') || q.includes('villa'))) {
+      // allow through to search
+    } else {
+      return false;
+    }
+  }
+
+  // Check for property keywords
+  const hasPropertyType =
     q.includes('plot') ||
     q.includes('land') ||
-    q.includes('openplot') ||
-    q.includes('sq.yd') ||
-    q.includes('guntas')
-  ) {
-    const plots = source.filter(p => p.type === 'plot');
-    if (plots.length > 0) return plots.slice(0, 3);
+    q.includes('villa') ||
+    q.includes('apartment') ||
+    q.includes('flat') ||
+    q.includes('bhk') ||
+    q.includes('house') ||
+    q.includes('commercial') ||
+    q.includes('farmland');
+
+  const hasSearchIntent =
+    q.includes('show') ||
+    q.includes('find') ||
+    q.includes('search') ||
+    q.includes('list') ||
+    q.includes('buy') ||
+    q.includes('available') ||
+    q.includes('budget') ||
+    q.includes('under') ||
+    q.includes('price');
+
+  const hasLocation = [
+    'shadnagar', 'kokapet', 'madhapur', 'kothur', 'mokila',
+    'shamshabad', 'sadashivpet', 'kadthal', 'lemoor', 'tellapur',
+    'kollur', 'gachibowli', 'kondapur', 'patancheru', 'medchal',
+    'adibatla', 'maheshwaram', 'chevella', 'shankarpally', 'kompally', 'hyderabad'
+  ].some(loc => q.includes(loc));
+
+  return hasPropertyType || (hasLocation && hasSearchIntent) || (hasLocation && hasPropertyType) || (hasLocation && q.split(' ').length <= 3);
+}
+
+/**
+ * Core query filtering function applied against either live Supabase data or fallback inventory.
+ * Strictly checks project name, numeric budget, property type, and locality.
+ */
+export function filterPropertiesByQuery(source: PropertyItem[], query: string): PropertyItem[] {
+  const q = normalizeQuery(query).toLowerCase().trim();
+
+  // 1. Direct Project Name Match
+  const projectMatches = source.filter(p => {
+    const t = p.title.toLowerCase();
+    if (q.includes('golden terra') && t.includes('golden terra')) return true;
+    if (q.includes('sanjeevani') && t.includes('sanjeevani')) return true;
+    if (q.includes('nri green county') && t.includes('nri green county')) return true;
+    if (q.includes('katyayani') && t.includes('katyayani')) return true;
+    if (q.includes('vasavi') && t.includes('vasavi')) return true;
+    if (q.includes('tellapur neopolis') && (t.includes('tellapur') || t.includes('neopolis'))) return true;
+    return false;
+  });
+
+  if (projectMatches.length > 0) {
+    return projectMatches.slice(0, 3);
   }
 
-  // 4. If query is specifically about villas / luxury gated
-  if (q.includes('villa') || q.includes('gated') || q.includes('triplex') || q.includes('duplex')) {
-    const villas = source.filter(p => p.type === 'villa');
-    if (villas.length > 0) return villas.slice(0, 3);
+  // 2. Budget limits
+  const budget = parseBudgetLimits(q);
+
+  // 3. Property Type
+  let targetType: string | null = null;
+  if (q.includes('plot') || q.includes('land') || q.includes('openplot') || q.includes('sq.yd') || q.includes('guntas')) {
+    targetType = 'plot';
+  } else if (q.includes('villa') || q.includes('triplex') || q.includes('duplex') || q.includes('house')) {
+    targetType = 'villa';
+  } else if (q.includes('apartment') || q.includes('flat') || q.includes('bhk') || q.includes('highrise') || q.includes('rent')) {
+    targetType = 'apartment';
+  } else if (q.includes('commercial') || q.includes('shop') || q.includes('office') || q.includes('retail')) {
+    targetType = 'commercial';
+  } else if (q.includes('farm') || q.includes('agriculture')) {
+    targetType = 'farmland';
   }
 
-  // 5. If query is about commercial or farmland / farmhouse
-  if (q.includes('commercial') || q.includes('shop') || q.includes('office')) {
-    const comms = source.filter(p => p.type === 'commercial');
-    if (comms.length > 0) return comms.slice(0, 3);
-  }
-  if (q.includes('farm') || q.includes('agriculture')) {
-    const farms = source.filter(p => p.type === 'farmland' || p.title.toLowerCase().includes('farm'));
-    if (farms.length > 0) return farms.slice(0, 3);
+  // 4. Locations
+  const locations = [
+    'shadnagar', 'kokapet', 'madhapur', 'balanagar', 'kothur', 'mokila',
+    'shamshabad', 'sadashivpet', 'kadthal', 'lemoor', 'tellapur', 'kollur',
+    'gachibowli', 'kondapur', 'patancheru', 'medchal', 'adibatla', 'maheshwaram',
+    'tenali', 'chevella', 'shankarpally', 'kompally', 'nizampet'
+  ];
+  const matchedLocations = locations.filter(loc => q.includes(loc));
+
+  // 5. Filter candidates strictly
+  const candidates = source.filter(p => {
+    // Check type
+    if (targetType) {
+      if (targetType === 'farmland') {
+        const isFarm = p.type === 'farmland' || p.title.toLowerCase().includes('farm');
+        if (!isFarm) return false;
+      } else if (p.type !== targetType && !(targetType === 'apartment' && p.config?.includes('BHK'))) {
+        return false;
+      }
+    }
+
+    // Check location
+    if (matchedLocations.length > 0) {
+      const pLoc = p.location.toLowerCase();
+      const pTitle = p.title.toLowerCase();
+      const match = matchedLocations.some(l => pLoc.includes(l) || pTitle.includes(l));
+      if (!match) return false;
+    }
+
+    // Check numeric budget strictly (never return properties that violate user budget)
+    if (budget) {
+      const pPrice = p.priceNumeric || 0;
+      if (budget.maxPrice && pPrice > budget.maxPrice) return false;
+      if (budget.minPrice && pPrice < budget.minPrice) return false;
+    }
+
+    return true;
+  });
+
+  if (candidates.length > 0) {
+    return candidates.slice(0, 4);
   }
 
-  // 6. If query is 360 elite services or spotlight properties
-  if (q.includes('360') || q.includes('service') || q.includes('elite')) {
-    return source.slice(0, 3);
+  // If budget was specified but NO properties meet the budget, return empty array
+  // (The chatbot will state no listings match and offer expert connect, without faking prices)
+  if (budget) {
+    return [];
   }
 
-  // Default: Return the top featured properties
-  return source.slice(0, 3);
+  // If only location matched
+  if (matchedLocations.length > 0) {
+    const locOnly = source.filter(p => {
+      const pLoc = p.location.toLowerCase();
+      const pTitle = p.title.toLowerCase();
+      return matchedLocations.some(l => pLoc.includes(l) || pTitle.includes(l));
+    });
+    if (locOnly.length > 0) return locOnly.slice(0, 4);
+  }
+
+  // If only type matched
+  if (targetType) {
+    const typeOnly = source.filter(p => p.type === targetType);
+    if (typeOnly.length > 0) return typeOnly.slice(0, 4);
+  }
+
+  return [];
+}
+
+/**
+ * Searches properties with strict priority:
+ * 1. Supabase LIVE DATA (activeProperties)
+ * 2. propertyData.ts FALLBACK (OPV_PROPERTIES)
+ */
+export function getPropertiesForQuery(query: string): PropertyItem[] {
+  // If not a property search, return empty array so no random cards are attached
+  if (!isPropertySearchQuery(query)) {
+    return [];
+  }
+
+  // Priority 1: Supabase live data if available
+  if (isLiveSupabaseLoaded && activeProperties.length > 0) {
+    const liveMatches = filterPropertiesByQuery(activeProperties, query);
+    if (liveMatches.length > 0) {
+      return liveMatches;
+    }
+  }
+
+  // Priority 2: Fallback propertyData.ts
+  return filterPropertiesByQuery(OPV_PROPERTIES, query);
+}
+
+/**
+ * Dedicated Live Supabase Property Search
+ */
+export function searchLiveProperties(query: string): PropertyItem[] {
+  if (isLiveSupabaseLoaded && activeProperties.length > 0) {
+    return filterPropertiesByQuery(activeProperties, query);
+  }
+  return [];
+}
+
+/**
+ * Dedicated Fallback Property Search
+ */
+export function searchFallbackProperties(query: string): PropertyItem[] {
+  return filterPropertiesByQuery(OPV_PROPERTIES, query);
 }
 
 export function findPropertyById(id: string): PropertyItem | undefined {
@@ -498,10 +875,18 @@ export function findPropertyById(id: string): PropertyItem | undefined {
 }
 
 export function findPropertyByTitle(title: string): PropertyItem | undefined {
-  const cleanTitle = title.toLowerCase();
+  const cleanTitle = title.toLowerCase().trim();
   const source = activeProperties.length > 0 ? activeProperties : OPV_PROPERTIES;
-  return (
-    source.find(p => p.title.toLowerCase().includes(cleanTitle) || cleanTitle.includes(p.title.toLowerCase().slice(0, 20))) ||
-    OPV_PROPERTIES.find(p => p.title.toLowerCase().includes(cleanTitle) || cleanTitle.includes(p.title.toLowerCase().slice(0, 20)))
-  );
+  const isMatch = (p: PropertyItem) => {
+    if (p.title.toLowerCase().includes(cleanTitle)) return true;
+    if (cleanTitle.length > 5 && cleanTitle.includes(p.title.toLowerCase().slice(0, 20))) return true;
+    const projectSpec = p.specifications?.find(s => s.label.toLowerCase() === 'project');
+    if (projectSpec && projectSpec.value.toLowerCase().includes(cleanTitle)) return true;
+    if (p.about && p.about.toLowerCase().includes(cleanTitle)) return true;
+    return false;
+  };
+
+  return source.find(isMatch) || OPV_PROPERTIES.find(isMatch);
 }
+
+

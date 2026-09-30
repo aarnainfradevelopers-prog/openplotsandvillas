@@ -40,10 +40,41 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const isAssistant = message.role === 'assistant';
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    if (!message.content) return;
+    let success = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(message.content);
+        success = true;
+      }
+    } catch (err) {
+      console.warn('navigator.clipboard failed, attempting fallback', err);
+    }
+
+    if (!success) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = message.content;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (err) {
+        console.error('Fallback clipboard copy failed:', err);
+      }
+    }
+
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleSpeak = () => {
@@ -174,7 +205,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* User Message Bubble matching card specs: White bg, thin dark-gray border, rounded 10px, 40px height, ~140px width */}
           <div
-            className="inline-flex items-center justify-center min-h-[40px] min-w-[140px] px-4 py-2 rounded-[10px] bg-white text-slate-900 border border-slate-300 shadow-2xs text-xs sm:text-[13px] font-semibold break-words text-center"
+            className="inline-flex items-center justify-center min-h-[40px] min-w-[140px] px-4 py-2 rounded-[10px] bg-white text-slate-900 border border-slate-300 shadow-2xs text-xs sm:text-[13px] font-semibold break-words text-center select-text cursor-text"
             style={{
               backgroundColor: '#ffffff',
               borderColor: '#cbd5e1',
@@ -210,9 +241,50 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Speech Bubble & Content Area */}
         <div className="flex-1 min-w-0">
           {message.content && (
-            <div className="inline-block bg-white dark:bg-[#1a2234] border border-slate-200/90 dark:border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3 text-slate-800 dark:text-slate-100 text-sm sm:text-[15px] shadow-xs leading-relaxed max-w-2xl">
-              <div className="text-slate-800 dark:text-slate-200 text-sm">
+            <div className="inline-block bg-white dark:bg-[#1a2234] border border-slate-200/90 dark:border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3 text-slate-800 dark:text-slate-100 text-sm sm:text-[15px] shadow-xs leading-relaxed max-w-2xl select-text cursor-text">
+              <div className="text-slate-800 dark:text-slate-200 text-sm select-text">
                 {renderFormattedContent(message.content)}
+              </div>
+
+              {/* Message Utilities: 1-Click Copy and Listen */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  title="Copy response"
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-600 font-semibold">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSpeak}
+                  title={isSpeaking ? "Stop listening" : "Listen to answer"}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  {isSpeaking ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                      <span className="text-emerald-600 font-semibold">Stop</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Listen</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}
