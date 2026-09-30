@@ -116,13 +116,32 @@ export function processChatQuery(
   const classified = classifyIntent(rawQuery);
   const { intent, matchedProject, normalizedQuery } = classified;
 
+  // Detect if user asks for detailed explanation ("explain in detail", "tell me everything", etc.)
+  const isDetailRequested =
+    /\b(detail|detailed|in detail|everything|complete|deep|explain in detail|tell me everything|step by step|full information|all details|how does it work)\b/i.test(
+      normalizedQuery
+    );
+
   // =========================================================================
   // PILLAR D: GREETING, COMPETITOR, OUT-OF-SCOPE PROTECTION
   // =========================================================================
   if (intent === 'GREETING') {
+    const isThanks = /\b(thank you|thanks|dhanyavadalu|dhanyavadamulu|bye|goodbye)\b/i.test(normalizedQuery);
+    if (isThanks) {
+      return {
+        content: `You're welcome! Feel free to ask whenever you have questions about properties, approvals, or legal verification in Hyderabad. Have a great day!`,
+        actions: getStandardActions('Hello OPV, I have a property query'),
+        category: 'greeting',
+        properties: []
+      };
+    }
+
     const langObj = OPV_LANGUAGES.find(l => l.code === language) || OPV_LANGUAGES[0];
     return {
-      content: `### ${langObj.welcomeGreeting}\n${langObj.welcomeSubtitle}\n\nHere are some popular topics I can assist you with:\n1. 🏡 **Open Plots & Land:** HMDA & DTCP layouts in Shadnagar, Patancheru, Lemoor, Kothur\n2. 🏰 **Luxury Villas & Homes:** Gated communities in Kokapet, Mokila, Tellapur\n3. 🌟 **360° Elite Services:** From Bhoomi Pooja to Gruhapravesam end-to-end\n4. 🏦 **Home Loans:** Fast sanctions at lowest interest rates (SBI, HDFC, ICICI)\n5. ⚖️ **Legal Verification & EC:** 30-year link search, Nil Encumbrance Certificate, Mutation\n6. 🌐 **NRI Investment Desk:** Remote video tours & embassy-attested POA process\n\nHow can I help you today?`,
+      content: `### ${langObj.welcomeGreeting}
+${langObj.welcomeSubtitle}
+
+How can I assist you with properties, approvals, or real estate services today?`,
       actions: getStandardActions('Hello OPV, I would like to explore properties in Hyderabad'),
       category: 'greeting',
       properties: []
@@ -270,19 +289,26 @@ ${approvedProj.description}
 
   // 1. WHAT SERVICES DOES OPV PROVIDE? / 360° ELITE SERVICES
   if (intent === 'OPV_SERVICES') {
-    const list = profile.eliteServices360
-      .map((s, idx) => `${idx + 1}. **${s.title}**\n   • ${s.shortDesc}\n   • *Key Highlights:* ${s.benefits.join(', ')}`)
-      .join('\n\n');
-
     return {
-      content: `Sure! OPV provides a wide range of real-estate services, including property buying and selling support, home loans, legal verification, property registration, land surveys, Vastu, Bhoomi Pooja, Gruhapravesam, interior and construction services, property management, and NRI property assistance.
+      content: `Sure! OPV provides comprehensive real-estate services across Hyderabad and Telangana:
 
-### 🌟 OPV 360° Elite Services
-*From Land Acquisition, Bhoomi Pooja to Gruhapravesam — Complete End-to-End Solutions*
+### 🌟 OPV Real Estate Services
 
-${list}
+- 🏡 **Property Buying:** Guided property discovery, site visits, and acquisition support for verified open plots, luxury gated villas, and apartments.
+- 📢 **Property Selling:** Free property listing and AI-driven buyer matchmaking for owners and builders.
+- 🏠 **Property Rentals:** Verified tenant matchmaking and digital rental agreement drafting.
+- 🏦 **Home Loans:** Fast loan sanctions at competitive interest rates with leading banks (SBI, HDFC, ICICI, Axis Bank, LIC HFL).
+- ⚖️ **Legal Verification:** Comprehensive 30-year link document search, title scrutiny, and due diligence by senior property advocates.
+- 🖋️ **Property Registration:** SRO slot booking, challan assistance, and deed registration execution support.
+- 🛰️ **Land Survey:** Total Station and GPS boundary surveys to verify plot dimensions and prevent overlap.
+- 🧭 **Vastu Consultation:** Directional and floor plan audits for plots and residential construction.
+- 🪔 **Bhoomi Pooja:** Traditional ground-breaking ceremonies with certified Vedic purohits and complete samagri.
+- 🏠 **Gruhapravesam:** Hassle-free housewarming ceremony coordination including Go-Puja and Navagraha homam.
+- 🏗️ **Interior & Construction:** Turnkey architectural planning, structural design, and interior solutions.
+- 🛡️ **Property Management:** Perimeter fencing, regular inspections, and asset guard services for vacant plots.
+- 🌐 **NRI Property Assistance:** Dedicated remote advisory with virtual video tours, consular POA assistance, and lease management.
 
-> 💡 **Core Promise:** From your very first plot inspection through structural design, Vedic ground-breaking (Bhoomi Pooja), bank financing, and Gruhapravesam housewarming, OPV manages every milestone with trusted expertise.`,
+Feel free to ask for details on any specific service!`,
       actions: [
         { label: '📋 Book 360° Consultation', url: `https://wa.me/${profile.contact.whatsapp.replace('+', '')}?text=${encodeURIComponent('I want to know more about OPV 360 Elite Services')}`, action: 'whatsapp' },
         { label: '📞 Call OPV Desk', url: `tel:${profile.contact.phonePrimary.replace(/\s+/g, '')}`, action: 'call' }
@@ -294,9 +320,22 @@ ${list}
 
   // 2. ABOUT OPV / MISSION & VISION / WHAT IS OPV
   if (intent === 'OPV_COMPANY_INFORMATION') {
+    if (!isDetailRequested && !normalizedQuery.includes('mission') && !normalizedQuery.includes('vision') && !normalizedQuery.includes('why') && !normalizedQuery.includes('trust')) {
+      return {
+        content: `**Open Plots & Villas (OPV)** is an AI-powered real estate platform in Hyderabad and Telangana.
+
+We connect property buyers and investors with verified open plots, luxury gated villas, apartments, and farm lands with complete document verification, home loan assistance, and end-to-end property services.
+
+You can ask me to search available properties, explain regulatory approvals (HMDA, DTCP, RERA), or assist with 360° property services.`,
+        actions: getStandardActions('Hello OPV, I want to learn more about OPV platform'),
+        category: 'about',
+        properties: []
+      };
+    }
+
     return {
       content: `### 🏢 About Open Plots & Villas (OPV)
-${profile.about.overview}
+${profile.about.overview.replace(/100%\s*/gi, 'thoroughly ')}
 
 🎯 **Mission:**  
 ${profile.about.mission}
@@ -305,7 +344,7 @@ ${profile.about.mission}
 ${profile.about.vision}
 
 **Why Customers Trust OPV:**  
-${profile.about.whyOPV.map(point => `• ${point}`).join('\n')}`,
+${profile.about.whyOPV.map(point => `• ${point.replace(/100%\s*/gi, 'Thoroughly ')}`).join('\n')}`,
       actions: getStandardActions('Hello OPV, I want to learn more about OPV platform'),
       category: 'about',
       properties: []
@@ -320,11 +359,11 @@ ${profile.about.whyOPV.map(point => `• ${point}`).join('\n')}`,
 
     return {
       content: `### 🏡 Property Types Available on OPV
-Open Plots & Villas offers 100% verified properties across Hyderabad and Telangana:
+Open Plots & Villas offers verified properties across Hyderabad and Telangana:
 
 ${typesDesc}
 
-All properties listed on OPV feature 30-year link document verification and complete legal title clearance.`,
+Properties listed on OPV undergo link document review and statutory approval checks.`,
       actions: getStandardActions('Hello OPV, I would like to inquire about property options'),
       category: 'general',
       properties: []
@@ -348,20 +387,21 @@ Both **HMDA** and **DTCP** are statutory layout approval authorities in Telangan
 - **Coverage Areas:** High-density urban corridors (e.g. Kokapet, Tellapur, Mokila, Shamshabad, Medchal, Kothur).
 - **Road & Infrastructure Standards:** Requires minimum 30ft, 40ft, or 60ft wide blacktop (BT) roads, underground drainage, and piped drinking water.
 - **Open Space Reservation:** Mandates that developers reserve and hand over 7.5% to 10% of the layout area for public parks, open spaces, and civic amenities.
-- **Price & Appreciation:** Higher capital investment with rapid appreciation and established urban infrastructure.
+- **Price & Appreciation:** Higher capital investment with established urban infrastructure and location-driven appreciation potential.
 
 ### 📐 DTCP (Directorate of Town and Country Planning)
 - **Jurisdiction:** Sanctions layouts in municipalities, nagar panchayats, and rural corridors **outside the HMDA boundary**.
 - **Coverage Areas:** Expanding district growth corridors along major highways (e.g. outer Shadnagar, Yadagirigutta, Sadashivpet).
 - **Road & Infrastructure Standards:** Enforces standard 33ft or 40ft wide internal BT/CC roads and clearly demarcated plot boundaries.
 - **Open Space Reservation:** Compulsory statutory reservations for public parks, open spaces, and utilities per town planning norms.
-- **Price & Appreciation:** Budget-friendly entry prices with strong long-term appreciation as highway infrastructure expands.
+- **Price & Appreciation:** Budget-friendly entry prices with potential long-term value growth as regional infrastructure expands.
 
 ### Summary & Buying Advice
-- 🛡️ **Legal Safety:** Both HMDA and DTCP approved layouts are **100% legally valid** and eligible for bank loans when fully sanctioned.
+- 🛡️ **Regulatory Validity:** Fully sanctioned HMDA and DTCP approved layouts comply with government planning norms and provide greater regulatory assurance.
 - 📝 **Registration Security:** In Telangana, unapproved or non-HMDA/non-DTCP plots cannot be registered at Sub-Registrar Offices.
 
-**Example / Verification Tip:** When purchasing within Hyderabad metropolitan limits, check the **HMDA Layout Permit (LP) Number**. For highway corridors outside HMDA limits, verify the **DTCP Technical Layout Approval (TLP) Number** directly with official records.`,
+### Example / Verification Tip:
+When purchasing within Hyderabad metropolitan limits, check the **HMDA Layout Permit (LP) Number**. For highway corridors outside HMDA limits, verify the **DTCP Technical Layout Approval (TLP) Number** directly with official records.`,
         actions: getStandardActions('Hello OPV, I have a question about HMDA vs DTCP approved plots'),
         category: 'regulatory',
         properties: []
@@ -385,12 +425,16 @@ In simple words, HMDA is the apex statutory urban planning agency that plans, co
 
 ### Why is HMDA approval important?
 
-- 🛡️ **100% Legal Title & Demolition Safety:** HMDA-approved plots comply with statutory zoning and are completely protected from municipal demolitions and unauthorized layout penalties.
-- 🏦 **Guaranteed Bank Financing:** Leading public and private banks readily sanction plot purchase and construction loans for HMDA layouts.
+- 🛡️ **Regulatory Assurance & Zoning Compliance:** HMDA layouts provide greater regulatory assurance when properly approved and verified, complying with statutory master plan zoning.
+- 🏦 **Bank Loan Approval Eligibility:** Leading public and private banks sanction plot purchase and construction loans for approved HMDA layouts.
 - 📝 **Mandatory for Registration:** In Telangana, unauthorized or non-HMDA plots in metropolitan zones cannot be registered at Sub-Registrar Offices (SRO).
-- 📈 **High Capital Appreciation:** HMDA layouts are planned along designated infrastructure corridors, ensuring rapid development and strong resale value.
+- 📈 **Organized Development:** Planned along designated infrastructure corridors, supporting long-term utility and organized growth.
 
-**Example / Verification Tip:** When evaluating a layout advertised as **"HMDA Approved"**, always check the official **HMDA Layout Permit (LP) Number** on the HMDA portal (**hmda.gov.in**) and confirm that your specific plot number is released from mortgage before making a financial commitment.`,
+### Telangana-Specific Information:
+HMDA functions under the Municipal Administration and Urban Development (MA&UD) Department of Telangana, governing planned urban growth across Hyderabad and parts of 7 surrounding districts.
+
+### Example / Verification Tip:
+When evaluating a layout advertised as **"HMDA Approved"**, always check the official **HMDA Layout Permit (LP) Number** on the HMDA portal (**hmda.gov.in**) and confirm that your specific plot number is released from mortgage before making a financial commitment.`,
       actions: getStandardActions('Hello OPV, I have a question about HMDA approved plots'),
       category: 'regulatory',
       properties: []
@@ -415,12 +459,16 @@ In simple words, DTCP is the statutory government authority responsible for regu
 
 ### Why is DTCP approval important?
 
-- 🛡️ **Safe & Legal Ownership:** Protects buyers from illegal agricultural conversions and unapproved panchayat layouts.
+- 🛡️ **Regulatory Protection:** Helps protect buyers from unauthorized agricultural subdivisions and unapproved panchayat layouts.
 - 🏦 **Bank Loan Eligibility:** DTCP-approved layouts are recognized and approved for property and composite loans by major banks.
 - 📝 **Hassle-Free Registration:** Ensures the plot can be legally registered at the Sub-Registrar Office without government restrictions.
-- 💰 **Affordable Investment with High Growth:** DTCP layouts (e.g. in outer Shadnagar, Kothur, Yadagirigutta, Sadashivpet) offer accessible entry prices and strong long-term appreciation as highway corridors expand.
+- 💰 **Accessible Entry & Planned Layouts:** DTCP layouts offer accessible entry prices in developing corridors, though actual property appreciation depends on location, connectivity, and market conditions.
 
-**Example / Verification Tip:** Always verify the developer's **DTCP Technical Layout Approval (TLP) number** and layout sanction copy from the local municipal or gram panchayat authority to ensure the final layout has received all regulatory clearances.`,
+### Telangana-Specific Information:
+In Telangana, DTCP approvals apply to developing municipalities, nagar panchayats, and rural corridors outside the HMDA limits and Outer Ring Road (ORR), working in coordination with local civic bodies.
+
+### Example / Verification Tip:
+Always verify the developer's **DTCP Technical Layout Approval (TLP) number** and layout sanction copy from the local municipal or gram panchayat authority to ensure the final layout has received all regulatory clearances.`,
       actions: getStandardActions('Hello OPV, I have a question about DTCP approved layouts'),
       category: 'regulatory',
       properties: []
@@ -436,16 +484,23 @@ In simple words, RERA is an Indian law designed to bring **transparency and acco
 
 ### What does RERA do?
 
-- 🏗️ Requires eligible real estate projects (exceeding 500 sq. meters or more than 8 residential/commercial units) to be registered with the relevant state RERA authority.
-- 📋 Developers must disclose important project information, approvals, plans, timelines, and other required details.
-- 💰 Provides rules regarding the use of money collected from buyers for registered projects, mandating 70% in a dedicated escrow account.
-- 📅 Provides a framework for project timelines, delays, and buyer complaints.
-- 🛡️ Holds builders legally liable for structural defects for 5 years after handing over possession.
-- ⚖️ Provides mechanisms for buyers and developers to raise disputes with the appropriate RERA authority.
+- 🏗️ Requires eligible real estate projects (exceeding 500 sq. meters or more than 8 units) to be registered with the state RERA authority before marketing or selling.
+- 📋 Mandates comprehensive disclosures of project layouts, sanction plans, timelines, and promoter track record.
+- 💰 Directs developers to deposit 70% of buyer payments into a dedicated escrow bank account exclusively for construction and land costs.
+- 📅 Enforces timely project delivery with standardized sale agreements and penalty interest for handover delays.
+- 🛡️ Holds builders legally accountable for structural defect rectifications for 5 years post-possession.
 
-For Telangana projects, the relevant authority is **TG RERA (Telangana Real Estate Regulatory Authority)**.
+### Why is RERA important?
 
-**Example:** If a property project is advertised as **"RERA Registered"**, users should verify the actual RERA registration number and project status through the official state RERA authority (**rera.telangana.gov.in**) rather than relying only on an advertisement.`,
+- 🛡️ **Buyer Safeguards:** Significantly reduces the risk of project abandonment, fund diversion, and unauthorized plan alterations.
+- ⚖️ **Speedy Dispute Resolution:** Offers a dedicated regulatory tribunal for adjudicating homebuyer grievances without protracted civil litigation.
+- 📜 **Clarity on Carpet Area:** Establishes standardized carpet-area pricing rather than ambiguous super-built-up calculations.
+
+### Telangana-Specific Information:
+In Telangana, the governing body is **TG RERA (Telangana Real Estate Regulatory Authority)**. Promoters are prohibited by law from advertising, marketing, or collecting booking advances for non-exempt projects without a valid TSRERA registration number.
+
+### Example / Verification Tip:
+Before committing funds to any ongoing residential apartment or plotted layout project, verify its registration status directly on the official TSRERA portal (**rera.telangana.gov.in**) using the project name or registration number.`,
       actions: getStandardActions('Hello OPV, I have an inquiry regarding TSRERA verified projects'),
       category: 'regulatory',
       properties: []
@@ -474,11 +529,15 @@ In simple words, an EC is an official government document issued by the **Sub-Re
 
 ### Why is an EC important?
 
-- 🛡️ **Guarantees Clear Title:** Confirms the seller has an unencumbered legal right to sell the property without hidden bank claims.
+- 🛡️ **Verifies Title Status:** Confirms whether the property has registered encumbrances, bank mortgages, or court attachments during the searched period.
 - 🏦 **Mandatory for Bank Loans:** Banks will not sanction a home loan or plot loan without reviewing a minimum 13-to-30-year EC.
 - 📝 **Essential for Registration:** The Sub-Registrar requires the latest EC to verify clear ownership before registering the sale deed.
 
-**Practical Verification Tip:** In Telangana, always procure a **30-year Nil Encumbrance Certificate** through the **Telangana Registration & Stamps Department (registration.telangana.gov.in)** or the Dharani portal to verify historical title clearance before making any financial commitment.`,
+### Telangana-Specific Information:
+In Telangana, ECs can be searched and downloaded online through the **Telangana Registration & Stamps Department (registration.telangana.gov.in)** or verified via the **Dharani portal** for agricultural land parcels.
+
+### Example / Verification Tip:
+When verifying property in Telangana, always obtain a **30-year Nil Encumbrance Certificate (Form 16)** to inspect the complete chain of ownership and confirm there are no outstanding registered liabilities.`,
       actions: getStandardActions('Hello OPV, I need help checking an Encumbrance Certificate (EC)'),
       category: 'legal',
       properties: []
@@ -511,9 +570,11 @@ In simple words, while property registration legally transfers the title from se
 - 📑 **Official Proof of Possession:** Mutation records provide crucial civic evidence of ownership and possession during legal or utility verifications.
 - 💰 **Essential for Future Resale:** Prospective buyers and banks require the latest mutation proceedings and tax receipts to confirm smooth title continuity.
 
-**Telangana-Specific Process:** In Telangana, agricultural and rural land mutations are processed through the **Dharani Portal**, while urban residential properties in Hyderabad are updated through **GHMC (Greater Hyderabad Municipal Corporation)** or **CDMA (Commissioner and Director of Municipal Administration)**.
+### Telangana-Specific Information:
+In Telangana, agricultural and rural land mutations are processed through the **Dharani Portal**, while urban residential properties in Hyderabad are updated through **GHMC (Greater Hyderabad Municipal Corporation)** or **CDMA (Commissioner and Director of Municipal Administration)**.
 
-**Practical Verification Tip:** After registering your property deed, ensure mutation is initiated promptly, and verify your updated Property Tax Identification Number (PTIN) or Pattadar Passbook online.`,
+### Example / Verification Tip:
+After completing your sale deed registration at the Sub-Registrar Office, verify that mutation is initiated promptly. Confirm your updated **Property Tax Identification Number (PTIN)** or Pattadar Passbook online to ensure title records match tax records.`,
       actions: getStandardActions('Hello OPV, I need guidance regarding property mutation'),
       category: 'legal',
       properties: []
@@ -522,6 +583,35 @@ In simple words, while property registration legally transfers the title from se
 
   // 9. PROPERTY REGISTRATION GUIDANCE
   if (intent === 'PROPERTY_REGISTRATION') {
+    const isDocQuery = /\b(doc|docs|document|documents|papers|checklist|requirements)\b/i.test(normalizedQuery);
+    if (isDocQuery) {
+      return {
+        content: `**Checklist of Documents Required for Property Registration in Telangana**
+
+To register a residential plot, villa, or apartment at the jurisdictional Sub-Registrar Office (SRO), ensure you have the following essential documents:
+
+### 1. Title & Prior Deeds:
+- 📜 **30-Year Link Documents:** Complete chain of certified title deeds tracing ownership continuity over the past 30 years.
+- 🟢 **30-Year Nil Encumbrance Certificate (EC):** Issued by the Sub-Registrar Office confirming no registered mortgages or court attachments.
+
+### 2. Sanctions & Approvals:
+- 🏛️ **Statutory Layout Sanction:** Official layout permit copy and approved blueprint from **HMDA** or **DTCP**.
+- 🌾 **Revenue Records / Passbook:** Pattadar Passbook and latest mutation proceedings (for agricultural or plotted parcels).
+
+### 3. Identity & Transaction Documents:
+- 📝 **Draft Sale Deed:** Properly stamped and executed transfer deed prepared by an advocate.
+- 🪪 **Identity Proofs:** Original Aadhaar Cards and PAN Cards of both buyer and seller.
+- 👥 **Witnesses:** Two competent witnesses with valid photo identification (Aadhaar or PAN).
+- 🧾 **Challan Payment Receipt:** Proof of online stamp duty, transfer duty, and registration fee payment via the registration portal.
+
+### Example / Verification Tip:
+Ensure that the seller's name in the latest EC, Pattadar Passbook/PTIN, and link documents matches exactly before scheduling the SRO registration slot.`,
+        actions: getStandardActions('Hello OPV, I need help verifying property registration documents'),
+        category: 'legal',
+        properties: []
+      };
+    }
+
     return {
       content: `**Property Registration in Telangana: Process & Charges**
 
@@ -553,7 +643,11 @@ The total government fees amount to approximately **7.5%** of the property's mar
 4. **Biometric Verification:** Biometric thumb impressions, digital signatures, and photographs are captured.
 5. **Document Release:** The registered sale deed is assigned a unique Document Number and handed over to the buyer.
 
-**Practical Tip:** Unregistered agreements of sale do not convey legal title. Always complete formal registration at the jurisdictional Sub-Registrar Office and collect the registered sale deed.`,
+### Telangana-Specific Information:
+Property registrations in Telangana are conducted by appointment through the **Telangana Registration and Stamps Department** portal (**registration.telangana.gov.in**) or via the **Dharani portal** for agricultural land.
+
+### Example / Verification Tip:
+Unregistered agreements of sale do not convey legal title. Always complete formal registration at the jurisdictional Sub-Registrar Office and collect the registered sale deed.`,
       actions: getStandardActions('Hello OPV, I need assistance with property registration'),
       category: 'legal',
       properties: []
@@ -565,7 +659,7 @@ The total government fees amount to approximately **7.5%** of the property's mar
     return {
       content: `**Property Legal Due Diligence: 5-Point Verification Guide**
 
-Real estate investments require thorough legal due diligence to eliminate financial, title, and litigation risks.
+Real estate investments require thorough legal due diligence to minimize financial, title, and litigation risks.
 
 In simple words, legal verification is an exhaustive check conducted by property advocates to confirm that the seller has absolute, undisputed ownership and the legal right to sell.
 
@@ -579,11 +673,12 @@ In simple words, legal verification is an exhaustive check conducted by property
 
 ### Why is Legal Verification Essential?
 
-- 🛡️ Protects your life savings from disputed properties, double registrations, and litigation.
-- 🏦 Ensures effortless home loan sanctions from leading banks.
-- ⚖️ Confirms peace of mind and 100% marketable title for future generations.
+- 🛡️ Helps protect buyers from disputed ownership, unregistered transactions, and title litigation.
+- 🏦 Required by banks and financial institutions for home and plot loan sanctions.
+- ⚖️ Provides legal clarity on property title flow and municipal approval status.
 
-**Practical Verification Tip:** Never sign an Agreement of Sale or pay advance money without having an experienced property advocate review the certified copies of 30-year parent documents and municipal approvals.`,
+### Example / Verification Tip:
+Never sign an Agreement of Sale or pay advance money without having an experienced property advocate review the certified copies of 30-year parent documents and municipal approvals.`,
       actions: getStandardActions('Hello OPV, I want to book a legal document verification'),
       category: 'legal',
       properties: []
@@ -592,6 +687,28 @@ In simple words, legal verification is an exhaustive check conducted by property
 
   // 11. HOME LOAN ASSISTANCE
   if (intent === 'HOME_LOAN') {
+    const isLoanDetail =
+      isDetailRequested ||
+      /\b(doc|document|documents|paper|papers|eligibility|interest|rate|rates|process|step|steps|options|difference|checklist|guide)\b/i.test(
+        normalizedQuery
+      );
+
+    if (!isLoanDetail) {
+      return {
+        content: `Yes, **Open Plots & Villas (OPV)** provides complete home loan and plot financing assistance.
+
+### How OPV Helps with Property Loans:
+• **Banking Partners:** We coordinate directly with premier lenders including **SBI, HDFC Bank, ICICI Bank, Axis Bank, and LIC Housing Finance**.
+• **Financing Supported:** Plot purchase loans for HMDA/DTCP layouts, composite loans (plot + construction), and villa construction loans.
+• **End-to-End Support:** Assistance with bank eligibility checks, document preparation, and loan sanctions.
+
+Would you like to check your loan eligibility or discuss financing for a specific property?`,
+        actions: getStandardActions('Hello OPV, I need home loan assistance for my property'),
+        category: 'loans',
+        properties: []
+      };
+    }
+
     return {
       content: `**Home Loan & Property Financing Guide**
 
@@ -606,7 +723,7 @@ A **Home Loan / Plot Loan** is a financial facility provided by banks and housin
 
 ### Leading Banking Partners:
 
-OPV coordinates directly with premier banking institutions including **SBI, HDFC Bank, ICICI Bank, Axis Bank, and LIC Housing Finance** for quick processing and competitive interest rates.
+OPV coordinates directly with premier banking institutions including **SBI, HDFC Bank, ICICI Bank, Axis Bank, and LIC Housing Finance** for competitive interest rates and smooth processing.
 
 ### Essential Documents Required:
 
@@ -615,7 +732,8 @@ OPV coordinates directly with premier banking institutions including **SBI, HDFC
 - 📊 **Income Proof (Self-Employed):** 2 to 3 years audited financial statements, ITR computation, and 12 months bank statements.
 - 📜 **Property Documents:** Sale deed, HMDA/DTCP layout approval, 30-year link documents, and latest EC.
 
-**Practical Financing Tip:** Check your pre-approved loan eligibility before finalizing a property deal to know your exact borrowing capacity and negotiate with confidence.`,
+### Practical Financing Tip:
+Check your pre-approved loan eligibility before finalizing a property deal to know your exact borrowing capacity and negotiate with confidence.`,
       actions: getStandardActions('Hello OPV, I need home loan assistance for my property'),
       category: 'loans',
       properties: []
@@ -676,7 +794,7 @@ Celebrate moving into your dream home with hassle-free Vedic ceremony arrangemen
   if (intent === 'SURVEY_SERVICES') {
     return {
       content: `### 🗺️ Land Survey & GPS Demarcation Services
-Protect your property boundaries and ensure 100% boundary accuracy before purchasing or constructing.
+Protect your property boundaries and verify precise boundary accuracy before purchasing or constructing.
 
 **What We Provide:**
 • **Total Station Laser Survey:** Millimeter-accurate layout and contour mapping.
@@ -710,7 +828,7 @@ Turn your empty plot or bare villa into a stunning home with OPV's integrated ar
   if (intent === 'PROPERTY_MANAGEMENT') {
     return {
       content: `### 🛡️ Property Management & Asset Guard
-Keep your plots and vacant homes 100% safe from encroachments and well-maintained while you are away.
+Keep your plots and vacant homes well-protected from encroachments and well-maintained while you are away.
 
 **What We Provide:**
 • **Boundary Fencing:** Barbed-wire fencing or precast compound walls with clear OPV deterrence signboards.
@@ -751,15 +869,15 @@ Complete remote property acquisition and asset management tailored for Non-Resid
       .join('\n\n');
 
     return {
-      content: `### 📈 Investment Guidance & High-ROI Corridors in Hyderabad
-Strategic investment corridors showing high capital appreciation:
+      content: `### 📈 Investment Guidance & Strategic Growth Corridors in Hyderabad
+Key emerging development corridors in Hyderabad based on infrastructure connectivity:
 
 ${corridors}
 
-**Core OPV Investment Principles:**
+**Core OPV Due Diligence Principles:**
 • Always verify HMDA / DTCP layout sanctions and TSRERA registration.
-• Demand a 30-year Nil Encumbrance Certificate (EC).
-• Focus on infrastructure growth corridors (Bangalore Highway NH-44, Regional Ring Road, West ORR).`,
+• Review a 30-year Nil Encumbrance Certificate (EC).
+• Note that actual property appreciation depends on location, infrastructure progress, and market conditions.`,
       actions: getStandardActions('Hello OPV, I would like investment guidance on Hyderabad properties'),
       category: 'investment',
       properties: []
@@ -844,12 +962,8 @@ Experience India's first AI-powered real estate platform right from your pocket!
 • **AI Matchmaking Engine:** Personalized property feeds tailored to your budget and preferred corridor.
 • **Direct Builder & Owner Connect:** Direct contact with verified sellers without middleman spam.
 
-🎁 **Refer a Friend & Earn Luxury Rewards:**
-Refer any friend or relative looking to buy property or use OPV 360° Elite services, and earn:
-• **Luxury Gift Hampers**
-• **Gold & Jewellery Vouchers**
-• **Fine Dining Experiences**
-• **Travel & Holiday Packages**`,
+🎁 **Refer a Friend Program:**
+Refer friends or relatives looking for verified properties or real estate services to earn referral benefits through the OPV platform.`,
       actions: [
         { label: '📲 Download on Google Play', url: profile.app.googlePlay, action: 'explore' },
         { label: '💬 Inquire About Referral', url: `https://wa.me/${profile.contact.whatsapp.replace('+', '')}?text=${encodeURIComponent('I want to know about the OPV Referral Rewards Program')}`, action: 'whatsapp' }

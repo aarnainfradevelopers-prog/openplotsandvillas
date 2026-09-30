@@ -627,7 +627,7 @@ export function classifyIntent(rawQuery: string): ClassifiedIntent {
   }
 
   // 19. HOME LOANS
-  if (/\b(loan|home loan|property loan|bank loan|housing loan|interest rate|sbi loan|hdfc loan)\b/i.test(normalized)) {
+  if (/\b(loans?|home loans?|property loans?|bank loans?|housing loans?|interest rates?|sbi loans?|hdfc loans?)\b/i.test(normalized)) {
     return {
       intent: 'HOME_LOAN',
       normalizedQuery: normalized,
@@ -684,7 +684,7 @@ export function classifyIntent(rawQuery: string): ClassifiedIntent {
 
   // 19. ABOUT OPV / COMPANY INFO
   if (
-    /\b(about opv|what is opv|who is opv|who are you|mission|vision|why opv|why choose opv|founder|ceo)\b/i.test(normalized) ||
+    /\b(about opv|what is opv|who is opv|who are you|mission|vision|why opv|why choose opv|founder|ceo|opv company)\b/i.test(normalized) ||
     normalized === 'opv' ||
     normalized === 'about'
   ) {
