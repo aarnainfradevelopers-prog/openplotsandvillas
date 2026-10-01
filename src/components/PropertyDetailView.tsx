@@ -78,7 +78,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
 
   const statusText = getStatusText();
 
-  // 3. Genuine Overview directly from website/Supabase data
+  // 3. Genuine Overview directly from Supabase property data
   const overviewText = property.overview || property.about || `${property.title} in ${property.location}. Verified property listed on Open Plots & Villas.`;
 
   // 4. Genuine Why Consider list directly from property facts
@@ -282,12 +282,12 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
             <div className="min-h-[140px] text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               {activeTab === 'Overview' && (
                 <div className="space-y-3">
-                  {/* One-Liner Box with emerald left accent: Actual Website Knowledge */}
+                  {/* One-Liner Box with emerald left accent: Supabase Property Overview */}
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border-l-3 border-emerald-500 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
                     {overviewText}
                   </div>
 
-                  {/* Why consider this? Highlight Card: Real Website Facts */}
+                  {/* Why consider this? Highlight Card: Verified Property Details */}
                   <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 rounded-xl p-3.5 space-y-2">
                     <h5 className="text-xs font-bold text-slate-900 dark:text-white">
                       Why consider this?

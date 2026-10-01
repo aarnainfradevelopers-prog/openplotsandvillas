@@ -54,7 +54,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const statusBadge = property.badge || (property.status === 'For Sale' ? 'Ready to Move' : 'Available');
 
   // Config display
-  const configText = property.config || (property.bhk ? `${property.bhk} Beds` : (property.type === 'plot' ? 'Plot' : '3 Beds'));
+  const configText = property.config || (property.bhk ? `${property.bhk} Beds` : (property.type === 'plot' ? 'Plot' : (property.type === 'farmland' ? 'Farmland' : (property.type === 'commercial' ? 'Commercial' : (property.type === 'villa' ? 'Villa' : 'Standard Unit')))));
 
   return (
     <div className="bg-white dark:bg-[#1a2234] rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col w-full max-w-[285px] sm:max-w-[290px] min-h-[430px] justify-between text-slate-900 dark:text-white mx-auto">

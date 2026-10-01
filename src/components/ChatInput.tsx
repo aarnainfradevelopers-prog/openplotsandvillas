@@ -3,7 +3,7 @@ import { ArrowUp, Plus, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { MicrophoneButton } from './MicrophoneButton';
 import { LanguageDropdown } from './LanguageDropdown';
 import { LanguageCode, AttachedFile } from '../types/chat';
-import { OPV_LANGUAGES } from '../data/opvKnowledge';
+import { OPV_LANGUAGES } from '../data/chatConfig';
 
 interface ChatInputProps {
   currentLanguage: LanguageCode;

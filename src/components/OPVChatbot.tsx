@@ -30,8 +30,8 @@ import {
   UserAccount,
   AttachedFile
 } from '../types/chat';
-import { processChatQuery } from '../utils/aiEngine';
-import { getPropertiesForQuery, OPV_PROPERTIES, OPV_FALLBACK_IMAGE, updateActiveProperties } from '../data/propertyData';
+import { processChatQuery, processChatQueryAsync } from '../utils/aiEngine';
+import { getPropertiesForQuery, OPV_FALLBACK_IMAGE, updateActiveProperties } from '../data/propertyData';
 import { fetchLiveSupabaseProperties } from '../services/supabaseService';
 
 export const OPVChatbot: React.FC = () => {
@@ -54,7 +54,7 @@ export const OPVChatbot: React.FC = () => {
         console.error('Failed to parse favorites', e);
       }
     }
-    return [OPV_PROPERTIES[0], OPV_PROPERTIES[1]];
+    return [];
   });
   const [isShortlistOpen, setIsShortlistOpen] = useState(false);
 
@@ -233,34 +233,64 @@ export const OPVChatbot: React.FC = () => {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const aiResponse = processChatQuery(text, currentLanguage);
-      const matchedProperties =
-        aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(text);
+    const conversationHistory = currentSession.messages
+      .filter(m => m.content && m.content.trim())
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      }));
 
-      const assistantMsg: ChatMessageItem = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: aiResponse.content,
-        timestamp: new Date(),
-        language: currentLanguage,
-        actions: aiResponse.actions,
-        category: aiResponse.category,
-        properties: matchedProperties && matchedProperties.length > 0 ? matchedProperties : undefined
-      };
+    processChatQueryAsync(text, currentLanguage, conversationHistory)
+      .then(aiResponse => {
+        const matchedProperties = Array.isArray(aiResponse.properties)
+          ? aiResponse.properties
+          : (aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(text));
 
-      setSessions(prev =>
-        prev.map(s =>
-          s.id === currentSession.id
-            ? {
-              ...s,
-              messages: [...s.messages, assistantMsg]
-            }
-            : s
-        )
-      );
-      setIsLoading(false);
-    }, 350);
+        const assistantMsg: ChatMessageItem = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: aiResponse.content,
+          timestamp: new Date(),
+          language: currentLanguage,
+          actions: aiResponse.actions,
+          category: aiResponse.category,
+          properties: matchedProperties && matchedProperties.length > 0 ? matchedProperties : undefined
+        };
+
+        setSessions(prev =>
+          prev.map(s =>
+            s.id === currentSession.id
+              ? {
+                ...s,
+                messages: [...s.messages, assistantMsg]
+              }
+              : s
+          )
+        );
+      })
+      .catch(err => {
+        console.error('Chat error:', err);
+        const fallbackMsg: ChatMessageItem = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: 'I could not process that request right now. Please try again or connect with an OPV advisor.',
+          timestamp: new Date(),
+          language: currentLanguage
+        };
+        setSessions(prev =>
+          prev.map(s =>
+            s.id === currentSession.id
+              ? {
+                ...s,
+                messages: [...s.messages, fallbackMsg]
+              }
+              : s
+          )
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const handleSelectPropertyDetails = (property: PropertyItem) => {
@@ -393,12 +423,6 @@ export const OPVChatbot: React.FC = () => {
       subtitle: 'Kokapet, Tellapur, Mokila'
     },
     {
-      label: '360° Elite Services',
-      query: '360 elite services & properties',
-      icon: Sparkles,
-      subtitle: 'Legal, Loans & Vastu'
-    },
-    {
       label: 'Farm Lands',
       query: 'farm lands in hyderabad',
       icon: Sprout,
@@ -489,7 +513,7 @@ export const OPVChatbot: React.FC = () => {
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 text-center max-w-xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
-                Find verified open plots, luxury villas, apartments &amp; 360° Elite services in Hyderabad
+                Find verified open plots, luxury villas, and apartments from our database
               </p>
 
               {/* Centered User Prompt Bar with balanced, compact length */}
@@ -501,7 +525,7 @@ export const OPVChatbot: React.FC = () => {
                   isLoading={isLoading}
                   selectedCity={selectedCity}
                   isDarkMode={isDarkMode}
-                  placeholder="Ask about plots, villas, home loans, legal verification, Hyderabad localities..."
+                  placeholder="Search plots, villas, apartments, locations, budgets..."
                   containerClassName="max-w-3xl sm:max-w-[740px]"
                 />
               </div>
@@ -555,7 +579,7 @@ export const OPVChatbot: React.FC = () => {
                 {isLoading && (
                   <div className="py-2 flex items-center justify-center gap-2.5 text-xs text-slate-500">
                     <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <span>Searching verified listings from openplotsandvillas.com...</span>
+                    <span>Searching verified listings from Supabase...</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />

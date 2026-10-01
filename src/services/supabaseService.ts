@@ -66,16 +66,19 @@ export function cleanPropertyImages(rawImages: any, type: string): string[] {
 
 export function mapSupabaseToPropertyItem(raw: any): PropertyItem {
   const rawType = (raw.property_type || '').toLowerCase();
+  const titleLower = (raw.title || '').toLowerCase();
   let normalizedType: 'plot' | 'apartment' | 'villa' | 'commercial' | 'farmland' = 'plot';
 
-  if (rawType.includes('villa') || rawType.includes('house') || rawType.includes('independent')) {
-    normalizedType = 'villa';
-  } else if (rawType.includes('flat') || rawType.includes('apartment')) {
-    normalizedType = 'apartment';
-  } else if (rawType.includes('commercial')) {
-    normalizedType = 'commercial';
-  } else if (rawType.includes('farm') || rawType.includes('agriculture')) {
+  if (rawType.includes('farm') || rawType.includes('agri') || titleLower.includes('farm') || titleLower.includes('agricultural')) {
     normalizedType = 'farmland';
+  } else if (rawType.includes('commercial') || titleLower.includes('commercial')) {
+    normalizedType = 'commercial';
+  } else if (titleLower.includes('villa plot') || titleLower.includes('villas plot') || rawType === 'plot' || titleLower.includes('plot for sale') || titleLower.includes('residential land & plot')) {
+    normalizedType = 'plot';
+  } else if (rawType.includes('villa') || (/\bvillas?\b/i.test(titleLower) && !titleLower.includes('plot')) || /\bhouse\b/i.test(titleLower)) {
+    normalizedType = 'villa';
+  } else if (rawType.includes('flat') || rawType.includes('apartment') || titleLower.includes('flat') || titleLower.includes('apartment') || titleLower.includes('bhk')) {
+    normalizedType = 'apartment';
   } else {
     normalizedType = 'plot';
   }

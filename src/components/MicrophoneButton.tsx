@@ -19,7 +19,7 @@ import {
   Monitor,
   Smartphone
 } from 'lucide-react';
-import { OPV_LANGUAGES } from '../data/opvKnowledge';
+import { OPV_LANGUAGES } from '../data/chatConfig';
 import { LanguageCode, AttachedFile } from '../types/chat';
 
 declare global {

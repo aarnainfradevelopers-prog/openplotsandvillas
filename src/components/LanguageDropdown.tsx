@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
-import { OPV_LANGUAGES } from '../data/opvKnowledge';
+import { OPV_LANGUAGES } from '../data/chatConfig';
 import { LanguageCode } from '../types/chat';
 
 interface LanguageDropdownProps {
