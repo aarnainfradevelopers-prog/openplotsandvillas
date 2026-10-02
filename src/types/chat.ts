@@ -11,7 +11,19 @@ export type LanguageCode =
   | 'ur'
   | 'pa'
   | 'or'
-  | 'mwr';
+  | 'mwr'
+  | 'as'   // Assamese
+  | 'mai'  // Maithili
+  | 'sat'  // Santali
+  | 'ks'   // Kashmiri
+  | 'bho'  // Bhojpuri
+  | 'ne'   // Nepali
+  | 'sd'   // Sindhi
+  | 'kok'  // Konkani
+  | 'bgc'  // Haryanvi
+  | 'hne'  // Chhattisgarhi
+  | 'tcy'; // Tulu
+
 
 export interface LanguageOption {
   code: LanguageCode;

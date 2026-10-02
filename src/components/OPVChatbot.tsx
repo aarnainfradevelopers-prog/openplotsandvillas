@@ -293,6 +293,150 @@ export const OPVChatbot: React.FC = () => {
       });
   };
 
+  const handleEditMessage = (messageId: string, newText: string) => {
+    if (!newText.trim()) return;
+
+    const msgIndex = currentSession.messages.findIndex(m => m.id === messageId);
+    if (msgIndex === -1) return;
+
+    const oldMsg = currentSession.messages[msgIndex];
+    const updatedUserMsg: ChatMessageItem = {
+      ...oldMsg,
+      content: newText,
+      timestamp: new Date()
+    };
+
+    // Keep all messages prior to the edited prompt, then append the updated prompt
+    const previousMessages = currentSession.messages.slice(0, msgIndex);
+    const updatedMessages = [...previousMessages, updatedUserMsg];
+
+    setSessions(prev =>
+      prev.map(s =>
+        s.id === currentSession.id
+          ? {
+              ...s,
+              messages: updatedMessages
+            }
+          : s
+      )
+    );
+
+    setIsLoading(true);
+
+    const conversationHistory = previousMessages
+      .filter(m => m.content && m.content.trim())
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      }));
+
+    processChatQueryAsync(newText, currentLanguage, conversationHistory)
+      .then(aiResponse => {
+        const matchedProperties = Array.isArray(aiResponse.properties)
+          ? aiResponse.properties
+          : (aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(newText));
+
+        const assistantMsg: ChatMessageItem = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: aiResponse.content,
+          timestamp: new Date(),
+          language: currentLanguage,
+          actions: aiResponse.actions,
+          category: aiResponse.category,
+          properties: matchedProperties && matchedProperties.length > 0 ? matchedProperties : undefined
+        };
+
+        setSessions(prev =>
+          prev.map(s =>
+            s.id === currentSession.id
+              ? {
+                  ...s,
+                  messages: [...updatedMessages, assistantMsg]
+                }
+              : s
+          )
+        );
+      })
+      .catch(err => {
+        console.error('Chat edit error:', err);
+        const fallbackMsg: ChatMessageItem = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: 'I could not process that request right now. Please try again or connect with an OPV advisor.',
+          timestamp: new Date(),
+          language: currentLanguage
+        };
+        setSessions(prev =>
+          prev.map(s =>
+            s.id === currentSession.id
+              ? {
+                  ...s,
+                  messages: [...updatedMessages, fallbackMsg]
+                }
+              : s
+          )
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const handleRegenerate = (assistantMessageId: string) => {
+    const msgIndex = currentSession.messages.findIndex(m => m.id === assistantMessageId);
+    if (msgIndex === -1) return;
+
+    // Find the closest user query before this assistant message
+    const prevMessages = currentSession.messages.slice(0, msgIndex);
+    const lastUserMsg = [...prevMessages].reverse().find(m => m.role === 'user');
+    if (!lastUserMsg) return;
+
+    setIsLoading(true);
+
+    const conversationHistory = prevMessages
+      .filter(m => m.content && m.content.trim())
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content
+      }));
+
+    processChatQueryAsync(lastUserMsg.content, currentLanguage, conversationHistory)
+      .then(aiResponse => {
+        const matchedProperties = Array.isArray(aiResponse.properties)
+          ? aiResponse.properties
+          : (aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(lastUserMsg.content));
+
+        const updatedAssistantMsg: ChatMessageItem = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: aiResponse.content,
+          timestamp: new Date(),
+          language: currentLanguage,
+          actions: aiResponse.actions,
+          category: aiResponse.category,
+          properties: matchedProperties && matchedProperties.length > 0 ? matchedProperties : undefined
+        };
+
+        setSessions(prev =>
+          prev.map(s =>
+            s.id === currentSession.id
+              ? {
+                  ...s,
+                  messages: s.messages.map(m => m.id === assistantMessageId ? updatedAssistantMsg : m)
+                }
+              : s
+          )
+        );
+      })
+      .catch(err => {
+        console.error('Regenerate error:', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
   const handleSelectPropertyDetails = (property: PropertyItem) => {
     const userMsg: ChatMessageItem = {
       id: `user-${Date.now()}`,
@@ -572,6 +716,8 @@ export const OPVChatbot: React.FC = () => {
                     onEnquireProperty={handleEnquireProperty}
                     onToggleFavorite={handleToggleFavorite}
                     onOpenPropertyModal={prop => setDetailModalProperty(prop)}
+                    onEditMessage={handleEditMessage}
+                    onRegenerate={handleRegenerate}
                   />
                 ))}
 

@@ -3,6 +3,8 @@ import { retrieveWebsiteContent } from './websiteRetriever.ts';
 import {
   generateGeminiResponse,
   extractSearchFiltersWithGemini,
+  checkIsGeneralEducationalQuery,
+  getEducationalTopicKnowledge,
   type ChatHistoryMessage,
   type ApprovalType,
   type PropertyCategory,
@@ -107,7 +109,7 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
     try {
       const jsonPart = p.description.split('||_OPV_EXTRA_||')[0];
       parsedDesc = JSON.parse(jsonPart);
-    } catch {}
+    } catch { }
   }
 
   const titleLower = (p.title || '').toLowerCase();
@@ -192,6 +194,193 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
 }
 
 /**
+ * Generates a short, professional dynamic search summary for property searches.
+ * Avoids duplicate property listings in text since cards are rendered immediately below.
+ */
+export function generatePropertySearchSummary(
+  query: string,
+  filters: StructuredPropertySearchFilter,
+  matchedProperties: NormalizedPropertyRecord[]
+): string {
+  const q = (query || '').toLowerCase().trim();
+
+  // 1. DYNAMIC PROPERTY TYPE DETECTION
+  let headerType = 'Properties';
+  let summaryType = 'Verified Properties';
+
+  if (/\b(farm\s*land|farmland|agricultural|agriculture)\b/i.test(q) || filters.property_type?.includes('FARM_LAND')) {
+    headerType = 'Farm Land';
+    summaryType = 'Farm Lands';
+  } else if (/\b(farm\s*house|farmhouse)\b/i.test(q) || filters.property_type?.includes('FARM_HOUSE')) {
+    headerType = 'Farm House';
+    summaryType = 'Farm Houses';
+  } else if (/\b(commercial\s*plot|commercial\s*plots)\b/i.test(q)) {
+    headerType = 'Commercial Plot';
+    summaryType = 'Commercial Plots';
+  } else if (/\b(shop|shops|retail)\b/i.test(q)) {
+    headerType = 'Commercial Shop';
+    summaryType = 'Commercial Shops';
+  } else if (/\b(office|offices)\b/i.test(q)) {
+    headerType = 'Commercial Office';
+    summaryType = 'Commercial Offices';
+  } else if (/\bcommercial\b/i.test(q) || filters.property_type?.includes('COMMERCIAL')) {
+    headerType = 'Commercial';
+    summaryType = 'Commercial Properties';
+  } else if (/\b(flat|flats)\b/i.test(q)) {
+    headerType = 'Flat';
+    summaryType = 'Flats';
+  } else if (/\b(apartment|apartments|high\s*rise)\b/i.test(q) || filters.property_type?.includes('APARTMENT')) {
+    headerType = 'Apartment';
+    summaryType = 'Apartments';
+  } else if (/\b(duplex|triplex)\b/i.test(q)) {
+    headerType = 'Duplex Villa';
+    summaryType = 'Duplex Villas';
+  } else if (/\b(independent\s*house|house|houses)\b/i.test(q)) {
+    headerType = 'Independent House';
+    summaryType = 'Independent Houses';
+  } else if (/\b(villa|villas)\b/i.test(q) || filters.property_type?.includes('VILLA')) {
+    headerType = 'Villa';
+    summaryType = 'Villas';
+  } else if (/\b(open\s*plot|open\s*plots|plot|plots|venture|layouts|plotted)\b/i.test(q) || filters.property_type?.includes('PLOT')) {
+    headerType = 'Open Plot';
+    summaryType = 'Open Plots';
+  }
+
+  // 2. DYNAMIC LOCATION DETECTION (with "in" vs "near")
+  let locationDisplay = 'Hyderabad';
+  let titleLocationPhrase = 'in Hyderabad';
+
+  const nearMatch = q.match(/\bnear\s+([a-zA-Z\s]+?)(?:\s+(?:under|below|within|above|for|with|in|around|budget|\d)|$)/i);
+  if (nearMatch && nearMatch[1].trim()) {
+    const rawNearLoc = nearMatch[1].trim();
+    const locCap = rawNearLoc.charAt(0).toUpperCase() + rawNearLoc.slice(1);
+    const cleanedLoc = locCap.toLowerCase() === 'hyd' ? 'Hyderabad' : locCap;
+    locationDisplay = `Near ${cleanedLoc}`;
+    titleLocationPhrase = `near ${cleanedLoc}`;
+  } else {
+    let detectedLoc = '';
+    if (filters.location && filters.location.length > 0) {
+      detectedLoc = filters.location[0];
+    } else {
+      const knownLocations = [
+        'shadnagar', 'kokapet', 'tellapur', 'mokila', 'lemoor', 'kothur',
+        'sadashivpet', 'patancheru', 'gachibowli', 'shamshabad', 'kadthal',
+        'maheshwaram', 'attapur', 'bhanur', 'uppal', 'rajapur', 'kandukur',
+        'nednur', 'kallepally', 'balanagar', 'jubilee hills', 'banjara hills',
+        'madhapur', 'hitec city', 'kondapur', 'manikonda', 'financial district',
+        'nizampet', 'kompally', 'miyapur', 'bachupally', 'hyderabad', 'hyd'
+      ];
+      for (const loc of knownLocations) {
+        if (new RegExp(`\\b${loc}\\b`, 'i').test(q)) {
+          detectedLoc = loc.toLowerCase() === 'hyd' ? 'Hyderabad' : loc.charAt(0).toUpperCase() + loc.slice(1);
+          break;
+        }
+      }
+    }
+
+    if (detectedLoc) {
+      const finalLoc = detectedLoc.toLowerCase() === 'hyd' ? 'Hyderabad' : detectedLoc;
+      locationDisplay = finalLoc;
+      titleLocationPhrase = `in ${finalLoc}`;
+    } else if (matchedProperties.length > 0 && matchedProperties[0].location) {
+      const pLoc = matchedProperties[0].location;
+      locationDisplay = pLoc;
+      titleLocationPhrase = `in ${pLoc}`;
+    }
+  }
+
+  // 3. DYNAMIC APPROVAL DETECTION
+  let approvalLine = '';
+  const approvals: string[] = [];
+  if (filters.approval && filters.approval.length > 0) {
+    approvals.push(...filters.approval);
+  } else {
+    if (/\bhmda\b/i.test(q)) approvals.push('HMDA');
+    if (/\bdtcp\b/i.test(q)) approvals.push('DTCP');
+    if (/\brera\b/i.test(q)) approvals.push('RERA');
+    if (/\bghmc\b/i.test(q)) approvals.push('GHMC');
+    if (/\b(gram\s*panchayat|panchayat)\b/i.test(q)) approvals.push('Gram Panchayat');
+  }
+  if (approvals.length > 0) {
+    approvalLine = `**Approval:** ${[...new Set(approvals)].join(', ')}`;
+  }
+
+  // 4. DYNAMIC BUDGET DETECTION
+  let budgetLine = '';
+  const underMatch = q.match(/(?:under|below|within|upto|less than)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakh|lakhs|cr|crore|l)?/i);
+  const betweenMatch = q.match(/between\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|cr|crore)?\s*(?:and|to|-)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakh|lakhs|cr|crore)/i);
+
+  if (underMatch) {
+    const val = underMatch[1];
+    const unitRaw = (underMatch[2] || '').toLowerCase();
+    const unit = unitRaw.startsWith('cr') ? 'Crore' : 'Lakhs';
+    budgetLine = `**Budget:** Under ₹${val} ${unit}`;
+  } else if (betweenMatch) {
+    const minVal = betweenMatch[1];
+    const maxVal = betweenMatch[2];
+    const unitRaw = (betweenMatch[3] || '').toLowerCase();
+    const unit = unitRaw.startsWith('cr') ? 'Crore' : 'Lakhs';
+    budgetLine = `**Budget:** ₹${minVal} - ₹${maxVal} ${unit}`;
+  } else if (filters.budget_max) {
+    if (filters.budget_max >= 10000000) {
+      const cr = filters.budget_max / 10000000;
+      const formatted = cr % 1 === 0 ? cr.toString() : cr.toFixed(1);
+      budgetLine = `**Budget:** Under ₹${formatted} Crore`;
+    } else if (filters.budget_max >= 100000) {
+      const lk = filters.budget_max / 100000;
+      const formatted = lk % 1 === 0 ? lk.toString() : lk.toFixed(1);
+      budgetLine = `**Budget:** Under ₹${formatted} Lakhs`;
+    }
+  }
+
+  // 5. DYNAMIC BHK DETECTION
+  let bhkLine = '';
+  const bhkMatch = q.match(/\b([1-9])\s*(?:bhk|bedroom|bed)\b/i);
+  if (bhkMatch) {
+    bhkLine = `**BHK:** ${bhkMatch[1]} BHK`;
+  } else if (filters.bhk) {
+    bhkLine = `**BHK:** ${filters.bhk} BHK`;
+  }
+
+  // 6. DYNAMIC FACING DETECTION
+  let facingLine = '';
+  if (filters.facing && filters.facing.length > 0) {
+    facingLine = `**Facing:** ${filters.facing.map(f => f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()).join(', ')} Facing`;
+  } else {
+    const facingMatch = q.match(/\b(east|west|north|south|north-east|north-west|south-east|south-west)\s*facing\b/i);
+    if (facingMatch) {
+      const f = facingMatch[1].charAt(0).toUpperCase() + facingMatch[1].slice(1).toLowerCase();
+      facingLine = `**Facing:** ${f} Facing`;
+    }
+  }
+
+  // 7. BUILD SUMMARY
+  const searchResultsLines: string[] = [
+    `**Property Type:** ${summaryType}`,
+    `**Location:** ${locationDisplay}`
+  ];
+
+  if (approvalLine) searchResultsLines.push(approvalLine);
+  if (budgetLine) searchResultsLines.push(budgetLine);
+  if (bhkLine) searchResultsLines.push(bhkLine);
+  if (facingLine) searchResultsLines.push(facingLine);
+
+  searchResultsLines.push(`**Projects Found:** ${matchedProperties.length}`);
+
+  const mainTitle = headerType === 'Properties'
+    ? `**🏡 Properties ${titleLocationPhrase}**`
+    : `**🏡 ${headerType} Properties ${titleLocationPhrase}**`;
+
+  return `${mainTitle}
+
+✨ **Here's What I Found**
+
+${searchResultsLines.join('\n')}
+
+Here are the available verified properties matching your search. You can view location, approvals, plot sizes, pricing and amenities in the property cards below.`.trim();
+}
+
+/**
  * Main Chat Processing Handler (Server-Side)
  */
 export async function handleChatRequest(
@@ -216,20 +405,31 @@ export async function handleChatRequest(
     filters.target_project = contextProject;
   }
 
-  // 3. Classify if query is a Property Search or Website/Company Query
+  // 3. Classify if query is General Educational Information or Property Search
+  const isGeneralInfo =
+    checkIsGeneralEducationalQuery(rawQuery) ||
+    filters.intent === 'GENERAL_INFORMATION' ||
+    filters.intent === 'WEBSITE_QUERY' ||
+    filters.intent === 'GENERAL_CONVERSATION';
+
   const isPropertyOrProjectQuery =
-    filters.intent === 'PROPERTY_SEARCH' ||
-    Boolean(filters.target_project) ||
-    filters.approval.length > 0 ||
-    filters.property_type.length > 0 ||
-    filters.location.length > 0 ||
-    filters.budget_max !== null ||
-    filters.budget_min !== null ||
-    filters.bhk !== null;
+    !isGeneralInfo &&
+    (filters.intent === 'PROPERTY_SEARCH' ||
+      filters.property_type.length > 0 ||
+      Boolean(filters.target_project) ||
+      (filters.location.length > 0 &&
+        (filters.budget_max !== null ||
+          filters.budget_min !== null ||
+          filters.bhk !== null ||
+          /\b(properties|property|projects|project|buy|show|find|search|list|available)\b/i.test(rawQuery))) ||
+      (filters.approval.length > 0 &&
+        (filters.property_type.length > 0 ||
+          /\b(properties|property|projects|project|buy|show|find|search|list|available)\b/i.test(rawQuery))));
 
   let groundingData = '';
-  let groundingSourceType: 'supabase_property' | 'opv_website' | 'general' = 'general';
+  let groundingSourceType: 'supabase_property' | 'opv_website' | 'general' = isGeneralInfo ? 'general' : 'opv_website';
   let matchedProperties: any[] = [];
+  let finalAnswer = '';
 
   // =========================================================================
   // PATH A: PROPERTY / PROJECT QUESTION → QUERY SUPABASE WITH STRICT AND LOGIC
@@ -301,8 +501,18 @@ export async function handleChatRequest(
       if (filtered.length > 0) {
         matchedProperties = filtered.slice(0, 6);
 
-        // Formulate strict grounding string with verified details
-        groundingData = matchedProperties.map((p, idx) => `
+        // Check if query is an attribute question about a specific project (e.g. "What is RERA of X?")
+        const isFactualAttributeQuery = Boolean(
+          filters.target_project &&
+          /\b(what is|who is|tell me about|explain|rera number|contact|developer|phone)\b/i.test(rawQuery)
+        );
+
+        if (!isFactualAttributeQuery) {
+          // GENERATE SHORT DYNAMIC SEARCH SUMMARY DIRECTLY (no long property duplicate text)
+          finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties);
+        } else {
+          // Formulate strict grounding string for Gemini to answer the specific attribute question
+          groundingData = matchedProperties.map((p, idx) => `
 Record #${idx + 1}:
 - Project/Property Title: ${p.title}
 - Property Category: ${p.normalizedType}
@@ -316,6 +526,7 @@ Record #${idx + 1}:
 - Verified Official Images Available: ${p.images.length > 0 ? `${p.images.length} photos in attached card` : 'Displayed in attached card'}
 - Direct Listing ID: #${p.id}
 `.trim()).join('\n\n');
+        }
       } else {
         // STRICT ZERO-RESULT HANDLING: No properties match all criteria
         matchedProperties = [];
@@ -338,28 +549,30 @@ INSTRUCTIONS FOR YOUR RESPONSE:
   }
 
   // =========================================================================
-  // PATH B: WEBSITE QUESTION → DYNAMIC RETRIEVAL FROM openplotsandvillas.com
+  // PATH B: WEBSITE QUESTION / EDUCATIONAL TOPIC → DYNAMIC RETRIEVAL
   // =========================================================================
-  if (!groundingData) {
-    groundingSourceType = 'opv_website';
+  if (!groundingData && !finalAnswer) {
+    groundingSourceType = isGeneralInfo ? 'general' : 'opv_website';
+    const eduTopic = getEducationalTopicKnowledge(rawQuery);
     const retrieved = await retrieveWebsiteContent(rawQuery);
 
+    const parts: string[] = [];
+    if (eduTopic) {
+      parts.push(`Official Real Estate Reference:\nTopic: ${eduTopic.topic}\nExplanation: ${eduTopic.explanation}\n\nSuggested Follow-up Question: ${eduTopic.followUp}`);
+    }
     if (retrieved.found && retrieved.text) {
-      groundingData = `
-Source URL: ${retrieved.url}
-Page Title: ${retrieved.title}
-Retrieved Page Text:
-${retrieved.text}
-`;
+      parts.push(`OPV Website Source (${retrieved.url}):\nPage Title: ${retrieved.title}\nRetrieved Page Text:\n${retrieved.text}`);
+    }
+
+    if (parts.length > 0) {
+      groundingData = parts.join('\n\n');
     }
   }
 
   // =========================================================================
   // AI REASONING & RESPONSE GENERATION (GEMINI AI ENGINE)
   // =========================================================================
-  let finalAnswer = '';
-
-  if (geminiApiKey) {
+  if (geminiApiKey && !finalAnswer) {
     try {
       finalAnswer = await generateGeminiResponse(
         {
@@ -379,9 +592,14 @@ ${retrieved.text}
   // Graceful fallback if Gemini did not produce an answer
   if (!finalAnswer) {
     if (matchedProperties.length > 0) {
-      finalAnswer = `Here are the verified listings matching your request from our database:`;
+      finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties);
     } else {
-      finalAnswer = `I don't have that specific information in our active records right now. Please connect directly with an OPV advisor who can assist you.`;
+      const eduTopic = getEducationalTopicKnowledge(rawQuery);
+      if (eduTopic) {
+        finalAnswer = `${eduTopic.explanation}\n\n${eduTopic.followUp}`;
+      } else {
+        finalAnswer = `I don't have that specific information in our active records right now. Please connect directly with an OPV advisor who can assist you.`;
+      }
     }
   }
 

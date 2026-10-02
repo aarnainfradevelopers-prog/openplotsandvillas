@@ -27,51 +27,150 @@ function getStandardActions(customWhatsAppMsg?: string): ActionLink[] {
 }
 
 /**
- * Friendly conversational confirmation text for property searches
+ * Generates a short, professional dynamic search summary for property searches
  */
 function buildPropertySearchIntro(query: string, properties: PropertyItem[]): string {
-  const q = normalizeQuery(query).toLowerCase();
+  const q = normalizeQuery(query).toLowerCase().trim();
 
-  const locations = [
-    'shadnagar', 'kokapet', 'tellapur', 'mokila', 'lemoor',
-    'kothur', 'sadashivpet', 'patancheru', 'medchal', 'gachibowli',
-    'shamshabad', 'kollur', 'kadthal', 'maheshwaram', 'chevella',
-    'shankarpally', 'adibatla', 'kondapur', 'madhapur', 'kompally', 'hyderabad'
+  // 1. Property Type
+  let headerType = 'Properties';
+  let summaryType = 'Verified Properties';
+
+  if (/\b(farm\s*land|farmland|agricultural|agriculture)\b/i.test(q)) {
+    headerType = 'Farm Land';
+    summaryType = 'Farm Lands';
+  } else if (/\b(farm\s*house|farmhouse)\b/i.test(q)) {
+    headerType = 'Farm House';
+    summaryType = 'Farm Houses';
+  } else if (/\b(commercial\s*plot|commercial\s*plots)\b/i.test(q)) {
+    headerType = 'Commercial Plot';
+    summaryType = 'Commercial Plots';
+  } else if (/\b(shop|shops|retail)\b/i.test(q)) {
+    headerType = 'Commercial Shop';
+    summaryType = 'Commercial Shops';
+  } else if (/\b(office|offices)\b/i.test(q)) {
+    headerType = 'Commercial Office';
+    summaryType = 'Commercial Offices';
+  } else if (/\bcommercial\b/i.test(q)) {
+    headerType = 'Commercial';
+    summaryType = 'Commercial Properties';
+  } else if (/\b(flat|flats)\b/i.test(q)) {
+    headerType = 'Flat';
+    summaryType = 'Flats';
+  } else if (/\b(apartment|apartments|high\s*rise)\b/i.test(q)) {
+    headerType = 'Apartment';
+    summaryType = 'Apartments';
+  } else if (/\b(duplex|triplex)\b/i.test(q)) {
+    headerType = 'Duplex Villa';
+    summaryType = 'Duplex Villas';
+  } else if (/\b(independent\s*house|house|houses)\b/i.test(q)) {
+    headerType = 'Independent House';
+    summaryType = 'Independent Houses';
+  } else if (/\b(villa|villas)\b/i.test(q)) {
+    headerType = 'Villa';
+    summaryType = 'Villas';
+  } else if (/\b(open\s*plot|open\s*plots|plot|plots|venture|layouts|plotted)\b/i.test(q)) {
+    headerType = 'Open Plot';
+    summaryType = 'Open Plots';
+  }
+
+  // 2. Location
+  let locationDisplay = 'Hyderabad';
+  let titleLocationPhrase = 'in Hyderabad';
+
+  const nearMatch = q.match(/\bnear\s+([a-zA-Z\s]+?)(?:\s+(?:under|below|within|above|for|with|in|around|budget|\d)|$)/i);
+  if (nearMatch && nearMatch[1].trim()) {
+    const rawNearLoc = nearMatch[1].trim();
+    const locCap = rawNearLoc.charAt(0).toUpperCase() + rawNearLoc.slice(1);
+    const cleanedLoc = locCap.toLowerCase() === 'hyd' ? 'Hyderabad' : locCap;
+    locationDisplay = `Near ${cleanedLoc}`;
+    titleLocationPhrase = `near ${cleanedLoc}`;
+  } else {
+    const locations = [
+      'shadnagar', 'kokapet', 'tellapur', 'mokila', 'lemoor',
+      'kothur', 'sadashivpet', 'patancheru', 'medchal', 'gachibowli',
+      'shamshabad', 'kollur', 'kadthal', 'maheshwaram', 'chevella',
+      'shankarpally', 'adibatla', 'kondapur', 'madhapur', 'kompally', 'hyderabad', 'hyd'
+    ];
+    const matchedLoc = locations.find(loc => new RegExp(`\\b${loc}\\b`, 'i').test(q));
+    if (matchedLoc) {
+      const finalLoc = matchedLoc.toLowerCase() === 'hyd' ? 'Hyderabad' : matchedLoc.charAt(0).toUpperCase() + matchedLoc.slice(1);
+      locationDisplay = finalLoc;
+      titleLocationPhrase = `in ${finalLoc}`;
+    } else if (properties.length > 0 && properties[0].location) {
+      locationDisplay = properties[0].location;
+      titleLocationPhrase = `in ${properties[0].location}`;
+    }
+  }
+
+  // 3. Approval
+  let approvalLine = '';
+  const approvals: string[] = [];
+  if (/\bhmda\b/i.test(q)) approvals.push('HMDA');
+  if (/\bdtcp\b/i.test(q)) approvals.push('DTCP');
+  if (/\brera\b/i.test(q)) approvals.push('RERA');
+  if (/\bghmc\b/i.test(q)) approvals.push('GHMC');
+  if (/\b(gram\s*panchayat|panchayat)\b/i.test(q)) approvals.push('Gram Panchayat');
+  if (approvals.length > 0) {
+    approvalLine = `**Approval:** ${[...new Set(approvals)].join(', ')}`;
+  }
+
+  // 4. Budget
+  let budgetLine = '';
+  const underMatch = q.match(/(?:under|below|within|upto|less than)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakh|lakhs|cr|crore|l)?/i);
+  const betweenMatch = q.match(/between\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|cr|crore)?\s*(?:and|to|-)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakh|lakhs|cr|crore)/i);
+  if (underMatch) {
+    const val = underMatch[1];
+    const unitRaw = (underMatch[2] || '').toLowerCase();
+    const unit = unitRaw.startsWith('cr') ? 'Crore' : 'Lakhs';
+    budgetLine = `**Budget:** Under ₹${val} ${unit}`;
+  } else if (betweenMatch) {
+    const minVal = betweenMatch[1];
+    const maxVal = betweenMatch[2];
+    const unitRaw = (betweenMatch[3] || '').toLowerCase();
+    const unit = unitRaw.startsWith('cr') ? 'Crore' : 'Lakhs';
+    budgetLine = `**Budget:** ₹${minVal} - ₹${maxVal} ${unit}`;
+  }
+
+  // 5. BHK
+  let bhkLine = '';
+  const bhkMatch = q.match(/\b([1-9])\s*(?:bhk|bedroom|bed)\b/i);
+  if (bhkMatch) {
+    bhkLine = `**BHK:** ${bhkMatch[1]} BHK`;
+  }
+
+  // 6. Facing
+  let facingLine = '';
+  const facingMatch = q.match(/\b(east|west|north|south|north-east|north-west|south-east|south-west)\s*facing\b/i);
+  if (facingMatch) {
+    const f = facingMatch[1].charAt(0).toUpperCase() + facingMatch[1].slice(1).toLowerCase();
+    facingLine = `**Facing:** ${f} Facing`;
+  }
+
+  // 7. Results Block
+  const searchResultsLines: string[] = [
+    `**Property Type:** ${summaryType}`,
+    `**Location:** ${locationDisplay}`
   ];
-  const matchedLoc = locations.find(loc => q.includes(loc));
-  const locTitle = matchedLoc
-    ? matchedLoc.charAt(0).toUpperCase() + matchedLoc.slice(1)
-    : '';
 
-  let budgetText = '';
-  const lakhMatch = q.match(/(?:under|below|budget|within)?\s*₹?\s*(\d+)\s*(?:lakh|lakhs|l)\b/i);
-  const crMatch = q.match(/(?:under|below|budget|within)?\s*₹?\s*(\d+(?:\.\d+)?)\s*(?:cr|crore|crores)\b/i);
-  if (lakhMatch) {
-    budgetText = ` under ₹${lakhMatch[1]} Lakhs`;
-  } else if (crMatch) {
-    budgetText = ` under ₹${crMatch[1]} Cr`;
-  }
+  if (approvalLine) searchResultsLines.push(approvalLine);
+  if (budgetLine) searchResultsLines.push(budgetLine);
+  if (bhkLine) searchResultsLines.push(bhkLine);
+  if (facingLine) searchResultsLines.push(facingLine);
 
-  if (q.includes('plot') || q.includes('land') || q.includes('openplot')) {
-    if (locTitle) return `Sure! Here are available open plots in ${locTitle}${budgetText} from our database:`;
-    return `Sure! Here are available open plots in Hyderabad${budgetText} from our database:`;
-  }
+  searchResultsLines.push(`**Projects Found:** ${properties.length}`);
 
-  if (q.includes('villa') || q.includes('house') || q.includes('triplex') || q.includes('duplex')) {
-    if (locTitle) return `Sure! Here are available luxury villas in ${locTitle}${budgetText} from our database:`;
-    return `Sure! Here are available luxury villas in Hyderabad${budgetText} from our database:`;
-  }
+  const mainTitle = headerType === 'Properties'
+    ? `**🏡 Properties ${titleLocationPhrase}**`
+    : `**🏡 ${headerType} Properties ${titleLocationPhrase}**`;
 
-  if (q.includes('apartment') || q.includes('flat') || q.includes('bhk')) {
-    if (locTitle) return `Sure! Here are available apartments in ${locTitle}${budgetText} from our database:`;
-    return `Sure! Here are available apartments in Hyderabad${budgetText} from our database:`;
-  }
+  return `${mainTitle}
 
-  if (locTitle) {
-    return `Sure! Here are available properties in ${locTitle}${budgetText} from our database:`;
-  }
+✨ **Here's What I Found**
 
-  return `Sure! Here are available verified properties matching your query from our database:`;
+${searchResultsLines.join('\n')}
+
+Here are the available verified properties matching your search. You can view location, approvals, plot sizes, pricing and amenities in the property cards below.`.trim();
 }
 
 /**
@@ -133,30 +232,29 @@ Tell me what type of property, location, or budget you are searching for.`,
   }
 
   // 3. PROPERTY & PROJECT SEARCH (SUPABASE IS THE ONLY SOURCE)
-  // Search Supabase live data for matching listings
-  const liveMatches = searchLiveProperties(rawQuery);
-  if (liveMatches.length > 0) {
-    if (intent === 'PROJECT_INFORMATION') {
-      const proj = liveMatches[0];
+  if (intent === 'PROPERTY_SEARCH' || intent === 'PROJECT_INFORMATION') {
+    const liveMatches = searchLiveProperties(rawQuery);
+    if (liveMatches.length > 0) {
+      if (intent === 'PROJECT_INFORMATION') {
+        const proj = liveMatches[0];
+        return {
+          content: `Here is the latest project information for **${proj.title}** from our database:`,
+          properties: liveMatches,
+          actions: getStandardActions(`Hello OPV, I am inquiring about ${proj.title}`),
+          category: proj.type === 'plot' ? 'plots' : 'villas'
+        };
+      }
+
+      const intro = buildPropertySearchIntro(rawQuery, liveMatches);
       return {
-        content: `Here is the latest project information for **${proj.title}** from our database:`,
+        content: intro,
         properties: liveMatches,
-        actions: getStandardActions(`Hello OPV, I am inquiring about ${proj.title}`),
-        category: proj.type === 'plot' ? 'plots' : 'villas'
+        actions: getStandardActions('Hello OPV, I am interested in these property listings'),
+        category: liveMatches[0].type === 'plot' ? 'plots' : 'villas'
       };
     }
 
-    const intro = buildPropertySearchIntro(rawQuery, liveMatches);
-    return {
-      content: intro,
-      properties: liveMatches,
-      actions: getStandardActions('Hello OPV, I am interested in these property listings'),
-      category: liveMatches[0].type === 'plot' ? 'plots' : 'villas'
-    };
-  }
-
-  // 4. IF PROPERTY SEARCH / PROJECT QUERY HAS NO MATCHES IN SUPABASE
-  if (intent === 'PROPERTY_SEARCH' || intent === 'PROJECT_INFORMATION') {
+    // 4. IF PROPERTY SEARCH / PROJECT QUERY HAS NO MATCHES IN SUPABASE
     return {
       content: `I don't have that property or project listed in our database right now. I can connect you with an OPV property advisor.`,
       actions: getStandardActions(`Hello OPV, I am looking for properties matching: ${rawQuery}`),

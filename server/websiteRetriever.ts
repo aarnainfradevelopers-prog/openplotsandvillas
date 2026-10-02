@@ -30,7 +30,7 @@ function resolveWebsiteUrl(query: string): string | null {
   const q = query.toLowerCase().trim();
 
   // 1. Guides & Knowledge
-  if (/\b(legal faq|what is rera|rera act|hmda rule|dtcp rule|stamp duty|ec certificate|encumbrance|mutation|registration process|documents required)\b/i.test(q)) {
+  if (/\b(rera|hmda|dtcp|ghmc|municipality|gram panchayat|panchayat|legal faq|stamp duty|ec\b|encumbrance|mutation|registration|patta|passbook|dharani|lrs|brs|building permission|layout approval|carpet area|built up area|super built up area|guidance value|market value|sale deed|agreement of sale)\b/i.test(q)) {
     return `${BASE_URL}/guide/legal-faq`;
   }
   if (/\b(how to buy|buying guide|buyer guide|buying process|steps to purchase)\b/i.test(q)) {

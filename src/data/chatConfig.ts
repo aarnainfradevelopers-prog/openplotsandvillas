@@ -201,7 +201,160 @@ export const OPV_LANGUAGES: LanguageOption[] = [
       'हैदराबाद मांय लग्जरी विला',
       'लेमूर मांय प्लॉट'
     ]
+  },
+  {
+    code: 'as',
+    label: 'অসমীয়া (Assamese)',
+    nativeName: 'অসমীয়া (Assamese)',
+    speechCode: 'as-IN',
+    welcomeGreeting: 'নমস্কাৰ! অপেন প্লটছ এণ্ড ভিলাছ (OPV) AI লৈ স্বাগতম।',
+    welcomeSubtitle: 'আমাৰ ডাটাবেছৰ পৰা প্ৰমাণিত প্লট, ভিলা আৰু এপাৰ্টমেণ্ট সন্ধান কৰক।',
+    placeholder: 'প্লট, ভিলা, এপাৰ্টমেণ্ট, স্থান বা বাজেট সন্ধান কৰক...',
+    suggestions: [
+      'শাদনগৰত মুক্ত প্লট',
+      'হায়দৰাবাদত বিলাসী ভিলা',
+      'লেমুৰত প্লট'
+    ]
+  },
+  {
+    code: 'mai',
+    label: 'मैथिली (Maithili)',
+    nativeName: 'मैथिली (Maithili)',
+    speechCode: 'mai-IN',
+    welcomeGreeting: 'प्रणाम! ओपन प्लॉट्स ऐंड विलाज (OPV) AI में अपनेक स्वागत अछि।',
+    welcomeSubtitle: 'हमार डेटाबेस सं सत्यापित प्लॉट, विला आ अपार्टमेंट खोजू।',
+    placeholder: 'प्लॉट, विला, अपार्टमेंट, स्थान, बजट खोजू...',
+    suggestions: [
+      'शादनगर में खुला प्लॉट',
+      'हैदराबाद में लग्जरी विला',
+      'लेमूर में प्लॉट'
+    ]
+  },
+  {
+    code: 'sat',
+    label: 'ᱥᱟᱱᱛᱟᱲᱤ (Santali)',
+    nativeName: 'ᱥᱟᱱᱛᱟᱲᱤ (Santali)',
+    speechCode: 'sat-IN',
+    welcomeGreeting: 'ᱡᱚᱦᱟᱨ! ᱚᱯᱮᱱ ᱯᱞᱚᱴᱥ ᱮᱱᱰ ᱵᱷᱤᱞᱟᱥ (OPV) AI ᱨᱮ ᱥᱟᱹᱜᱩᱱ ᱫᱟᱨᱟᱢ᱾',
+    welcomeSubtitle: 'ᱟᱞᱮᱭᱟᱜ ᱰᱟᱴᱟᱵᱮᱥ ᱠᱷᱚᱱ ᱯᱞᱚᱴ, ᱵᱷᱤᱞᱟ ᱟᱨ ᱮᱯᱟᱨᱴᱢᱮᱱᱴ ᱯᱟᱸᱡᱟᱭ ᱢᱮ᱾',
+    placeholder: 'ᱯᱞᱚᱴ, ᱵᱷᱤᱞᱟ, ᱮᱯᱟᱨᱴᱢᱮᱱᱴ ᱯᱟᱸᱡᱟᱭ ᱢᱮ...',
+    suggestions: [
+      'ᱥᱟᱫᱽᱱᱟᱜᱟᱨ ᱨᱮ ᱚᱯᱮᱱ ᱯᱞᱚᱴ',
+      'ᱦᱟᱭᱫᱽᱨᱟᱵᱟᱫᱽ ᱨᱮ ᱵᱷᱤᱞᱟ'
+    ]
+  },
+  {
+    code: 'ks',
+    label: 'کٲشُر (Kashmiri)',
+    nativeName: 'کٲشُر (Kashmiri)',
+    speechCode: 'ks-IN',
+    direction: 'rtl',
+    welcomeGreeting: 'آداب! اوپن پلاٹس اینڈ ولاز (OPV) AI مَنٛز چھُ تُہُند ستقبال۔',
+    welcomeSubtitle: 'سأنِس ڈیٹا بیس پؠٹھٕ تصدیق شُدٕ پلاٹ، ولا تہٕ اپارٹمنٹ ژھانٛڈِو۔',
+    placeholder: 'پلاٹ، ولا، اپارٹمنٹ ژھانٛڈِو...',
+    suggestions: [
+      'شادنگرس مَنٛز اوپن پلاٹ',
+      'حیدرآبادس مَنٛز لگژری ولا'
+    ]
+  },
+  {
+    code: 'bho',
+    label: 'भोजपुरी (Bhojpuri)',
+    nativeName: 'भोजपुरी (Bhojpuri)',
+    speechCode: 'bho-IN',
+    welcomeGreeting: 'प्रणाम! ओपन प्लॉट्स आ विलास (OPV) AI में रउआ सब के स्वागत बा।',
+    welcomeSubtitle: 'हमनी के डेटाबेस से सत्यापित प्लॉट, विला आ अपार्टमेंट खोजीं।',
+    placeholder: 'प्लॉट, विला, अपार्टमेंट, जगह भा बजट खोजीं...',
+    suggestions: [
+      'शादनगर में ओपन प्लॉट्स खोजीं',
+      'हैदराबाद में लग्जरी विला',
+      'लेमूर में प्लॉट्स'
+    ]
+  },
+  {
+    code: 'ne',
+    label: 'नेपाली (Nepali)',
+    nativeName: 'नेपाली (Nepali)',
+    speechCode: 'ne-NP',
+    welcomeGreeting: 'नमस्ते! ओपन प्लट्स एण्ड भिल्लाज (OPV) AI मा स्वागत छ।',
+    welcomeSubtitle: 'हाम्रो डाटाबेसबाट प्रमाणित प्लट, भिल्ला र अपार्टमेन्ट खोज्नुहोस्।',
+    placeholder: 'प्लट्स, भिल्ला, अपार्टमेन्ट वा स्थान खोज्नुहोस्...',
+    suggestions: [
+      'शादनगरमा प्लट खोज्नुहोस्',
+      'हैदराबादमा लक्जरी भिल्ला',
+      'लेमुरमा प्लट'
+    ]
+  },
+  {
+    code: 'sd',
+    label: 'سنڌي (Sindhi)',
+    nativeName: 'سنڌي (Sindhi)',
+    speechCode: 'sd-IN',
+    direction: 'rtl',
+    welcomeGreeting: 'سلام! اوپن پلاٽس اينڊ ولاز (OPV) AI ۾ اوهان کي ڀليڪار۔',
+    welcomeSubtitle: 'اسان جي ڊيٽابيس مان تصديق ٿيل پلاٽ، ولا ۽ اپارٽمينٽ ڳوليو۔',
+    placeholder: 'پلاٽ، ولا، اپارٽمينٽ ڳوليو...',
+    suggestions: [
+      'شادنگر ۾ اوپن پلاٽ',
+      'حيدرآباد ۾ عاليشان ولاز'
+    ]
+  },
+  {
+    code: 'kok',
+    label: 'कोंकणी (Konkani)',
+    nativeName: 'कोंकणी (Konkani)',
+    speechCode: 'kok-IN',
+    welcomeGreeting: 'नमस्कार! ओपन प्लॉट्स अँड विलास (OPV) AI मध्ये तुमकां येवकार।',
+    welcomeSubtitle: 'आमच्या डेटाबेसांतल्यान तपासलेले प्लॉट्स, व्हिला आनी अपार्टमेंट सोदात.',
+    placeholder: 'प्लॉट्स, व्हिला, अपार्टमेंट सोदात...',
+    suggestions: [
+      'शादनगरांत प्लॉट्स सोदात',
+      'हैदराबादंत लक्झरी विला',
+      'लेमूरांत प्लॉट्स'
+    ]
+  },
+  {
+    code: 'bgc',
+    label: 'हरियाणवी (Haryanvi)',
+    nativeName: 'हरियाणवी (Haryanvi)',
+    speechCode: 'hi-IN',
+    welcomeGreeting: 'राम राम! ओपन प्लॉट्स अर विलास (OPV) AI म थारा स्वागत सै।',
+    welcomeSubtitle: 'म्हारी डेटाबेस तै वेरिफाइड प्लॉट, कोठी अर फ्लैट टटोलो।',
+    placeholder: 'प्लॉट, कोठी, फ्लैट, जगह या बजट टटोलो...',
+    suggestions: [
+      'शादनगर म खुले प्लॉट',
+      'हैदराबाद म बढ़िया कोठी',
+      'लेमूर म प्लॉट'
+    ]
+  },
+  {
+    code: 'hne',
+    label: 'छत्तीसगढ़ी (Chhattisgarhi)',
+    nativeName: 'छत्तीसगढ़ी (Chhattisgarhi)',
+    speechCode: 'hi-IN',
+    welcomeGreeting: 'जय जोहार! ओपन प्लॉट्स अउ विलास (OPV) AI म आप सब के सुवागत हे।',
+    welcomeSubtitle: 'हमार डेटाबेस ले सत्यापित प्लाट, बंगला अउ फ्लैट खोजव।',
+    placeholder: 'प्लाट, बंगला, अपार्टमेंट, जगह खोजव...',
+    suggestions: [
+      'शादनगर म खुला प्लाट',
+      'हैदराबाद म लक्जरी विला',
+      'लेमूर म प्लाट'
+    ]
+  },
+  {
+    code: 'tcy',
+    label: 'ತುಳು (Tulu)',
+    nativeName: 'ತುಳು (Tulu)',
+    speechCode: 'kn-IN',
+    welcomeGreeting: 'ನಮಸ್ಕಾರ! ಓಪನ್ ಪ್ಲಾಟ್ಸ್ & ವಿಲ್ಲಾಸ್ (OPV) AI ಗ್ ಸ್ವಾಗತ.',
+    welcomeSubtitle: 'ಎಂಕ್ಲೆನ ಡೇಟಾಬೇಸ್‌ರ್ದ್ ಪರೀಕ್ಷೆ ಮಲ್ದಿನ ಪ್ಲಾಟ್, ವಿಲ್ಲಾ ಬುಕ್ಕ ಅಪಾರ್ಟ್‌ಮೆಂಟ್‌ಲೆನ್ ನಾಡ್ಲೆ.',
+    placeholder: 'ಪ್ಲಾಟ್, ವಿಲ್ಲಾ, ಅಪಾರ್ಟ್‌ಮೆಂಟ್‌ ನಾಡ್ಲೆ...',
+    suggestions: [
+      'ಶಾದ್‌ನಗರಡ್ ಓಪನ್ ಪ್ಲಾಟ್‌ಲು',
+      'ಹೈದರಾಬಾದ್‌ಡ್ ಐಷಾರಾಮಿ ವಿಲ್ಲಾಲು'
+    ]
   }
+
 ];
 
 export const OPV_COMPANY_PROFILE = {

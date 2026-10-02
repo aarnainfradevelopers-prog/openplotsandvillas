@@ -291,13 +291,26 @@ export function classifyIntent(rawQuery: string): ClassifiedIntent {
     }
   }
 
-  // 5. PROPERTY SEARCH INTENT (Plots, Villas, Apartments, Commercial, Farmland, Locations, Budgets)
-  const hasPropType = /\b(plot|plots|villa|villas|apartment|apartments|flat|flats|farmland|farmlands|commercial|house|land)\b/i.test(normalized);
+  // 5. EDUCATIONAL / REAL ESTATE CONCEPTS (RERA, HMDA, DTCP, GHMC, EC, Mutation, etc. alone are NOT search)
+  const isEduPattern =
+    /\b(what|explain|meaning|definition|process|rules|how|why|difference|details|info)\b/i.test(normalized) ||
+    /^(rera|hmda|dtcp|ghmc|municipality|gram panchayat|panchayat|ec|encumbrance|mutation|registration|patta|lrs|vastu|home loan|tax|sale deed|agreement of sale|bhk|carpet area)$/i.test(normalized);
+
+  const hasSpecificPropType = /\b(plot|plots|villa|villas|apartment|apartments|flat|flats|farmland|farmlands|commercial|house|houses)\b/i.test(normalized);
   const hasLoc = KNOWN_LOCATIONS.some(loc => normalized.includes(loc));
   const hasBudgetWord = /\b(under|budget|lakh|lakhs|cr|crore|crores|price|cost|below)\b/i.test(normalized) || /\b\d+(\.\d+)?\s*(l|cr|lakh|crore)\b/i.test(normalized);
   const hasSearchVerb = /\b(show|find|search|available|look|looking|want|need|buy)\b/i.test(normalized);
 
-  if (hasPropType || (hasLoc && (hasBudgetWord || hasSearchVerb || normalized.split(' ').length <= 4)) || hasBudgetWord) {
+  if (isEduPattern && !hasSearchVerb && !hasBudgetWord && !hasLoc) {
+    return {
+      intent: 'GENERAL_INQUIRY',
+      normalizedQuery: normalized,
+      originalQuery: original
+    };
+  }
+
+  // 6. PROPERTY SEARCH INTENT (Plots, Villas, Apartments, Commercial, Farmland, Locations, Budgets)
+  if (hasSpecificPropType || (hasLoc && (hasBudgetWord || hasSearchVerb || normalized.split(' ').length <= 4)) || (hasBudgetWord && hasSearchVerb)) {
     return {
       intent: 'PROPERTY_SEARCH',
       normalizedQuery: normalized,

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   User,
   Sparkles,
-  Copy,
   Check,
   Volume2,
   VolumeX,
@@ -12,7 +11,12 @@ import {
   ShieldCheck,
   Landmark,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Pencil,
+  RotateCw,
+  SmilePlus,
+  ThumbsDown,
+  ThumbsUp
 } from 'lucide-react';
 import { ChatMessageItem, LanguageCode, PropertyItem } from '../types/chat';
 import { OPV_LANGUAGES } from '../data/chatConfig';
@@ -74,6 +78,48 @@ const PhoneCallIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4 
   </svg>
 );
 
+/**
+ * Clean Share / Upload Tray Icon (matching middle icon in user reference screenshot)
+ */
+const ShareTrayIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
+  </svg>
+);
+
+/**
+ * Exact Custom Copy SVG Icon (20px x 20px)
+ */
+const CopyIcon: React.FC<{ className?: string }> = ({ className = "Icon-X4VkKC" }) => (
+  <svg
+    aria-hidden="true"
+    className={className}
+    focusable="false"
+    height="20"
+    viewBox="0 0 20 20"
+    width="20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M15.1006 1.78516C16.793 1.78556 18.165 3.15808 18.165 4.85059V10.8838C18.1649 12.5762 16.7929 13.9478 15.1006 13.9482H13.998V15.0508C13.9976 16.7431 12.626 18.1151 10.9336 18.1152H4.90039C3.20789 18.1152 1.83537 16.7432 1.83496 15.0508V9.01758C1.83496 7.32482 3.20764 5.95215 4.90039 5.95215H6.00195V4.85059C6.00195 3.15783 7.37463 1.78516 9.06738 1.78516H15.1006ZM4.90039 7.28223C3.94218 7.28223 3.16504 8.05936 3.16504 9.01758V15.0508C3.16544 16.0087 3.94243 16.7852 4.90039 16.7852H10.9336C11.8914 16.785 12.6676 16.0086 12.668 15.0508V9.01758C12.668 8.05945 11.8917 7.28237 10.9336 7.28223H4.90039ZM9.06738 3.11523C8.10917 3.11523 7.33203 3.89237 7.33203 4.85059V5.95215H10.9336C12.6262 5.95229 13.998 7.32491 13.998 9.01758V12.6182H15.1006C16.0584 12.6178 16.8348 11.8416 16.835 10.8838V4.85059C16.835 3.89262 16.0585 3.11564 15.1006 3.11523H9.06738Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 interface ChatMessageProps {
   message: ChatMessageItem;
   currentLanguage: LanguageCode;
@@ -81,6 +127,8 @@ interface ChatMessageProps {
   onEnquireProperty: (property: PropertyItem) => void;
   onToggleFavorite?: (property: PropertyItem) => void;
   onOpenPropertyModal?: (property: PropertyItem) => void;
+  onEditMessage?: (messageId: string, newContent: string) => void;
+  onRegenerate?: (messageId: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -89,11 +137,28 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onSelectPropertyDetails,
   onEnquireProperty,
   onToggleFavorite,
-  onOpenPropertyModal
+  onOpenPropertyModal,
+  onEditMessage,
+  onRegenerate
 }) => {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(message.content || '');
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const isAssistant = message.role === 'assistant';
+
+  const handleTryAgain = () => {
+    setIsRegenerating(true);
+    if (onRegenerate) {
+      onRegenerate(message.id);
+    }
+    setTimeout(() => setIsRegenerating(false), 1200);
+  };
 
   const handleCopy = async () => {
     if (!message.content) return;
@@ -130,6 +195,27 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleShare = async () => {
+    if (!message.content) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'OPV Prompt',
+          text: message.content,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+        return;
+      } catch {
+        // User aborted or unsupported share
+      }
+    }
+    // Fallback: copy to clipboard
+    handleCopy();
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
   };
 
   const handleSpeak = () => {
@@ -229,10 +315,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-800 underline underline-offset-2 font-semibold">$1</a>');
   };
 
-  // If this is a User Message: render yellow bubble matching Images 2 & 3
+  // If this is a User Message: render user bubble and action row matching reference screenshot
   if (!isAssistant) {
     return (
-      <div className="py-2 px-2 sm:px-4 w-full flex items-center justify-end gap-2.5">
+      <div className="py-2 px-2 sm:px-4 w-full flex items-start justify-end gap-2.5">
         <div className="flex flex-col items-end max-w-xl">
           {/* User message attachments if any */}
           {message.attachments && message.attachments.length > 0 && (
@@ -258,24 +344,112 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </div>
           )}
 
-          {/* User Message Bubble matching card specs: White bg, thin dark-gray border, rounded 10px, 40px height, ~140px width */}
-          <div
-            className="inline-flex items-center justify-center min-h-[40px] min-w-[140px] px-4 py-2 rounded-[10px] bg-white text-slate-900 border border-slate-300 shadow-2xs text-xs sm:text-[13px] font-semibold break-words text-center select-text cursor-text"
-            style={{
-              backgroundColor: '#ffffff',
-              borderColor: '#cbd5e1',
-              borderRadius: '10px',
-              minHeight: '40px',
-              minWidth: '140px'
-            }}
-          >
-            {message.content}
-          </div>
+          {isEditing ? (
+            <div className="w-full min-w-[280px] sm:min-w-[380px] max-w-xl bg-white dark:bg-[#1a2234] border border-emerald-500 rounded-2xl p-3 shadow-md">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (editText.trim()) {
+                      setIsEditing(false);
+                      onEditMessage?.(message.id, editText.trim());
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsEditing(false);
+                    setEditText(message.content);
+                  }
+                }}
+                rows={Math.min(5, Math.max(2, editText.split('\n').length))}
+                className="w-full text-xs sm:text-[13.5px] text-slate-800 dark:text-slate-100 bg-transparent resize-none focus:outline-none leading-relaxed"
+                autoFocus
+              />
+              <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditText(message.content);
+                  }}
+                  className="px-3 py-1 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (editText.trim()) {
+                      setIsEditing(false);
+                      onEditMessage?.(message.id, editText.trim());
+                    }
+                  }}
+                  disabled={!editText.trim()}
+                  className="px-3.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* User Message Bubble matching Reference Screenshot (clean bubble without icons inside) */}
+              <div
+                className="relative inline-block max-w-xl px-4 py-2.5 rounded-2xl rounded-tr-xs bg-[#edf4fc] dark:bg-[#1e293b] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs text-xs sm:text-[13.5px] font-normal leading-relaxed break-words text-left select-text cursor-text"
+              >
+                {message.content}
+              </div>
+
+              {/* Action Buttons Below the User Prompt (matching Reference Screenshot: Copy, Share, Edit) */}
+              <div className="flex items-center justify-end gap-1 mt-1 mr-0.5 text-slate-400">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  title={copied ? "Copied!" : "Copy prompt"}
+                  aria-label="Copy prompt"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <CopyIcon />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  title={shared ? "Shared!" : "Share prompt"}
+                  aria-label="Share prompt"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  {shared ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <ShareTrayIcon />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(true);
+                    setEditText(message.content);
+                  }}
+                  title="Edit prompt"
+                  aria-label="Edit prompt"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 'You' Avatar Badge */}
-        <div className="shrink-0">
-          <span className="px-2.5 py-1 rounded-full bg-slate-200 text-slate-600 text-xs font-semibold flex items-center justify-center">
+        <div className="shrink-0 mt-1">
+          <span className="px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center justify-center">
             You
           </span>
         </div>
@@ -296,50 +470,141 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Speech Bubble & Content Area */}
         <div className="flex-1 min-w-0">
           {message.content && (
-            <div className="inline-block bg-white dark:bg-[#1a2234] border border-slate-200/90 dark:border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3 text-slate-800 dark:text-slate-100 text-sm sm:text-[15px] shadow-xs leading-relaxed max-w-2xl select-text cursor-text">
-              <div className="text-slate-800 dark:text-slate-200 text-sm select-text">
+            <div className="relative inline-block bg-white dark:bg-[#1a2234] border border-slate-200/90 dark:border-slate-800 rounded-2xl rounded-tl-xs px-4 py-3 text-slate-800 dark:text-slate-100 text-sm sm:text-[15px] shadow-xs leading-relaxed max-w-2xl select-text cursor-text w-full sm:w-auto">
+              {/* Right Side Corner Copy Button (where user marked in red) */}
+              <button
+                type="button"
+                onClick={handleCopy}
+                title={copied ? "Copied!" : "Copy response"}
+                aria-label="Copy response"
+                className="absolute top-2.5 right-2.5 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors flex items-center justify-center z-10"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <CopyIcon />
+                )}
+              </button>
+
+              <div className="text-slate-800 dark:text-slate-200 text-sm select-text pr-7">
                 {renderFormattedContent(message.content)}
               </div>
 
-              {/* Message Utilities: 1-Click Copy and Listen */}
-              <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-3">
+              {/* Feedback Options: Share, Listen, Try Again, Emoji, Thumb Down, Thumb Up */}
+              <div className="relative mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1 text-slate-400">
+                {/* Share */}
                 <button
                   type="button"
-                  onClick={handleCopy}
-                  title="Copy response"
-                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors"
+                  onClick={handleShare}
+                  title={shared ? "Shared!" : "Share response"}
+                  aria-label="Share response"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
                 >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-600 font-semibold">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
+                  {shared ? <Check className="w-4 h-4 text-emerald-600" /> : <ShareTrayIcon className="w-4 h-4" />}
                 </button>
 
+                {/* Listen */}
                 <button
                   type="button"
                   onClick={handleSpeak}
                   title={isSpeaking ? "Stop listening" : "Listen to answer"}
-                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors"
+                  aria-label="Listen to answer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
                 >
                   {isSpeaking ? (
-                    <>
-                      <VolumeX className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                      <span className="text-emerald-600 font-semibold">Stop</span>
-                    </>
+                    <VolumeX className="w-4 h-4 text-emerald-600 animate-pulse" />
                   ) : (
-                    <>
-                      <Volume2 className="w-3.5 h-3.5" />
-                      <span>Listen</span>
-                    </>
+                    <Volume2 className="w-4 h-4" />
                   )}
                 </button>
+
+                {/* Try Again / Regenerate */}
+                <button
+                  type="button"
+                  onClick={handleTryAgain}
+                  title="Try again"
+                  aria-label="Try again"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  <RotateCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin text-emerald-600' : ''}`} />
+                </button>
+
+                {/* Emoji Reaction */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(prev => !prev)}
+                    title="Add reaction"
+                    aria-label="Add reaction"
+                    className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                      selectedEmoji
+                        ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/30'
+                        : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {selectedEmoji ? (
+                      <span className="text-sm leading-none">{selectedEmoji}</span>
+                    ) : (
+                      <SmilePlus className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  {/* Micro Emoji Reaction Popover */}
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-full left-0 mb-1.5 bg-white dark:bg-[#1a2234] border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl p-1.5 flex items-center gap-1 z-20 animate-in fade-in zoom-in-95 duration-150">
+                      {['👍', '❤️', '💡', '🔥', '👏', '😊'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setSelectedEmoji(selectedEmoji === emoji ? null : emoji);
+                            setShowEmojiPicker(false);
+                          }}
+                          className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-sm transition-transform hover:scale-125 cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumb Down */}
+                <button
+                  type="button"
+                  onClick={() => setFeedback(prev => prev === 'down' ? null : 'down')}
+                  title="Bad response"
+                  aria-label="Bad response"
+                  className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                    feedback === 'down'
+                      ? 'text-rose-600 bg-rose-50 dark:bg-rose-950/40'
+                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+
+                {/* Thumb Up */}
+                <button
+                  type="button"
+                  onClick={() => setFeedback(prev => prev === 'up' ? null : 'up')}
+                  title="Good response"
+                  aria-label="Good response"
+                  className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                    feedback === 'up'
+                      ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40'
+                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+
+                {/* Feedback confirmation note */}
+                {feedback && (
+                  <span className="ml-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500 animate-in fade-in duration-200">
+                    {feedback === 'up' ? 'Helpful' : 'Recorded'}
+                  </span>
+                )}
               </div>
             </div>
           )}
