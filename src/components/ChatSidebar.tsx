@@ -1,6 +1,8 @@
 import React from 'react';
 import { Plus, X, Trash2, MessageSquare, Sparkles } from 'lucide-react';
-import { ChatSession } from '../types/chat';
+import { ChatSession, LanguageCode } from '../types/chat';
+import { getDashboardStrings } from '../data/dashboardTranslations';
+import { getQuickTranslation } from '../utils/aiEngine';
 
 export interface ChatSidebarProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export interface ChatSidebarProps {
   onOpenShortlist?: () => void;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
+  currentLanguage?: LanguageCode;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -30,8 +33,33 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onNewChat,
   onClearHistory,
   onDeleteSession = () => {},
-  isDarkMode = false
+  isDarkMode = false,
+  currentLanguage = 'en'
 }) => {
+  const locale = getDashboardStrings(currentLanguage);
+
+  // Helper to dynamically display localized session title
+  const getSessionDisplayTitle = (session: ChatSession): string => {
+    if (!session.title || session.title === 'New Chat' || session.title === 'New Search') {
+      return locale.newChat;
+    }
+    // Check if the first user message has a translated query
+    if (currentLanguage !== 'en' && session.messages && session.messages.length > 0) {
+      const firstUserMsg = session.messages.find(m => m.role === 'user');
+      if (firstUserMsg?.translatedQuery) {
+        return firstUserMsg.translatedQuery.slice(0, 28) + (firstUserMsg.translatedQuery.length > 28 ? '...' : '');
+      }
+    }
+    // Check instant quick translation dictionary
+    if (currentLanguage !== 'en') {
+      const quick = getQuickTranslation(session.title, currentLanguage);
+      if (quick) {
+        return quick.slice(0, 28) + (quick.length > 28 ? '...' : '');
+      }
+    }
+    return session.title;
+  };
+
   // Only display real chats in Recent Chats (remove any empty "New Search" entries)
   const displaySessions = sessions.filter(
     session => session.messages && session.messages.length > 0 && session.title !== 'New Search'
@@ -65,9 +93,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               </div>
               <div className="leading-tight">
                 <span className="font-extrabold text-sm tracking-tight text-slate-950 dark:text-white block">
-                  Open Plots &amp; Villas
+                  {currentLanguage === 'en' ? 'Open Plots & Villas' : locale.brandTitle}
                 </span>
-                <span className="text-[10px] text-slate-400 block -mt-0.5">Real Estate AI</span>
+                <span className="text-[10px] text-slate-400 block -mt-0.5">{locale.brandSubtitle}</span>
               </div>
             </div>
 
@@ -80,7 +108,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             </button>
           </div>
 
-          {/* + New Chat Box Card - Styled matching Reference Image 1 (Do more with AI Mode) */}
+          {/* + New Chat Box Card - Styled matching Reference Image 1 */}
           <button
             type="button"
             onClick={() => {
@@ -94,10 +122,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
-                <span>New Chat</span>
+                <span>{locale.newChat}</span>
               </div>
               <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight mt-0.5 font-normal truncate">
-                Start a fresh search
+                {locale.startFreshSearch}
               </div>
             </div>
           </button>
@@ -106,12 +134,12 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         {/* Recent Chats Section directly below New Chat */}
         <div className="flex-1 overflow-y-auto px-3 py-3">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-2 flex items-center justify-between">
-            <span>Recent Chats</span>
+            <span>{locale.recentChats}</span>
             {displaySessions.length > 0 && (
               <button
                 type="button"
                 onClick={onClearHistory}
-                title="Clear all chats"
+                title={locale.clearAllChatsTooltip}
                 className="hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3 h-3 text-slate-400 hover:text-rose-500" />
@@ -123,7 +151,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <div className="space-y-1.5">
             {displaySessions.length === 0 ? (
               <div className="text-[11px] text-slate-400 dark:text-slate-500 px-2 py-4 text-center italic">
-                No recent chats yet
+                {locale.noRecentChats}
               </div>
             ) : (
               displaySessions.map(session => (
@@ -155,7 +183,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                           : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                       }`}
                     />
-                    <span className="truncate">{session.title}</span>
+                    <span className="truncate">{getSessionDisplayTitle(session)}</span>
                   </div>
                   <button
                     type="button"
@@ -163,7 +191,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       e.stopPropagation();
                       onDeleteSession(session.id);
                     }}
-                    title="Delete chat"
+                    title={locale.deleteChatTooltip}
                     className="opacity-0 group-hover:opacity-100 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1 rounded-md text-slate-400 transition-all shrink-0 cursor-pointer"
                   >
                     <X className="w-3 h-3" />
@@ -177,3 +205,4 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     </>
   );
 };
+

@@ -10,24 +10,28 @@ import {
   LayoutGrid,
   Navigation
 } from 'lucide-react';
-import { PropertyItem } from '../types/chat';
+import { PropertyItem, LanguageCode } from '../types/chat';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
+import { getPropertyDetailsStrings } from '../data/propertyDetailsI18n';
 
 interface PropertyCardProps {
   property: PropertyItem;
   onDetails: (property: PropertyItem) => void;
   onEnquire: (property: PropertyItem) => void;
   onToggleFavorite?: (property: PropertyItem) => void;
+  currentLanguage?: LanguageCode;
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   onDetails,
   onEnquire,
-  onToggleFavorite
+  onToggleFavorite,
+  currentLanguage = 'en'
 }) => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(property.isFavorite || false);
+  const pLocale = getPropertyDetailsStrings(currentLanguage);
 
   const images = property.images && property.images.length > 0
     ? property.images
@@ -160,7 +164,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
                   {configText}
                 </div>
                 <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">
-                  CONFIG
+                  {pLocale.configurations}
                 </div>
               </div>
             </div>
@@ -174,7 +178,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
                   {property.area}
                 </div>
                 <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">
-                  SIZE
+                  {pLocale.size}
                 </div>
               </div>
             </div>
@@ -188,7 +192,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             onClick={() => onDetails(property)}
             className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold transition-colors flex items-center justify-center cursor-pointer shadow-2xs"
           >
-            Details
+            {currentLanguage === 'te' ? 'వివరాలు' : currentLanguage === 'hi' ? 'विवरण' : currentLanguage === 'ta' ? 'விவரங்கள்' : 'Details'}
           </button>
           <button
             type="button"
@@ -196,7 +200,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Phone className="w-3.5 h-3.5" />
-            <span>Enquire</span>
+            <span>{pLocale.enquire}</span>
           </button>
         </div>
       </div>

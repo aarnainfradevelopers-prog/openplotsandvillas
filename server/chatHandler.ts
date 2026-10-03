@@ -3,6 +3,7 @@ import { retrieveWebsiteContent } from './websiteRetriever.ts';
 import {
   generateGeminiResponse,
   extractSearchFiltersWithGemini,
+  translateQueryWithGemini,
   checkIsGeneralEducationalQuery,
   getEducationalTopicKnowledge,
   type ChatHistoryMessage,
@@ -23,6 +24,7 @@ export interface ChatResponsePayload {
   actions?: Array<{ label: string; url: string; action: string }>;
   category?: string;
   sourceType?: 'supabase_property' | 'opv_website' | 'general';
+  translatedUserPrompt?: string;
 }
 
 /**
@@ -200,7 +202,8 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
 export function generatePropertySearchSummary(
   query: string,
   filters: StructuredPropertySearchFilter,
-  matchedProperties: NormalizedPropertyRecord[]
+  matchedProperties: NormalizedPropertyRecord[],
+  language: string = 'en'
 ): string {
   const q = (query || '').toLowerCase().trim();
 
@@ -367,6 +370,90 @@ export function generatePropertySearchSummary(
 
   searchResultsLines.push(`**Projects Found:** ${matchedProperties.length}`);
 
+  // Dynamic localization mapping for non-English responses
+  const SEARCH_SUMMARY_LANGUAGES: Record<string, {
+    foundHeader: string;
+    propTypeLabel: string;
+    locLabel: string;
+    approvalLabel: string;
+    budgetLabel: string;
+    projectsFoundLabel: string;
+    footer: string;
+    titleSuffix: (type: string, loc: string) => string;
+  }> = {
+    ta: {
+      foundHeader: "நான் கண்டறிந்த விவரங்கள்",
+      propTypeLabel: "சொத்து வகை",
+      locLabel: "இடம்",
+      approvalLabel: "ஒப்புதல்கள்",
+      budgetLabel: "பட்ஜெட்",
+      projectsFoundLabel: "கண்டறியப்பட்ட திட்டங்கள்",
+      footer: "உங்கள் தேடலுக்குப் பொருந்தக்கூடிய சரிபார்க்கப்பட்ட சொத்துகள் கீழே உள்ள அட்டைகளில் கொடுக்கப்பட்டுள்ளன. இருப்பிடம், ஒப்புதல்கள், அளவுகள் மற்றும் விலைகளை நீங்கள் பார்க்கலாம்.",
+      titleSuffix: (type, loc) => `**🏡 ${loc} உள்ள ${type === 'Properties' ? 'சொத்துகள்' : type + ' சொத்துகள்'}**`
+    },
+    te: {
+      foundHeader: "నేను కనుగొన్న వివరాలు",
+      propTypeLabel: "ప్రాపర్టీ రకం",
+      locLabel: "ప్రాంతం",
+      approvalLabel: "అనుమతులు",
+      budgetLabel: "బడ్జెట్",
+      projectsFoundLabel: "కనుగొనబడిన ప్రాజెక్ట్‌లు",
+      footer: "మీ శోధనకు సరిపోలే ధృవీకరించబడిన ప్రాపర్టీలను క్రింది కార్డ్స్‌లో చూడవచ్చు. స్థలం, అనుమతులు, ప్లాట్ పరిమాణాలు మరియు ధరల వివరాలు క్రింద ఉన్నాయి.",
+      titleSuffix: (type, loc) => `**🏡 ${loc} లో ${type === 'Properties' ? 'ప్రాపర్టీలు' : type + ' ప్రాపర్టీలు'}**`
+    },
+    hi: {
+      foundHeader: "मुझे यह मिला",
+      propTypeLabel: "संपत्ति प्रकार",
+      locLabel: "स्थान",
+      approvalLabel: "स्वीकृतियां",
+      budgetLabel: "बजट",
+      projectsFoundLabel: "मिले प्रोजेक्ट",
+      footer: "आपकी खोज से मेल खाने वाली सत्यापित संपत्तियां नीचे दिए गए प्रॉपर्टी कार्ड में उपलब्ध हैं। आप स्थान, स्वीकृतियां, प्लॉट का आकार और मूल्य विवरण देख सकते हैं।",
+      titleSuffix: (type, loc) => `**🏡 ${loc} में ${type === 'Properties' ? 'संपत्तियां' : type + ' संपत्तियां'}**`
+    },
+    kn: {
+      foundHeader: "ನಾನು ಕಂಡುಕೊಂಡ ವಿವರಗಳು",
+      propTypeLabel: "ಆಸ್ತಿಯ ಪ್ರಕಾರ",
+      locLabel: "ಸ್ಥಳ",
+      approvalLabel: "ಅನುಮೋದನೆಗಳು",
+      budgetLabel: "ಬಜೆಟ್",
+      projectsFoundLabel: "ಕಂಡುಬಂದ ಯೋಜನೆಗಳು",
+      footer: "ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಹೊಂದಿಕೆಯಾಗುವ ಪರಿಶೀಲಿಸಿದ ಆಸ್ತಿಗಳು ಕೆಳಗಿನ ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ಲಭ್ಯವಿದೆ.",
+      titleSuffix: (type, loc) => `**🏡 ${loc} ನಲ್ಲಿ ${type === 'Properties' ? 'ಆಸ್ತಿಗಳು' : type + ' ಆಸ್ತಿಗಳು'}**`
+    },
+    ml: {
+      foundHeader: "കണ്ടെത്തിയ വിവരങ്ങൾ",
+      propTypeLabel: "പ്രോപ്പർട്ടി തരം",
+      locLabel: "സ്ഥലം",
+      approvalLabel: "അംഗീകാരങ്ങൾ",
+      budgetLabel: "ബഡ്ജറ്റ്",
+      projectsFoundLabel: "കണ്ടെത്തിയ പ്രോജക്റ്റുകൾ",
+      footer: "നിങ്ങളുടെ തിരയലിന് അനുയോജ്യമായ സ്ഥിരീകരിച്ച പ്രോപ്പർട്ടികൾ താഴെയുള്ള കാർഡുകളിൽ ലഭ്യമാണ്.",
+      titleSuffix: (type, loc) => `**🏡 ${loc} ലെ ${type === 'Properties' ? 'പ്രോപ്പർട്ടികൾ' : type + ' പ്രോപ്പർട്ടികൾ'}**`
+    }
+  };
+
+  const localized = SEARCH_SUMMARY_LANGUAGES[language];
+  if (localized) {
+    const locLines: string[] = [
+      `**${localized.propTypeLabel}:** ${summaryType}`,
+      `**${localized.locLabel}:** ${locationDisplay}`
+    ];
+    if (approvals.length > 0) locLines.push(`**${localized.approvalLabel}:** ${[...new Set(approvals)].join(', ')}`);
+    if (budgetLine) locLines.push(budgetLine.replace('**Budget:**', `**${localized.budgetLabel}:**`));
+    if (bhkLine) locLines.push(bhkLine);
+    if (facingLine) locLines.push(facingLine);
+    locLines.push(`**${localized.projectsFoundLabel}:** ${matchedProperties.length}`);
+
+    return `${localized.titleSuffix(headerType, locationDisplay)}
+
+✨ **${localized.foundHeader}**
+
+${locLines.join('\n')}
+
+${localized.footer}`.trim();
+  }
+
   const mainTitle = headerType === 'Properties'
     ? `**🏡 Properties ${titleLocationPhrase}**`
     : `**🏡 ${headerType} Properties ${titleLocationPhrase}**`;
@@ -395,6 +482,11 @@ export async function handleChatRequest(
   const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Concurrently translate user query into target language if non-English
+  const translationPromise = (language && language !== 'en' && geminiApiKey)
+    ? translateQueryWithGemini(rawQuery, language, geminiApiKey).catch(() => rawQuery)
+    : Promise.resolve(rawQuery);
 
   // 1. Identify previous project context if follow-up question
   const contextProject = extractContextProject(history);
@@ -509,7 +601,7 @@ export async function handleChatRequest(
 
         if (!isFactualAttributeQuery) {
           // GENERATE SHORT DYNAMIC SEARCH SUMMARY DIRECTLY (no long property duplicate text)
-          finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties);
+          finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties, language);
         } else {
           // Formulate strict grounding string for Gemini to answer the specific attribute question
           groundingData = matchedProperties.map((p, idx) => `
@@ -592,7 +684,7 @@ INSTRUCTIONS FOR YOUR RESPONSE:
   // Graceful fallback if Gemini did not produce an answer
   if (!finalAnswer) {
     if (matchedProperties.length > 0) {
-      finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties);
+      finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties, language);
     } else {
       const eduTopic = getEducationalTopicKnowledge(rawQuery);
       if (eduTopic) {
@@ -608,11 +700,14 @@ INSTRUCTIONS FOR YOUR RESPONSE:
     ? `Hello OPV, I am inquiring about ${primaryProj.title}`
     : `Hello OPV, I have an inquiry: ${rawQuery}`;
 
+  const translatedUserPrompt = await translationPromise;
+
   return {
     content: finalAnswer,
     properties: matchedProperties, // ALWAYS an array: [] when 0 matches!
     actions: getStandardActions('9963513939', customWa),
     category: primaryProj ? (primaryProj.normalizedType === 'PLOT' ? 'plots' : 'villas') : 'general',
-    sourceType: groundingSourceType
+    sourceType: groundingSourceType,
+    translatedUserPrompt: (translatedUserPrompt && translatedUserPrompt !== rawQuery) ? translatedUserPrompt : undefined
   };
 }

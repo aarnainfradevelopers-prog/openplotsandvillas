@@ -630,9 +630,11 @@ CORE OPERATIONAL RULES:
 3. PROPERTY SEARCH QUERIES:
    - For queries where the user searched for properties and cards are displayed, do NOT list individual property or project details (names, prices, RERA numbers, etc.) as long bullet points in the text response because property cards are displayed directly below.
 
-4. Language & Tone:
-   - Professional, warm, transparent, and helpful.
-   - Respond in the language selected by the user (${language}) or match the language and script they use to ask their query.
+4. CRITICAL LANGUAGE RULE:
+   - The user has actively selected the interface language: "${language}".
+   - If "${language}" is NOT 'en', YOU MUST WRITE YOUR ENTIRE RESPONSE NATURALLY AND FLUENTLY IN THE USER'S SELECTED LANGUAGE (${language}) (e.g. Tamil for 'ta', Telugu for 'te', Hindi for 'hi', Kannada for 'kn', Malayalam for 'ml', Bengali for 'bn', Marathi for 'mr', Gujarati for 'gu', etc.).
+   - Even if grounding data and database records are in English, translate the explanation into the selected language (${language}) so the user receives an answer completely in their chosen language.
+   - Keep established technical real-estate acronyms (like RERA, HMDA, DTCP, GHMC, EC) identifiable while explaining them fully in ${language}.
 
 CURRENT GROUNDING SOURCE: ${groundingSourceType.toUpperCase()}
 GROUNDING DATA:
@@ -698,3 +700,91 @@ ${groundingData || 'No specific records found.'}
 
   throw new Error(`All Gemini candidate models failed. Last error: ${lastError || 'Unknown error'}`);
 }
+
+/**
+ * Translates a user query or question into the target Indian language using Gemini AI.
+ * If the user's input is already written in the target script, or if the target is 'en',
+ * returns the original query.
+ */
+export async function translateQueryWithGemini(
+  query: string,
+  targetLanguage: string,
+  apiKey: string
+): Promise<string> {
+  const clean = (query || '').trim();
+  if (!clean || !apiKey || !targetLanguage || targetLanguage === 'en') {
+    return clean;
+  }
+
+  // If the text does not contain any English/Latin letters (e.g. user already typed in Telugu script), no need to translate
+  if (!/[a-zA-Z]/.test(clean)) {
+    return clean;
+  }
+
+  const langNames: Record<string, string> = {
+    te: 'Telugu',
+    ta: 'Tamil',
+    hi: 'Hindi',
+    kn: 'Kannada',
+    ml: 'Malayalam',
+    mr: 'Marathi',
+    bn: 'Bengali',
+    gu: 'Gujarati',
+    ur: 'Urdu',
+    pa: 'Punjabi',
+    or: 'Odia',
+    mwr: 'Marwari',
+    as: 'Assamese',
+    mai: 'Maithili',
+    sat: 'Santali',
+    ks: 'Kashmiri',
+    bho: 'Bhojpuri',
+    ne: 'Nepali',
+    sd: 'Sindhi',
+    kok: 'Konkani',
+    bgc: 'Haryanvi',
+    hne: 'Chhattisgarhi',
+    tcy: 'Tulu'
+  };
+
+  const targetLangName = langNames[targetLanguage] || targetLanguage;
+
+  const systemInstruction = `You are a specialized real-estate multilingual assistant. Translate the following user query or search question into natural, conversational ${targetLangName} script.
+Rules:
+1. Preserve real-estate abbreviations and brand names as recognized terms (e.g. OPV, RERA, HMDA, DTCP, GHMC, EC, BHK, Sq.Yd.).
+2. Translate words like "plots", "villas", "apartments", "services", "price", "budget", "show me", "what is", "provide" into natural ${targetLangName}.
+3. Output ONLY the translated query text. Do not add quotes, introductory phrases, or explanation.`;
+
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: clean }] }],
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 120
+          }
+        })
+      });
+
+      if (!res.ok) continue;
+
+      const data = await res.json();
+      const translated = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (translated) {
+        // Strip any wrapping quotes
+        return translated.replace(/^["'`]|["'`]$/g, '').trim();
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return clean;
+}
+

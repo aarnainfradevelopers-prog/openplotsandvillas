@@ -117,6 +117,8 @@ export interface ChatMessageItem {
   content: string;
   timestamp: Date;
   language?: LanguageCode;
+  originalQuery?: string;
+  translatedQuery?: string;
   actions?: ActionLink[];
   category?: string;
   properties?: PropertyItem[];

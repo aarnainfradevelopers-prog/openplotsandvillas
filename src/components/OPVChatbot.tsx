@@ -30,12 +30,16 @@ import {
   UserAccount,
   AttachedFile
 } from '../types/chat';
-import { processChatQuery, processChatQueryAsync } from '../utils/aiEngine';
+import { processChatQuery, processChatQueryAsync, getQuickTranslation } from '../utils/aiEngine';
 import { getPropertiesForQuery, OPV_FALLBACK_IMAGE, updateActiveProperties } from '../data/propertyData';
 import { fetchLiveSupabaseProperties } from '../services/supabaseService';
+import { OPV_LANGUAGES } from '../data/chatConfig';
+import { getDashboardStrings } from '../data/dashboardTranslations';
 
 export const OPVChatbot: React.FC = () => {
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
+  const currentLangConfig = OPV_LANGUAGES.find(l => l.code === currentLanguage) || OPV_LANGUAGES[0];
+  const locale = getDashboardStrings(currentLanguage);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('Hyderabad');
@@ -204,10 +208,17 @@ export const OPVChatbot: React.FC = () => {
   const handleSendMessage = (text: string, attachments?: AttachedFile[]) => {
     if (!text.trim() && (!attachments || attachments.length === 0)) return;
 
+    // Check instant local dictionary for immediate non-English display
+    const quickTranslated = getQuickTranslation(text, currentLanguage);
+    const initialContent = quickTranslated || text || 'Uploaded documents';
+
+    const userMsgId = `user-${Date.now()}`;
     const userMsg: ChatMessageItem = {
-      id: `user-${Date.now()}`,
+      id: userMsgId,
       role: 'user',
-      content: text || 'Uploaded documents',
+      content: initialContent,
+      originalQuery: text,
+      translatedQuery: quickTranslated || undefined,
       timestamp: new Date(),
       language: currentLanguage,
       attachments
@@ -216,7 +227,7 @@ export const OPVChatbot: React.FC = () => {
     // If session only has the greeting, set its title from the first user message
     const isFirstUserQuery = currentSession.messages.filter(m => m.role === 'user').length === 0;
     const newTitle = isFirstUserQuery
-      ? text.slice(0, 28) + (text.length > 28 ? '...' : '')
+      ? initialContent.slice(0, 28) + (initialContent.length > 28 ? '...' : '')
       : currentSession.title;
 
     setSessions(prev =>
@@ -246,6 +257,8 @@ export const OPVChatbot: React.FC = () => {
           ? aiResponse.properties
           : (aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(text));
 
+        const finalUserPrompt = aiResponse.translatedUserPrompt || quickTranslated;
+
         const assistantMsg: ChatMessageItem = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
@@ -262,7 +275,22 @@ export const OPVChatbot: React.FC = () => {
             s.id === currentSession.id
               ? {
                 ...s,
-                messages: [...s.messages, assistantMsg]
+                title: (isFirstUserQuery && finalUserPrompt)
+                  ? (finalUserPrompt.slice(0, 28) + (finalUserPrompt.length > 28 ? '...' : ''))
+                  : s.title,
+                messages: [
+                  ...s.messages.map(m =>
+                    m.id === userMsgId && finalUserPrompt
+                      ? {
+                        ...m,
+                        content: finalUserPrompt,
+                        translatedQuery: finalUserPrompt,
+                        originalQuery: m.originalQuery || text
+                      }
+                      : m
+                  ),
+                  assistantMsg
+                ]
               }
               : s
           )
@@ -300,9 +328,14 @@ export const OPVChatbot: React.FC = () => {
     if (msgIndex === -1) return;
 
     const oldMsg = currentSession.messages[msgIndex];
+    const quickTranslated = getQuickTranslation(newText, currentLanguage);
+    const initialEditContent = quickTranslated || newText;
+
     const updatedUserMsg: ChatMessageItem = {
       ...oldMsg,
-      content: newText,
+      content: initialEditContent,
+      originalQuery: newText,
+      translatedQuery: quickTranslated || undefined,
       timestamp: new Date()
     };
 
@@ -314,9 +347,9 @@ export const OPVChatbot: React.FC = () => {
       prev.map(s =>
         s.id === currentSession.id
           ? {
-              ...s,
-              messages: updatedMessages
-            }
+            ...s,
+            messages: updatedMessages
+          }
           : s
       )
     );
@@ -336,6 +369,8 @@ export const OPVChatbot: React.FC = () => {
           ? aiResponse.properties
           : (aiResponse.properties !== undefined ? aiResponse.properties : getPropertiesForQuery(newText));
 
+        const finalTranslatedPrompt = aiResponse.translatedUserPrompt || quickTranslated;
+
         const assistantMsg: ChatMessageItem = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
@@ -351,9 +386,24 @@ export const OPVChatbot: React.FC = () => {
           prev.map(s =>
             s.id === currentSession.id
               ? {
-                  ...s,
-                  messages: [...updatedMessages, assistantMsg]
-                }
+                ...s,
+                title: (msgIndex === 1 && finalTranslatedPrompt)
+                  ? (finalTranslatedPrompt.slice(0, 28) + (finalTranslatedPrompt.length > 28 ? '...' : ''))
+                  : s.title,
+                messages: [
+                  ...updatedMessages.map(m =>
+                    m.id === messageId && finalTranslatedPrompt
+                      ? {
+                        ...m,
+                        content: finalTranslatedPrompt,
+                        translatedQuery: finalTranslatedPrompt,
+                        originalQuery: newText
+                      }
+                      : m
+                  ),
+                  assistantMsg
+                ]
+              }
               : s
           )
         );
@@ -371,9 +421,9 @@ export const OPVChatbot: React.FC = () => {
           prev.map(s =>
             s.id === currentSession.id
               ? {
-                  ...s,
-                  messages: [...updatedMessages, fallbackMsg]
-                }
+                ...s,
+                messages: [...updatedMessages, fallbackMsg]
+              }
               : s
           )
         );
@@ -401,7 +451,9 @@ export const OPVChatbot: React.FC = () => {
         content: m.content
       }));
 
-    processChatQueryAsync(lastUserMsg.content, currentLanguage, conversationHistory)
+    const queryToSend = lastUserMsg.originalQuery || lastUserMsg.content;
+
+    processChatQueryAsync(queryToSend, currentLanguage, conversationHistory)
       .then(aiResponse => {
         const matchedProperties = Array.isArray(aiResponse.properties)
           ? aiResponse.properties
@@ -422,9 +474,9 @@ export const OPVChatbot: React.FC = () => {
           prev.map(s =>
             s.id === currentSession.id
               ? {
-                  ...s,
-                  messages: s.messages.map(m => m.id === assistantMessageId ? updatedAssistantMsg : m)
-                }
+                ...s,
+                messages: s.messages.map(m => m.id === assistantMessageId ? updatedAssistantMsg : m)
+              }
               : s
           )
         );
@@ -438,13 +490,42 @@ export const OPVChatbot: React.FC = () => {
   };
 
   const handleSelectPropertyDetails = (property: PropertyItem) => {
+    const isTe = currentLanguage === 'te';
+    const isTa = currentLanguage === 'ta';
+    const isHi = currentLanguage === 'hi';
+
+    const userPromptText = isTe
+      ? `${property.title} వివరాలు చూపించండి`
+      : isTa
+        ? `${property.title} விவரங்களைக் காட்டு`
+        : isHi
+          ? `${property.title} का विवरण दिखाएं`
+          : `Show details for ${property.title}`;
+
     const userMsg: ChatMessageItem = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: `Show details for ${property.title}`,
+      content: userPromptText,
+      originalQuery: `Show details for ${property.title}`,
       timestamp: new Date(),
       language: currentLanguage
     };
+
+    const bookVisitLabel = isTe
+      ? `${property.area} కోసం సైట్ విజిట్ బుక్ చేయండి`
+      : isTa
+        ? `${property.area} தளப் பார்வை முன்பதிவு`
+        : isHi
+          ? `${property.area} के लिए साइट विजिट बुक करें`
+          : `Book Site Visit for ${property.area}`;
+
+    const waLabel = isTe
+      ? 'వాట్సాప్‌లో చాట్ చేయండి'
+      : isTa
+        ? 'வாட்ஸ்அப்பில் அரட்டையடிக்கவும்'
+        : isHi
+          ? 'व्हाट्सएप पर चैट करें'
+          : 'Chat on WhatsApp';
 
     const assistantMsg: ChatMessageItem = {
       id: `assistant-${Date.now() + 1}`,
@@ -454,9 +535,9 @@ export const OPVChatbot: React.FC = () => {
       language: currentLanguage,
       selectedPropertyDetail: property,
       actions: [
-        { label: `Book Site Visit for ${property.area}`, action: 'details' },
+        { label: bookVisitLabel, action: 'details' },
         {
-          label: 'Chat on WhatsApp',
+          label: waLabel,
           url: `https://wa.me/919963513939?text=Interested%20in%20${encodeURIComponent(property.title)}`,
           action: 'whatsapp'
         }
@@ -487,7 +568,7 @@ export const OPVChatbot: React.FC = () => {
     const cleanSessions = sessions.filter(s => s.messages && s.messages.length > 0 && s.title !== 'New Search');
     const newSession: ChatSession = {
       id: `session-${Date.now()}`,
-      title: 'New Chat',
+      title: locale.newChat,
       createdAt: new Date(),
       language: currentLanguage,
       messages: []
@@ -502,7 +583,7 @@ export const OPVChatbot: React.FC = () => {
       if (filtered.length === 0) {
         const fresh: ChatSession = {
           id: `session-${Date.now()}`,
-          title: 'New Chat',
+          title: locale.newChat,
           createdAt: new Date(),
           language: currentLanguage,
           messages: []
@@ -518,10 +599,10 @@ export const OPVChatbot: React.FC = () => {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm('Clear all chat history?')) {
+    if (window.confirm(locale.clearHistoryConfirm)) {
       const freshSession: ChatSession = {
         id: `session-${Date.now()}`,
-        title: 'New Chat',
+        title: locale.newChat,
         createdAt: new Date(),
         language: currentLanguage,
         messages: []
@@ -534,52 +615,62 @@ export const OPVChatbot: React.FC = () => {
 
   const handleLanguageChange = (lang: LanguageCode) => {
     setCurrentLanguage(lang);
+    const newLocale = getDashboardStrings(lang);
     setSessions(prev =>
       prev.map(s =>
         s.id === currentSession.id
           ? {
             ...s,
-            language: lang
+            language: lang,
+            title: (s.title === 'New Chat' || s.title === 'New Search' || !s.messages || s.messages.length === 0)
+              ? newLocale.newChat
+              : s.title
           }
           : s
       )
     );
   };
 
-  // Quick suggestion button options in square form matching reference
-  const suggestionChips = [
-    {
-      label: 'Apartments in Hyderabad',
-      query: 'apartments in hyd',
-      icon: Building2,
-      subtitle: '2, 3 & 4 BHK High-rises'
-    },
-    {
-      label: 'Open Plots in Hyd',
-      query: 'open plots in Hyd',
-      icon: MapPin,
-      subtitle: 'HMDA & DTCP Approved'
-    },
-    {
-      label: 'Gated Luxury Villas',
-      query: 'gated luxury villas in hyderabad',
-      icon: Home,
-      subtitle: 'Kokapet, Tellapur, Mokila'
-    },
-    {
-      label: 'Farm Lands',
-      query: 'farm lands in hyderabad',
-      icon: Sprout,
-      subtitle: 'Agriculture & Farm Houses'
-    },
-    {
-      label: 'Commercial Plots',
-      query: 'commercial properties in hyd',
-      icon: Store,
-      subtitle: 'offices & Retail Shops'
-    }
-
-  ];
+  // Quick suggestion button options in square form matching reference, dynamically localized
+  const chipIcons = [Building2, MapPin, Home, Sprout, Store];
+  const suggestionChips = (currentLangConfig.suggestions && currentLangConfig.suggestions.length > 0 && currentLanguage !== 'en')
+    ? currentLangConfig.suggestions.slice(0, 5).map((sug, idx) => ({
+      label: sug,
+      query: sug,
+      icon: chipIcons[idx % chipIcons.length]
+    }))
+    : [
+      {
+        label: 'Apartments in Hyderabad',
+        query: 'apartments in hyd',
+        icon: Building2,
+        subtitle: '2, 3 & 4 BHK High-rises'
+      },
+      {
+        label: 'Open Plots in Hyd',
+        query: 'open plots in Hyd',
+        icon: MapPin,
+        subtitle: 'HMDA & DTCP Approved'
+      },
+      {
+        label: 'Gated Luxury Villas',
+        query: 'gated luxury villas in hyderabad',
+        icon: Home,
+        subtitle: 'Kokapet, Tellapur, Mokila'
+      },
+      {
+        label: 'Farm Lands',
+        query: 'farm lands in hyderabad',
+        icon: Sprout,
+        subtitle: 'Agriculture & Farm Houses'
+      },
+      {
+        label: 'Commercial Plots',
+        query: 'commercial properties in hyd',
+        icon: Store,
+        subtitle: 'offices & Retail Shops'
+      }
+    ];
 
   return (
     <div
@@ -604,6 +695,7 @@ export const OPVChatbot: React.FC = () => {
         onOpenShortlist={() => setIsShortlistOpen(true)}
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(prev => !prev)}
+        currentLanguage={currentLanguage}
       />
 
       {/* Main Chat Workspace matching Square Yards AI layout */}
@@ -627,11 +719,11 @@ export const OPVChatbot: React.FC = () => {
 
             <div>
               <div className="text-sm font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 leading-snug">
-                <span>Open Plots &amp; Villas</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hidden sm:inline">• Real Estate AI</span>
+                <span>{currentLanguage === 'en' ? 'Open Plots & Villas' : locale.brandTitle}</span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hidden sm:inline">• {locale.brandSubtitle}</span>
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500 leading-none">
-                Search smarter · Find faster · Buy better
+                {locale.headerTagline}
               </div>
             </div>
           </div>
@@ -647,17 +739,21 @@ export const OPVChatbot: React.FC = () => {
               {/* Top Pill Badge */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-3 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>India’s First AI-Powered Real Estate Platform</span>
+                <span>{locale.platformBadge}</span>
               </div>
 
               {/* Hero Heading: Welcome to OPV Plots */}
-              <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight text-center mb-2.5">
-                Hello! Welcome to <span className="text-emerald-600 dark:text-emerald-400">OPV Plots</span>
+              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight text-center mb-2.5">
+                {currentLanguage === 'en' ? (
+                  <>Hello! Welcome to <span className="text-emerald-600 dark:text-emerald-400">OPV AI</span></>
+                ) : (
+                  currentLangConfig.welcomeGreeting
+                )}
               </h1>
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 text-center max-w-xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
-                Find verified open plots, luxury villas, and apartments from our database
+                {currentLangConfig.welcomeSubtitle}
               </p>
 
               {/* Centered User Prompt Bar with balanced, compact length */}
@@ -669,7 +765,7 @@ export const OPVChatbot: React.FC = () => {
                   isLoading={isLoading}
                   selectedCity={selectedCity}
                   isDarkMode={isDarkMode}
-                  placeholder="Search plots, villas, apartments, locations, budgets..."
+                  placeholder={currentLangConfig.placeholder}
                   containerClassName="max-w-3xl sm:max-w-[740px]"
                 />
               </div>
@@ -725,7 +821,7 @@ export const OPVChatbot: React.FC = () => {
                 {isLoading && (
                   <div className="py-2 flex items-center justify-center gap-2.5 text-xs text-slate-500">
                     <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <span>Searching verified listings from Supabase...</span>
+                    <span>{locale.searchingListings}</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -767,6 +863,7 @@ export const OPVChatbot: React.FC = () => {
                   isLoading={isLoading}
                   selectedCity={selectedCity}
                   isDarkMode={isDarkMode}
+                  placeholder={currentLangConfig.placeholder}
                 />
               </div>
             </div>
@@ -880,6 +977,7 @@ export const OPVChatbot: React.FC = () => {
         isOpen={!!detailModalProperty}
         onClose={() => setDetailModalProperty(null)}
         property={detailModalProperty}
+        currentLanguage={currentLanguage}
         onEnquire={prop => {
           setDetailModalProperty(null);
           handleEnquireProperty(prop);

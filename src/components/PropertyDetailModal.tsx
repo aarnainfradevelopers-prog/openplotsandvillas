@@ -13,28 +13,59 @@ import {
   Sparkles,
   Building
 } from 'lucide-react';
-import { PropertyItem } from '../types/chat';
+import { PropertyItem, LanguageCode } from '../types/chat';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
 import { StructuredPropertyCards } from './StructuredPropertyCards';
+import { getPropertyDetailsStrings } from '../data/propertyDetailsI18n';
 
 interface PropertyDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   property: PropertyItem | null;
   onEnquire: (property: PropertyItem) => void;
+  currentLanguage?: LanguageCode;
 }
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   isOpen,
   onClose,
   property,
-  onEnquire
+  onEnquire,
+  currentLanguage = 'en'
 }) => {
   const [activeTab, setActiveTab] = useState<'Structured Details' | 'Overview' | 'Amenities' | 'About' | 'Nearby'>('Structured Details');
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(false);
 
+  const pLocale = getPropertyDetailsStrings(currentLanguage);
+
   if (!isOpen || !property) return null;
+
+  const tabLabels: Record<'Structured Details' | 'Overview' | 'Amenities' | 'About' | 'Nearby', string> = {
+    'Structured Details': pLocale.structuredDetailsTab,
+    Overview: pLocale.overviewTab,
+    Amenities: pLocale.amenitiesTab,
+    About: pLocale.aboutTab,
+    Nearby: pLocale.similarTab
+  };
+
+  const getLocalizedOverview = (): string => {
+    if (currentLanguage === 'te') {
+      const facing = property.facing ? `${property.facing} ఫేసింగ్ ` : '';
+      const type = property.type === 'plot' ? 'ఓపెన్ ప్లాట్' : property.type === 'villa' ? 'విల్లా' : 'ప్రాపర్టీ';
+      return `${property.location}లో ${facing}${type} అమ్మకానికి ఉంది. OPV ధృవీకరించిన ప్రాజెక్ట్. లేఅవుట్ అనుమతులు, వాస్తు అనుకూలత మరియు పూర్తి సదుపాయాలు అందుబాటులో ఉన్నాయి.`;
+    }
+    if (currentLanguage === 'hi') {
+      const facing = property.facing ? `${property.facing} फेसिंग ` : '';
+      const type = property.type === 'plot' ? 'ओपन प्लॉट' : property.type === 'villa' ? 'विला' : 'प्रॉपर्टी';
+      return `${property.location} में ${facing}${type} बिक्री के लिए उपलब्ध है। OPV द्वारा सत्यापित प्रोजेक्ट। सभी वैध अनुमतियां और सुविधाएं उपलब्ध हैं।`;
+    }
+    if (currentLanguage === 'ta') {
+      const type = property.type === 'plot' ? 'ஓபன் பிளாட்' : property.type === 'villa' ? 'வில்லா' : 'சொத்து';
+      return `${property.location}-ல் ${type} விற்பனைக்கு உள்ளது. OPV சரிபார்க்கப்பட்ட திட்டம். அனைத்து வசதிகளும் உள்ளன.`;
+    }
+    return property.overview || property.about || `${property.title} in ${property.location}. Verified property listed on Open Plots & Villas.`;
+  };
 
   const images = property.images && property.images.length > 0
     ? property.images
@@ -61,11 +92,17 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           <div className="min-w-0 pr-4">
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
-                {property.status}
+                {currentLanguage === 'te'
+                  ? (property.status === 'For Sale' ? 'అమ్మకానికి' : 'అద్దెకు')
+                  : currentLanguage === 'hi'
+                  ? (property.status === 'For Sale' ? 'बिक्री के लिए' : 'किराए के लिए')
+                  : currentLanguage === 'ta'
+                  ? (property.status === 'For Sale' ? 'விற்பனைக்கு' : 'வாடகைக்கு')
+                  : property.status}
               </span>
               {property.badge && (
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
-                  {property.badge}
+                  {property.badge.toLowerCase().includes('ready') ? pLocale.readyToMove : property.badge}
                 </span>
               )}
             </div>
@@ -81,7 +118,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right hidden sm:block">
               <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                {property.price}
+                {property.price || pLocale.priceOnRequest}
               </div>
               <div className="text-[11px] text-slate-400 uppercase font-semibold">
                 {property.area}
@@ -138,7 +175,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
             {/* Mobile price tag */}
             <div className="absolute bottom-3 left-3 sm:hidden px-3 py-1 rounded-xl bg-white/95 text-slate-950 font-extrabold text-sm shadow-md">
-              {property.price}
+              {property.price || pLocale.priceOnRequest}
             </div>
           </div>
 
@@ -155,7 +192,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
-                {tab}
+                {tabLabels[tab]}
                 {activeTab === tab && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full" />
                 )}
@@ -166,7 +203,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {/* Tab 1: Structured Details matching Image 1 */}
           {activeTab === 'Structured Details' && (
             <div>
-              <StructuredPropertyCards property={property} />
+              <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
             </div>
           )}
 
@@ -174,7 +211,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {activeTab === 'Overview' && (
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border-l-4 border-emerald-500 text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
-                {property.overview}
+                {getLocalizedOverview()}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
@@ -216,17 +253,17 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {activeTab === 'About' && (
             <div className="space-y-4">
               <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                {property.about}
+                {property.about || getLocalizedOverview()}
               </p>
               {property.reraNumber && (
                 <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
                     <div className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                      RERA Registered Project
+                      {pLocale.reraRegistration.replace(':', '') || 'RERA Registered Project'}
                     </div>
                     <div className="text-xs text-emerald-700 dark:text-emerald-300 font-mono">
-                      Registration Number: {property.reraNumber}
+                      {pLocale.reraRegistration} {property.reraNumber}
                     </div>
                   </div>
                 </div>
@@ -281,7 +318,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               className="py-2.5 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-800 dark:text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors"
             >
               <Phone className="w-4 h-4" />
-              <span>Call</span>
+              <span>{pLocale.call}</span>
             </a>
 
             <button
@@ -293,7 +330,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               className="py-2.5 px-4 sm:px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Book Site Visit / Enquire</span>
+              <span>{pLocale.bookSiteVisit}</span>
             </button>
           </div>
         </div>

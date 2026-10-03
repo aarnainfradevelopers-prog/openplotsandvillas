@@ -24,6 +24,54 @@ import { PropertyCard } from './PropertyCard';
 import { PropertyDetailView } from './PropertyDetailView';
 
 /**
+ * Localized 'You' badge labels across all 24 Indian languages
+ */
+const YOU_LABEL_MAP: Record<string, string> = {
+  en: 'You',
+  te: 'మీరు',
+  ta: 'நீங்கள்',
+  hi: 'आप',
+  kn: 'ನೀವು',
+  ml: 'നിങ്ങൾ',
+  mr: 'तुम्ही',
+  bn: 'আপনি',
+  gu: 'તમે',
+  ur: 'آپ',
+  pa: 'ਤੁਸੀਂ',
+  or: 'ଆପଣ',
+  mwr: 'आप',
+  as: 'আপুনি',
+  mai: 'अहाँ',
+  sat: 'ᱟᱢ',
+  ks: 'تۄہہ',
+  bho: 'रउआ',
+  ne: 'तपाईं',
+  sd: 'توهان',
+  kok: 'तुमी',
+  bgc: 'तू',
+  hne: 'तुम्ही',
+  tcy: 'ఈర్'
+};
+
+/**
+ * Localized 'Projects for you' section heading across Indian languages
+ */
+const PROJECTS_FOR_YOU_MAP: Record<string, string> = {
+  en: 'Projects for you',
+  te: 'మీ కోసం ప్రాజెక్ట్‌లు',
+  ta: 'உங்களுக்கான திட்டங்கள்',
+  hi: 'आपके लिए प्रोजेक्ट्स',
+  kn: 'ನಿಮಗಾಗಿ ಯೋಜನೆಗಳು',
+  ml: 'നിങ്ങൾക്കായുള്ള പ്രോജക്റ്റുകൾ',
+  mr: 'तुमच्यासाठी प्रकल्प',
+  bn: 'আপনার জন্য প্রকল্প',
+  gu: 'તમારા માટે પ્રોજેક્ટ્સ',
+  ur: 'آپ کے لیے منصوبے',
+  pa: 'ਤੁਹਾਡੇ ਲਈ ਪ੍ਰੋਜੈਕਟ',
+  or: 'ଆପଣଙ୍କ ପାଇଁ ପ୍ରକଳ୍ପ'
+};
+
+/**
  * Strips corrupted question marks, unicode replacement characters, emojis, and artifacts from action labels
  */
 const cleanActionLabel = (label: string): string => {
@@ -397,7 +445,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <div
                 className="relative inline-block max-w-xl px-4 py-2.5 rounded-2xl rounded-tr-xs bg-[#edf4fc] dark:bg-[#1e293b] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs text-xs sm:text-[13.5px] font-normal leading-relaxed break-words text-left select-text cursor-text"
               >
-                {message.content}
+                <div>{message.content}</div>
+                {message.originalQuery && message.originalQuery.trim().toLowerCase() !== message.content.trim().toLowerCase() && (
+                  <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500 italic">
+                    Original: {message.originalQuery}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons Below the User Prompt (matching Reference Screenshot: Copy, Share, Edit) */}
@@ -434,7 +487,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   type="button"
                   onClick={() => {
                     setIsEditing(true);
-                    setEditText(message.content);
+                    setEditText(message.originalQuery || message.content);
                   }}
                   title="Edit prompt"
                   aria-label="Edit prompt"
@@ -450,7 +503,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* 'You' Avatar Badge */}
         <div className="shrink-0 mt-1">
           <span className="px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center justify-center">
-            You
+            {YOU_LABEL_MAP[currentLanguage || 'en'] || 'You'}
           </span>
         </div>
       </div>
@@ -616,6 +669,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 property={message.selectedPropertyDetail}
                 onEnquire={onEnquireProperty}
                 onDetails={onOpenPropertyModal || onSelectPropertyDetails}
+                currentLanguage={currentLanguage}
               />
             </div>
           )}
@@ -624,7 +678,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {message.properties && message.properties.length > 0 && !message.selectedPropertyDetail && (
             <div className={message.content ? "mt-4" : "mt-0"}>
               <h3 className="text-[15px] font-bold text-slate-800 dark:text-white mb-3">
-                Projects for you
+                {PROJECTS_FOR_YOU_MAP[currentLanguage] || PROJECTS_FOR_YOU_MAP.en}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-2">
                 {message.properties.map(property => (
@@ -634,6 +688,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     onDetails={onSelectPropertyDetails}
                     onEnquire={onEnquireProperty}
                     onToggleFavorite={onToggleFavorite}
+                    currentLanguage={currentLanguage}
                   />
                 ))}
               </div>

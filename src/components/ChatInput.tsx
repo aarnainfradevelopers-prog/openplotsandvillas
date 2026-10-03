@@ -155,7 +155,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             value={inputText}
             onChange={e => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder || `Ask about property in ${selectedCity}…`}
+            placeholder={placeholder || (OPV_LANGUAGES.find(l => l.code === currentLanguage) || OPV_LANGUAGES[0]).placeholder}
             className="flex-1 bg-transparent border-0 outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm sm:text-[15px] resize-none leading-relaxed py-1 min-h-[26px] max-h-32 font-normal"
           />
 

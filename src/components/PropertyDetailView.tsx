@@ -12,14 +12,16 @@ import {
   ShieldCheck,
   CheckCircle2
 } from 'lucide-react';
-import { PropertyItem } from '../types/chat';
+import { PropertyItem, LanguageCode } from '../types/chat';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
 import { StructuredPropertyCards } from './StructuredPropertyCards';
+import { getPropertyDetailsStrings } from '../data/propertyDetailsI18n';
 
 interface PropertyDetailViewProps {
   property: PropertyItem;
   onEnquire: (property: PropertyItem) => void;
   onDetails?: (property: PropertyItem) => void;
+  currentLanguage?: LanguageCode;
 }
 
 const TABS = ['Overview', 'Highlights', 'Configurations', 'Amenities', 'About', 'Similar'] as const;
@@ -28,11 +30,23 @@ type TabType = typeof TABS[number];
 export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   property,
   onEnquire,
-  onDetails
+  onDetails,
+  currentLanguage = 'en'
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('Overview');
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(property.isFavorite || false);
+
+  const pLocale = getPropertyDetailsStrings(currentLanguage);
+
+  const tabLabels: Record<TabType, string> = {
+    Overview: pLocale.overviewTab,
+    Highlights: pLocale.highlightsTab,
+    Configurations: pLocale.configurationsTab,
+    Amenities: pLocale.amenitiesTab,
+    About: pLocale.aboutTab,
+    Similar: pLocale.similarTab
+  };
 
   const images = property.images && property.images.length > 0
     ? property.images
@@ -47,11 +61,20 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   };
 
   // 1. Genuine Configuration string
-  const configText = property.bhk
-    ? `${property.bhk} BHK`
-    : property.type === 'plot'
-      ? 'Residential Plot'
-      : (property.config || (property.type === 'villa' ? 'Villa' : 'Independent Unit'));
+  const getConfigText = (): string => {
+    if (property.bhk) {
+      return `${property.bhk} BHK`;
+    }
+    if (property.type === 'plot') {
+      return pLocale.residentialPlot;
+    }
+    if (property.type === 'villa') {
+      return currentLanguage === 'te' ? 'లగ్జరీ విల్లా' : currentLanguage === 'hi' ? 'लक्जरी विला' : currentLanguage === 'ta' ? 'சொகுசு வில்லா' : 'Luxury Villa';
+    }
+    return property.config || (currentLanguage === 'te' ? 'ఇండిపెండెంట్ యూనిట్' : currentLanguage === 'hi' ? 'इंडिपेंडेंट यूनिट' : 'Independent Unit');
+  };
+
+  const configText = getConfigText();
 
   // 2. Genuine Status / Possession from property specifications / metadata
   const getStatusText = (): string => {
@@ -59,7 +82,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
       return property.possession;
     }
     if (property.possession === 'ready_to_move') {
-      return 'Ready to Move';
+      return pLocale.readyToMove;
     }
     // Check specifications array
     const specPossession = property.specifications?.find(s =>
@@ -68,18 +91,36 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
     if (specPossession) return specPossession;
 
     if (property.type === 'plot') {
-      return 'Immediate Registration';
+      return pLocale.immediateRegistration;
     }
     if (property.badge && !property.badge.toLowerCase().includes('brokerage')) {
       return property.badge;
     }
-    return 'Ready to Move';
+    return pLocale.readyToMove;
   };
 
   const statusText = getStatusText();
 
-  // 3. Genuine Overview directly from Supabase property data
-  const overviewText = property.overview || property.about || `${property.title} in ${property.location}. Verified property listed on Open Plots & Villas.`;
+  // 3. Genuine Localized Overview
+  const getLocalizedOverview = (): string => {
+    if (currentLanguage === 'te') {
+      const facing = property.facing ? `${property.facing} ఫేసింగ్ ` : '';
+      const type = property.type === 'plot' ? 'ఓపెన్ ప్లాట్' : property.type === 'villa' ? 'విల్లా' : 'ప్రాపర్టీ';
+      return `${property.location}లో ${facing}${type} అమ్మకానికి ఉంది. OPV ధృవీకరించిన ప్రాజెక్ట్. లేఅవుట్ అనుమతులు, వాస్తు అనుకూలత మరియు పూర్తి సదుపాయాలు అందుబాటులో ఉన్నాయి.`;
+    }
+    if (currentLanguage === 'hi') {
+      const facing = property.facing ? `${property.facing} फेसिंग ` : '';
+      const type = property.type === 'plot' ? 'ओपन प्लॉट' : property.type === 'villa' ? 'विला' : 'प्रॉपर्टी';
+      return `${property.location} में ${facing}${type} बिक्री के लिए उपलब्ध है। OPV द्वारा सत्यापित प्रोजेक्ट। सभी वैध अनुमतियां और सुविधाएं उपलब्ध हैं।`;
+    }
+    if (currentLanguage === 'ta') {
+      const type = property.type === 'plot' ? 'ஓபன் பிளாட்' : property.type === 'villa' ? 'வில்லா' : 'சொத்து';
+      return `${property.location}-ல் ${type} விற்பனைக்கு உள்ளது. OPV சரிபார்க்கப்பட்ட திட்டம். அனைத்து வசதிகளும் உள்ளன.`;
+    }
+    return property.overview || property.about || `${property.title} in ${property.location}. Verified property listed on Open Plots & Villas.`;
+  };
+
+  const overviewText = getLocalizedOverview();
 
   // 4. Genuine Why Consider list directly from property facts
   const getWhyConsiderItems = (): string[] => {
@@ -92,24 +133,39 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
     if (property.approval) {
       items.push(property.approval);
     } else if (property.reraNumber) {
-      items.push(`HMDA & RERA Approved (${property.reraNumber})`);
+      if (currentLanguage === 'te') {
+        items.push(`HMDA & RERA ఆమోదం పొందబడింది (${property.reraNumber})`);
+      } else if (currentLanguage === 'hi') {
+        items.push(`HMDA और RERA स्वीकृत (${property.reraNumber})`);
+      } else if (currentLanguage === 'ta') {
+        items.push(`HMDA மற்றும் RERA அங்கீகரிக்கப்பட்டது (${property.reraNumber})`);
+      } else {
+        items.push(`HMDA & RERA Approved (${property.reraNumber})`);
+      }
     } else {
-      items.push('Verified Clear Legal Title');
+      items.push(pLocale.verifiedClearTitle);
     }
 
     // Key amenity or layout feature
     if (property.type === 'plot') {
-      const roadSpec = property.specifications?.find(s => s.label.toLowerCase().includes('road'))?.value;
-      if (roadSpec) {
-        items.push(`${roadSpec}, Underground Electricity`);
+      if (currentLanguage === 'te') {
+        items.push('100% వాస్తు లేఅవుట్, 24/7 సెక్యూరిటీ, అవెన్యూ ప్లాంటేషన్');
+      } else if (currentLanguage === 'hi') {
+        items.push('100% वास्तु लेआउट, 24/7 सुरक्षा, एवेन्यू प्लांटेशन');
+      } else if (currentLanguage === 'ta') {
+        items.push('100% வாஸ்து தளவமைப்பு, 24/7 பாதுகாப்பு, பசுமை பூங்கா');
       } else {
-        items.push('40ft & 30ft Blacktop Roads, Underground Electricity');
+        items.push('100% Vastu Compliant, 24/7 Security, Avenue Plantation');
       }
     } else {
       if (property.amenities && property.amenities.length > 0) {
-        items.push(`${property.amenities.slice(0, 3).join(', ')}`);
+        items.push(property.amenities.slice(0, 3).join(', '));
       } else {
-        items.push('Modern Amenities & 24/7 Security');
+        if (currentLanguage === 'te') {
+          items.push('ఆధునిక సౌకర్యాలు & 24/7 భద్రత');
+        } else {
+          items.push('Modern Amenities & 24/7 Security');
+        }
       }
     }
 
@@ -122,7 +178,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
     <div className="w-full my-3">
       {/* Header */}
       <h4 className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">
-        Here are the details
+        {pLocale.hereAreTheDetails}
       </h4>
 
       {/* Main Detail Card Container (Clean, self-contained, Square Yards reference) */}
@@ -141,7 +197,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
           {/* Top-Left: Green PROJECT badge */}
           <div className="absolute top-3.5 left-3.5 z-10">
             <span className="px-2.5 py-1 rounded-sm bg-emerald-600 text-white text-[11px] font-black tracking-wider uppercase shadow-xs">
-              PROJECT
+              {pLocale.projectBadge}
             </span>
           </div>
 
@@ -198,7 +254,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
             {/* Top Row: Price + Expand Button */}
             <div className="flex items-center justify-between gap-3">
               <div className="text-xl sm:text-2xl font-black text-slate-950 dark:text-white tracking-tight leading-none">
-                {property.price || 'Price on request'}
+                {property.price || pLocale.priceOnRequest}
               </div>
               <button
                 type="button"
@@ -222,7 +278,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                     {configText}
                   </div>
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                    CONFIGURATIONS
+                    {pLocale.configurations}
                   </div>
                 </div>
               </div>
@@ -237,7 +293,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                     {statusText}
                   </div>
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                    PROJECT STATUS
+                    {pLocale.projectStatus}
                   </div>
                 </div>
               </div>
@@ -252,7 +308,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                     {property.area || '1550 sq.ft.'}
                   </div>
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                    SIZE
+                    {pLocale.size}
                   </div>
                 </div>
               </div>
@@ -270,7 +326,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                       : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
                     }`}
                 >
-                  {tab}
+                  {tabLabels[tab]}
                   {activeTab === tab && (
                     <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-emerald-600 rounded-full" />
                   )}
@@ -290,7 +346,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                   {/* Why consider this? Highlight Card: Verified Property Details */}
                   <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 rounded-xl p-3.5 space-y-2">
                     <h5 className="text-xs font-bold text-slate-900 dark:text-white">
-                      Why consider this?
+                      {pLocale.whyConsiderThis}
                     </h5>
                     <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                       {whyConsiderItems.map((item, idx) => (
@@ -321,19 +377,19 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                       <>
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>{property.type === 'plot' ? '100% Vaastu Compliant Layout' : 'Gated Community with 24/7 Security'}</span>
+                          <span>{property.type === 'plot' ? (currentLanguage === 'te' ? '100% వాస్తు అనుకూల లేఅవుట్' : '100% Vaastu Compliant Layout') : (currentLanguage === 'te' ? 'గేటెడ్ కమ్యూనిటీ & 24/7 భద్రత' : 'Gated Community with 24/7 Security')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>{property.area} Total Area</span>
+                          <span>{property.area} {currentLanguage === 'te' ? 'మొత్తం వైశాల్యం' : 'Total Area'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>{property.facing || 'East Facing'} Layout</span>
+                          <span>{property.facing || 'East Facing'} {currentLanguage === 'te' ? 'లేఅవుట్' : 'Layout'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>{property.approval || 'Verified Clear Title'}</span>
+                          <span>{property.approval || pLocale.verifiedClearTitle}</span>
                         </div>
                       </>
                     )}
@@ -343,22 +399,33 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
 
               {activeTab === 'Configurations' && (
                 <div className="py-1">
-                  <StructuredPropertyCards property={property} />
+                  <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
                 </div>
               )}
 
               {activeTab === 'Amenities' && (
                 <div className="grid grid-cols-2 gap-2 py-1 text-xs">
-                  {(property.type === 'plot' ? [
-                    '40ft & 30ft Blacktop Roads',
-                    'Underground Electricity',
-                    'Underground Drainage System',
-                    'Overhead Water Storage Tank',
-                    'Avenue Plantation & Green Parks',
-                    'Compound Wall with Entrance Arch',
-                    '24 × 7 Security Surveillance',
-                    '100% Vaastu Compliant Plots'
-                  ] : (property.amenities && property.amenities.length > 0 ? property.amenities : [
+                  {(property.type === 'plot' ? (
+                    currentLanguage === 'te' ? [
+                      '40 & 30 అడుగుల బీటీ రోడ్లు',
+                      'భూగర్భ విద్యుత్ వ్యవస్థ',
+                      'భూగర్భ డ్రైనేజీ వ్యవస్థ',
+                      'ఓవర్‌హెడ్ వాటర్ ట్యాంక్',
+                      'అవెన్యూ ప్లాంటేషన్ & పార్కులు',
+                      'కాంపౌండ్ వాల్ & ఎంట్రన్స్ ఆర్చ్',
+                      '24x7 భద్రత & సీసీటీవీ',
+                      '100% వాస్తు అనుకూల ప్లాట్లు'
+                    ] : [
+                      '40ft & 30ft Blacktop Roads',
+                      'Underground Electricity',
+                      'Underground Drainage System',
+                      'Overhead Water Storage Tank',
+                      'Avenue Plantation & Green Parks',
+                      'Compound Wall with Entrance Arch',
+                      '24 × 7 Security Surveillance',
+                      '100% Vaastu Compliant Plots'
+                    ]
+                  ) : (property.amenities && property.amenities.length > 0 ? property.amenities : [
                     'Clubhouse & Gymnasium',
                     'Swimming Pool',
                     '24 × 7 Security & CCTV',
@@ -377,12 +444,12 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
               {activeTab === 'About' && (
                 <div className="space-y-2 py-1">
                   <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-xs">
-                    {property.about || property.overview}
+                    {property.about || overviewText}
                   </p>
                   {property.reraNumber && (
                     <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>RERA Registration: {property.reraNumber}</span>
+                      <span>{pLocale.reraRegistration} {property.reraNumber}</span>
                     </div>
                   )}
                 </div>
@@ -399,7 +466,9 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                     ))
                   ) : (
                     <div className="text-xs text-slate-500">
-                      Near Outer Ring Road (ORR), Rajiv Gandhi International Airport, and Financial District.
+                      {currentLanguage === 'te'
+                        ? 'ఔటర్ రింగ్ రోడ్ (ORR), రాజీవ్ గాంధీ అంతర్జాతీయ విమానాశ్రయం మరియు ఫైనాన్షియల్ డిస్ట్రిక్ట్ సమీపంలో.'
+                        : 'Near Outer Ring Road (ORR), Rajiv Gandhi International Airport, and Financial District.'}
                     </div>
                   )}
                 </div>
@@ -419,7 +488,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                   OPEN PLOTS &amp; VILLAS
                 </span>
                 <span className="text-xs font-black text-slate-900 dark:text-white">
-                  Verified
+                  {pLocale.verified}
                 </span>
               </div>
             </div>
@@ -431,7 +500,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                 onClick={() => onDetails ? onDetails(property) : onEnquire(property)}
                 className="px-3.5 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
               >
-                <span>More details</span>
+                <span>{pLocale.moreDetails}</span>
                 <span className="text-sm leading-none font-bold">↗</span>
               </button>
 
@@ -440,7 +509,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                 onClick={() => onEnquire(property)}
                 className="px-4 sm:px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
               >
-                <span>Enquire</span>
+                <span>{pLocale.enquire}</span>
                 <span className="text-sm leading-none font-bold">→</span>
               </button>
             </div>
@@ -450,5 +519,6 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
     </div>
   );
 };
+
 
 
