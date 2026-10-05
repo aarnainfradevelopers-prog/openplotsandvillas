@@ -13,8 +13,7 @@ import {
   Home,
   Sprout,
   Store,
-
-
+  ShieldCheck,
 } from 'lucide-react';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessage } from './ChatMessage';
@@ -114,18 +113,18 @@ export const OPVChatbot: React.FC = () => {
 
   // Chat sessions management - starts fresh with clean welcome hero
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    const saved = localStorage.getItem('opv_chat_sessions_v6');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('opv_chat_sessions_v6');
+      if (saved) {
         const parsed = JSON.parse(saved);
-        const valid = parsed
-          .filter((s: any) => s.title !== 'New Search' && s.messages && s.messages.length > 0)
+        const valid = (Array.isArray(parsed) ? parsed : [])
+          .filter((s: any) => s && s.id !== 'session-welcome' && s.title !== 'New Search' && s.messages && s.messages.length > 0)
           .map((s: any) => ({
             ...s,
-            createdAt: new Date(s.createdAt),
-            messages: s.messages.map((m: any) => ({
+            createdAt: new Date(s.createdAt || Date.now()),
+            messages: (s.messages || []).map((m: any) => ({
               ...m,
-              timestamp: new Date(m.timestamp)
+              timestamp: new Date(m.timestamp || Date.now())
             }))
           }));
         if (valid.length > 0) {
@@ -140,9 +139,9 @@ export const OPVChatbot: React.FC = () => {
             ...valid
           ];
         }
-      } catch (e) {
-        console.error('Failed to parse saved sessions', e);
       }
+    } catch (e) {
+      console.warn('Failed to parse saved sessions', e);
     }
     return [
       {
@@ -166,22 +165,68 @@ export const OPVChatbot: React.FC = () => {
     messages: []
   };
 
-  // Sync state to LocalStorage (only persist actual chats with messages, avoiding blank "New Search" stacking)
+  // Safe sync state to LocalStorage with quota protection & pruning (prevents QuotaExceededError crashes)
   useEffect(() => {
-    const persistable = sessions.filter(s => s.messages && s.messages.length > 0 && s.title !== 'New Search');
-    localStorage.setItem('opv_chat_sessions_v6', JSON.stringify(persistable));
+    try {
+      const persistable = sessions
+        .filter(s => s && s.id !== 'session-welcome' && s.messages && s.messages.length > 0 && s.title !== 'New Search')
+        .slice(-15)
+        .map(s => ({
+          ...s,
+          messages: (s.messages || []).slice(-30).map(m => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            originalQuery: m.originalQuery,
+            translatedQuery: m.translatedQuery,
+            timestamp: m.timestamp,
+            language: m.language,
+            actions: m.actions,
+            category: m.category,
+            properties: m.properties ? m.properties.slice(0, 6) : undefined
+          }))
+        }));
+
+      localStorage.setItem('opv_chat_sessions_v6', JSON.stringify(persistable));
+    } catch (err) {
+      console.warn('LocalStorage quota exceeded, pruning session storage:', err);
+      try {
+        const minimal = sessions
+          .filter(s => s && s.id !== 'session-welcome' && s.messages && s.messages.length > 0)
+          .slice(-5)
+          .map(s => ({
+            ...s,
+            messages: (s.messages || []).slice(-10).map(m => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              timestamp: m.timestamp,
+              language: m.language
+            }))
+          }));
+        localStorage.setItem('opv_chat_sessions_v6', JSON.stringify(minimal));
+      } catch {
+        // Silently continue without breaking React
+      }
+    }
   }, [sessions]);
 
   useEffect(() => {
-    localStorage.setItem('opv_user_account', JSON.stringify(userAccount));
+    try {
+      localStorage.setItem('opv_user_account', JSON.stringify(userAccount));
+    } catch { }
   }, [userAccount]);
 
   useEffect(() => {
-    localStorage.setItem('opv_favorites_list', JSON.stringify(favorites));
+    try {
+      localStorage.setItem('opv_favorites_list', JSON.stringify(favorites.slice(0, 20)));
+    } catch { }
   }, [favorites]);
 
   useEffect(() => {
-    localStorage.setItem('opv_dark_mode', String(isDarkMode));
+    try {
+      localStorage.setItem('opv_dark_mode', String(isDarkMode));
+    } catch { }
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -669,7 +714,14 @@ export const OPVChatbot: React.FC = () => {
         query: 'commercial properties in hyd',
         icon: Store,
         subtitle: 'offices & Retail Shops'
-      }
+      },
+      {
+        label: '360° Elite Services',
+        query: '360 elite services',
+        icon: Sparkles,
+        subtitle: 'Property buying & Selling '
+
+      },
     ];
 
   return (
@@ -742,12 +794,21 @@ export const OPVChatbot: React.FC = () => {
                 <span>{locale.platformBadge}</span>
               </div>
 
-              {/* Hero Heading: Welcome to OPV Plots */}
-              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight text-center mb-2.5">
+              {/* Hero Heading: Hello! (top) + OPV Plots AI Assistance (below) */}
+              <h1 className="tracking-tight text-center mb-2.5">
                 {currentLanguage === 'en' ? (
-                  <>Hello! Welcome to <span className="text-emerald-600 dark:text-emerald-400">OPV AI</span></>
+                  <>
+                    <span className="block text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200 mb-0.5">
+                      Hello!
+                    </span>
+                    <span className="block text-2xl sm:text-[34px] font-black text-slate-900 dark:text-white leading-tight">
+                      OPV <span className="text-emerald-600 dark:text-emerald-400">AI Assistant</span>
+                    </span>
+                  </>
                 ) : (
-                  currentLangConfig.welcomeGreeting
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                    {currentLangConfig.welcomeGreeting}
+                  </span>
                 )}
               </h1>
 

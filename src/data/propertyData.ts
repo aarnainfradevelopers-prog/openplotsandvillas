@@ -209,10 +209,11 @@ export function filterPropertiesByQuery(source: PropertyItem[], query: string): 
 
   // 3. Property Type intent
   const wantsFarmland = /\b(farm|farmland|farmlands|farms|agriculture|agri|farmhouse)\b/i.test(q);
-  const wantsPlot = /\b(plot|plots|land|lands|open\s*plot|open\s*plots|venture|guntas|sq\.?yd)\b/i.test(q);
-  const wantsVilla = /\b(villa|villas|duplex|triplex|house|independent\s*house)\b/i.test(q);
-  const wantsApartment = /\b(flat|flats|apartment|apartments|bhk|highrise)\b/i.test(q);
   const wantsCommercial = /\b(commercial|shop|office|retail)\b/i.test(q);
+  const wantsVillaPlot = /\b(villa\s*plot|villas\s*plot|villa\s*plots|villas\s*plots)\b/i.test(q);
+  const wantsPlot = (/\b(plot|plots|land|lands|open\s*plot|open\s*plots|venture|guntas|sq\.?yd)\b/i.test(q) || wantsVillaPlot) && !wantsCommercial;
+  const wantsVilla = /\b(villa|villas|duplex|triplex|house|independent\s*house)\b/i.test(q) && !wantsVillaPlot;
+  const wantsApartment = /\b(flat|flats|apartment|apartments|bhk|highrise)\b/i.test(q);
 
   // 4. Budget limits
   const budget = parseBudgetLimits(q);
@@ -244,18 +245,18 @@ export function filterPropertiesByQuery(source: PropertyItem[], query: string): 
     const isApt = p.type === 'apartment' || titleLower.includes('flat for') || titleLower.includes('flats for') || titleLower.includes('apartments & flats') || (titleLower.includes('flat') && !titleLower.includes('villa')) || (titleLower.includes('apartment') && !titleLower.includes('villa'));
     const isComm = p.type === 'commercial' || titleLower.includes('commercial');
 
-    if (wantsFarmland) {
+    if (wantsCommercial) {
+      if (!isComm) return false;
+    } else if (wantsFarmland) {
       if (!isFarm) return false;
     } else if (wantsVilla && !wantsPlot) {
       if (isFarm || isPlot || !isVilla) return false;
     } else if (wantsVilla && wantsPlot) {
       if (!titleLower.includes('villa plot') && !(isPlot && titleLower.includes('villa'))) return false;
     } else if (wantsPlot && !wantsVilla) {
-      if (!isPlot || isFarm) return false;
+      if (!isPlot || isFarm || isComm) return false;
     } else if (wantsApartment) {
       if (!isApt) return false;
-    } else if (wantsCommercial) {
-      if (!isComm) return false;
     } else if (wantsAnyApproval && isFarm) {
       return false;
     }
@@ -279,6 +280,36 @@ export function filterPropertiesByQuery(source: PropertyItem[], query: string): 
 
   if (candidates.length > 0) {
     return candidates.slice(0, 4);
+  }
+
+  // Tier 2: Category-First Fallback if location had zero direct matches
+  const hasCategoryRequirement = wantsCommercial || wantsFarmland || wantsVilla || wantsPlot || wantsApartment;
+  if (matchedLocations.length > 0 && hasCategoryRequirement) {
+    const tier2Candidates = source.filter(p => {
+      const titleLower = p.title.toLowerCase();
+      const isFarm = p.type === 'farmland' || titleLower.includes('farm') || titleLower.includes('agricultural');
+      const isPlot = p.type === 'plot' || titleLower.includes('villa plot') || titleLower.includes('villas plot') || titleLower.includes('plot for sale');
+      const isVilla = !isFarm && !titleLower.includes('villa plot') && !titleLower.includes('villas plot') && (p.type === 'villa' || /\bvillas?\b/i.test(titleLower) || /\bhouse\b/i.test(titleLower));
+      const isApt = p.type === 'apartment' || titleLower.includes('flat for') || titleLower.includes('flats for') || titleLower.includes('apartments & flats') || (titleLower.includes('flat') && !titleLower.includes('villa')) || (titleLower.includes('apartment') && !titleLower.includes('villa'));
+      const isComm = p.type === 'commercial' || titleLower.includes('commercial');
+
+      if (wantsCommercial && !isComm) return false;
+      if (wantsFarmland && !isFarm) return false;
+      if (wantsVilla && !wantsPlot && (isFarm || isPlot || !isVilla)) return false;
+      if (wantsPlot && !wantsVilla && (!isPlot || isFarm || isComm)) return false;
+      if (wantsApartment && !isApt) return false;
+
+      if (budget) {
+        const pPrice = p.priceNumeric || 0;
+        if (budget.maxPrice && pPrice > budget.maxPrice) return false;
+        if (budget.minPrice && pPrice < budget.minPrice) return false;
+      }
+      return true;
+    });
+
+    if (tier2Candidates.length > 0) {
+      return tier2Candidates.slice(0, 4);
+    }
   }
 
   return [];

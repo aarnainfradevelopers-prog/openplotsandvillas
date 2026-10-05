@@ -196,6 +196,29 @@ export function mapSupabaseToPropertyItem(raw: any): PropertyItem {
     facing: (pd.facing || raw.facing || 'EAST').toUpperCase()
   };
 
+  let cleanDesc = '';
+  if (raw.description && typeof raw.description === 'string') {
+    const trimmed = raw.description.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const obj = JSON.parse(trimmed);
+        const parts: string[] = [];
+        if (obj.description && typeof obj.description === 'string' && !obj.description.startsWith('{')) {
+          parts.push(obj.description);
+        }
+        if (obj.propertyType) parts.push(`Type: ${obj.propertyType}`);
+        if (obj.sizeInput && obj.sizeUnit) parts.push(`Size: ${obj.sizeInput} ${obj.sizeUnit}`);
+        if (obj.facing) parts.push(`Facing: ${obj.facing}`);
+        if (obj.dimension) parts.push(`Dimension: ${obj.dimension}`);
+        if (parts.length > 0) cleanDesc = parts.join(' · ');
+      } catch {
+        cleanDesc = '';
+      }
+    } else {
+      cleanDesc = trimmed;
+    }
+  }
+
   return {
     id: `db-${raw.id}`,
     title: raw.title || raw.project_name || 'Open Plots & Villas Listing',
@@ -220,13 +243,14 @@ export function mapSupabaseToPropertyItem(raw: any): PropertyItem {
       role: raw.developer ? `${raw.developer} Representative` : 'Senior Property Advisor • OPV',
       avatar: (raw.owner_name || 'M')[0].toUpperCase()
     },
-    overview: `${areaStr} · in ${raw.location || 'Hyderabad'}. ${formattedPrice}. ${raw.description ? raw.description.slice(0, 140) + '...' : 'Verified genuine property directly listed on Open Plots & Villas.'}`,
+    overview: `${areaStr} · in ${raw.location || 'Hyderabad'}. ${formattedPrice}. ${cleanDesc ? (cleanDesc.length > 140 ? cleanDesc.slice(0, 140) + '...' : cleanDesc) : 'Verified genuine property directly listed on Open Plots & Villas.'}`,
     specifications: specs,
-    about: raw.description || `${raw.title || 'Property'} located in the prime zone of ${raw.location || 'Hyderabad'}. Features clear legal titles, verified documentation, and immediate registration capability.`,
+    about: cleanDesc || `${raw.title || 'Property'} located in the prime zone of ${raw.location || 'Hyderabad'}. Features clear legal titles, verified documentation, and immediate registration capability.`,
     nearby,
     reraNumber: raw.rera_number && raw.rera_number !== 'NA' ? raw.rera_number : undefined,
     approval: raw.approval_type || (raw.hmda_number ? 'HMDA Approved' : (raw.dtcp_number ? 'DTCP Approved' : 'Verified Clear Title')),
-    rawDetails
+    rawDetails,
+    websiteUrl: raw.url || raw.website_url || raw.link || (raw.slug ? `https://openplotsandvillas.com/properties/${raw.slug}/` : undefined)
   };
 }
 
@@ -243,8 +267,9 @@ export async function fetchLiveSupabaseProperties(): Promise<PropertyItem[]> {
   try {
     const { data, error } = await supabase
       .from('properties')
-      .select('*')
-      .order('id', { ascending: false });
+      .select('id, title, location, city, price, quotedprice, area, plot_size, plot_size_unit, property_type, purpose, bhk, facing, amenities, images, rera_number, hmda_number, dtcp_number, approval_type, possession_status, owner_name, owner_phone, landmark, description, property_details, is_featured, status')
+      .order('id', { ascending: false })
+      .limit(80);
 
     if (error || !data) {
       console.warn('Could not fetch properties from Supabase, error:', error?.message);
@@ -252,14 +277,14 @@ export async function fetchLiveSupabaseProperties(): Promise<PropertyItem[]> {
     }
 
     // Filter available/approved properties
-    const active = data.filter(p => !p.status || p.status === 'available' || p.status === 'approved');
+    const active = data.filter(p => !p.status || p.status === 'available' || p.status === 'approved' || p.status === 'For Sale');
     const mapped = active.map(mapSupabaseToPropertyItem);
     
     cachedLiveProperties = mapped;
     lastFetchTime = now;
     return mapped;
   } catch (err) {
-    console.error('Failed to query Supabase properties:', err);
+    console.warn('Failed to query Supabase properties:', err);
     return cachedLiveProperties || [];
   }
 }

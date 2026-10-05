@@ -70,6 +70,7 @@ export interface PropertyItem {
   badge?: string; // e.g. 'Ready to move', 'Owner · no brokerage'
   type: 'plot' | 'apartment' | 'villa' | 'commercial' | 'farmland' | string;
   area: string; // e.g. '171 Sq.Yd.', '1326 Sq.Ft.'
+  size?: string;
   config?: string; // e.g. '2 BHK', 'Plot'
   facing?: string; // e.g. 'East', 'North-East'
   floor?: string; // e.g. '5 Floor'
@@ -92,6 +93,7 @@ export interface PropertyItem {
   bhk?: number | string;
   isFavorite?: boolean;
   rawDetails?: StructuredPropertyDetails;
+  websiteUrl?: string;
 }
 
 export interface AttachedFile {

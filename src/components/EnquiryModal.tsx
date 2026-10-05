@@ -62,8 +62,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
   };
 
   const whatsappMessage = encodeURIComponent(
-    `Hello OPV Team, I am interested in ${property?.title || 'Open Plots & Villas'}${
-      property?.location ? ' located at ' + property.location : ''
+    `Hello OPV Team, I am interested in ${property?.title || 'Open Plots & Villas'}${property?.location ? ' located at ' + property.location : ''
     } (${property?.price || ''}). Please share details and arrange a site visit.`
   );
 
@@ -81,8 +80,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               <Phone className="w-4.5 h-4.5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold tracking-tight leading-tight">Property Enquiry &amp; Site Visit</h3>
-              <p className="text-[11px] text-slate-300">Open Plots &amp; Villas • Hyderabad</p>
+              <h3 className="text-sm  px] text-slate-300">Open Plots &amp; Villas • Hyderabad</h3>
             </div>
           </div>
           <button

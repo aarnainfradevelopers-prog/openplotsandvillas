@@ -16,25 +16,27 @@ export const StructuredPropertyCards: React.FC<StructuredPropertyCardsProps> = (
 }) => {
   const pLocale = getPropertyDetailsStrings(currentLanguage);
 
+  const propIdStr = String(property?.id || '');
+  const propTitle = String(property?.title || 'Property Listing');
   const details = property.rawDetails || {
     postedDate: '25-SEPT-2026',
     postedTime: '06:35 PM',
-    propId: property.id.startsWith('db-')
-      ? `OPV-${property.id.replace('db-', '')}-FE-880`
-      : 'OPV-852-FE-880',
-    propertyType: (property.type || 'FARMHOUSE').toUpperCase(),
+    propId: propIdStr.startsWith('db-')
+      ? `OPV-${propIdStr.replace('db-', '')}-FE-880`
+      : (propIdStr ? `OPV-${propIdStr}-FE-880` : 'OPV-852-FE-880'),
+    propertyType: (property.type || 'COMMERCIAL').toUpperCase(),
     quotedPrice: property.priceNumeric && property.priceNumeric > 1000000
       ? `₹${Math.round(property.priceNumeric / 2000).toLocaleString('en-IN')}`
-      : '₹5,000',
+      : (property.price || '₹5,000'),
     plotSize: property.area || '2000 sq-yards',
     totalPrice: property.priceNumeric
       ? `₹${Number(property.priceNumeric).toLocaleString('en-IN')}`
-      : property.price,
-    projectName: property.title.split(' - ')[1]?.split(' for ')[0] || property.title.split(' in ')[1] || property.title,
-    city: 'Hyderabad',
+      : (property.price || 'Price on Request'),
+    projectName: propTitle.split(' - ')[1]?.split(' for ')[0] || propTitle.split(' in ')[1] || propTitle,
+    city: property.location?.includes('Hyderabad') ? 'Hyderabad' : 'Hyderabad',
     zone: 'SOUTH',
     location: property.location || 'Shamshabad near ORR and Airport, Hyderabad',
-    landmark: property.nearby && property.nearby[0] ? property.nearby[0] : 'Shamshabad near Airport',
+    landmark: property.nearby && property.nearby[0] ? property.nearby[0] : 'Prime Location with Highway Connectivity',
     facing: property.facing ? property.facing.replace(' Facing', '').toUpperCase() : 'EAST'
   };
 

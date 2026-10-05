@@ -78,16 +78,20 @@ function extractContextProject(history: ChatHistoryMessage[]): string | null {
 }
 
 interface NormalizedPropertyRecord {
-  id: number;
+  id: string | number;
   title: string;
   normalizedType: PropertyCategory;
   normalizedApprovals: ApprovalType[];
   location: string;
   city: string;
   fullLocation: string;
+  price: string;
   priceNumeric: number;
   priceDisplay: string;
   size: string;
+  area: string;
+  type: string;
+  config?: string;
   bhk: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
@@ -99,6 +103,17 @@ interface NormalizedPropertyRecord {
   lpNumber: string | null;
   amenities: string[];
   projectName: string;
+  agent: {
+    name: string;
+    phone: string;
+    role: string;
+    avatar?: string;
+  };
+  specifications: { label: string; value: string }[];
+  overview: string;
+  about: string;
+  nearby: string[];
+  rawDetails?: any;
 }
 
 /**
@@ -138,18 +153,24 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
 
   // 2. PROPERTY TYPE NORMALIZATION (Strict classification - NEVER from BHK alone)
   let normalizedType: PropertyCategory = 'PLOT';
+  const hasFarmKeywords = rawType.includes('farm') || rawType.includes('agri') || descType.includes('agri') || titleLower.includes('farm land') || titleLower.includes('agricultural') || titleLower.includes('farm house') || titleLower.includes('farmhouse') || titleLower.includes('golden farm');
+  const hasPlotKeywords = titleLower.includes('villa plot') || titleLower.includes('villas plot') || rawType === 'plot' || descType.includes('plot') || titleLower.includes('plot for sale') || titleLower.includes('residential land & plot') || titleLower.includes('residential plots') || titleLower.includes('residential and commercial plots') || titleLower.includes('commercial and residential plots') || titleLower.includes('plots in');
+  const isGenuineCommercial = p.property_type === 'commercial' || rawType === 'commercial' || (titleLower.includes('commercial') && (titleLower.includes('complex') || titleLower.includes('building') || titleLower.includes('office') || titleLower.includes('shop') || titleLower.includes('retail') || titleLower.includes('mall')));
+
   if (rawType.includes('farmhouse') || titleLower.includes('farmhouse') || titleLower.includes('farm house')) {
     normalizedType = 'FARM_HOUSE';
-  } else if (rawType.includes('farm') || rawType.includes('agri') || descType.includes('agri') || titleLower.includes('farm land') || titleLower.includes('agricultural')) {
+  } else if (hasFarmKeywords) {
     normalizedType = 'FARM_LAND';
-  } else if (rawType.includes('commercial') || titleLower.includes('commercial')) {
+  } else if (isGenuineCommercial) {
     normalizedType = 'COMMERCIAL';
-  } else if (titleLower.includes('villa plot') || titleLower.includes('villas plot') || rawType === 'plot' || descType.includes('plot') || titleLower.includes('plot for sale') || titleLower.includes('residential land & plot')) {
+  } else if (hasPlotKeywords) {
     normalizedType = 'PLOT';
   } else if (rawType.includes('flat') || rawType.includes('apartment') || descType.includes('flat') || descType.includes('apartment') || titleLower.includes('flat for') || titleLower.includes('flats for') || titleLower.includes('apartments & flats')) {
     normalizedType = 'APARTMENT';
   } else if (rawType.includes('villa') || descType.includes('villa') || (/\bvillas?\b/i.test(titleLower) && !titleLower.includes('plot')) || /\bhouse\b/i.test(titleLower)) {
     normalizedType = 'VILLA';
+  } else {
+    normalizedType = 'PLOT';
   }
 
   // 3. EFFECTIVE PRICE NORMALIZATION
@@ -164,34 +185,92 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
 
   const rera = p.rera_number && p.rera_number !== 'NA' && p.rera_number !== 'Not Applicable' ? p.rera_number : (parsedDesc.reraNumber || null);
   const lp = p.lp_number && p.lp_number !== 'NA' ? p.lp_number : (parsedDesc.lpNumber || null);
-  const amenities = p.amenities && p.amenities.length > 0 ? p.amenities : (parsedDesc.amenities || []);
+  const amenities = p.amenities && p.amenities.length > 0 ? p.amenities : (parsedDesc.amenities || ['24/7 Security', 'Blacktop Roads', 'Clear Title', 'Immediate Registration']);
   const size = p.area || p.plot_size || parsedDesc.sizeInput || parsedDesc.plotSize || null;
   const sizeUnit = p.plot_size_unit || parsedDesc.sizeUnit || parsedDesc.plotSizeUnit || 'Sq. Yd.';
 
+  const formatSmartPrice = (val: number | string | null | undefined): string => {
+    if (!val) return 'Price on Request';
+    const num = typeof val === 'string' ? parseFloat(val.replace(/[^\d.]/g, '')) : Number(val);
+    if (isNaN(num) || num <= 0) return 'Price on Request';
+    if (num < 100000) {
+      return `₹${num.toLocaleString('en-IN')}/sq.yd`;
+    }
+    if (num >= 10000000) {
+      const cr = (num / 10000000).toFixed(2).replace(/\.00$/, '');
+      return `₹${cr} Cr`;
+    }
+    const l = (num / 100000).toFixed(2).replace(/\.00$/, '');
+    return `₹${l} Lakhs`;
+  };
+
   const propBhk = parseInt(p.bhk || parsedDesc.bedrooms || '0', 10);
+  const rawPriceVal = p.quotedprice && p.quotedprice < 100000 ? p.quotedprice : (p.price || p.quotedprice || parsedDesc.totalPrice || parsedDesc.quotedPrice);
+  const formattedPrice = formatSmartPrice(rawPriceVal);
+  const areaFormatted = size ? `${size} ${sizeUnit}` : (normalizedType === 'PLOT' ? 'Standard Plot' : 'Spacious Unit');
+
+  const specs: { label: string; value: string }[] = [];
+  if (p.project_name || parsedDesc.projectName) specs.push({ label: 'Project', value: p.project_name || parsedDesc.projectName });
+  if (size) specs.push({ label: 'Size', value: areaFormatted });
+  if (propBhk > 0) specs.push({ label: 'Configuration', value: `${propBhk} BHK` });
+  if (p.facing || parsedDesc.facing) specs.push({ label: 'Facing', value: `${p.facing || parsedDesc.facing} Facing` });
+  if (approvalsSet.size > 0) specs.push({ label: 'Approval', value: Array.from(approvalsSet).join(', ') });
+  if (rera) specs.push({ label: 'RERA Number', value: rera });
+
+  const nearbyList: string[] = [];
+  if (p.landmark) nearbyList.push(`Near ${p.landmark}`);
+  if (p.location) nearbyList.push(`${p.location} Junction`);
+  if (nearbyList.length === 0) nearbyList.push('Close to Highway and ORR Connectivity');
+
+  const agentName = p.owner_name || 'MANCHALA DAIVAPRAKASH';
+  const agentPhone = p['phone number'] || p.owner_phone || '+91 9963513939';
 
   return {
-    id: p.id,
-    title: p.title,
+    id: `db-${p.id}`,
+    title: p.title || p.project_name || 'Verified Property Listing',
     normalizedType,
     normalizedApprovals: Array.from(approvalsSet),
     location: p.location || 'Hyderabad',
     city: p.city || 'Hyderabad',
     fullLocation: `${p.location || ''} ${p.city || ''} ${p.title || ''}`.toLowerCase(),
+    price: formattedPrice,
     priceNumeric: priceNum,
-    priceDisplay: p.quotedprice ? `₹${p.quotedprice}/sq.yd` : (p.price ? `₹${p.price}` : 'Price on Request'),
-    size: size ? `${size} ${sizeUnit}` : 'Various Sizes',
+    priceDisplay: formattedPrice,
+    size: areaFormatted,
+    area: areaFormatted,
+    type: normalizedType === 'PLOT' ? 'plot' : normalizedType === 'COMMERCIAL' ? 'commercial' : normalizedType === 'VILLA' ? 'villa' : normalizedType === 'APARTMENT' ? 'apartment' : 'farmland',
+    config: propBhk > 0 ? `${propBhk} BHK` : (normalizedType === 'PLOT' ? 'Plot' : normalizedType === 'COMMERCIAL' ? 'Commercial' : 'Standard Unit'),
     bhk: propBhk > 0 ? propBhk : null,
     bedrooms: propBhk > 0 ? propBhk : null,
     bathrooms: p.bathrooms || parsedDesc.bathrooms || null,
     imageUrl: (p.images && p.images[0] && !p.images[0].startsWith('file://')) ? p.images[0] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
     images: (p.images || []).filter((img: string) => !img.startsWith('file://')),
     isFeatured: Boolean(p.is_featured),
-    status: p.status || 'available',
+    status: p.status === 'For Rent' ? 'For Rent' : 'For Sale',
     reraNumber: rera,
     lpNumber: lp,
     amenities: amenities.slice(0, 10),
-    projectName: parsedDesc.projectName || ''
+    projectName: parsedDesc.projectName || p.project_name || '',
+    agent: {
+      name: agentName,
+      phone: agentPhone,
+      role: 'Senior Property Advisor • OPV',
+      avatar: agentName.charAt(0).toUpperCase() || 'M'
+    },
+    specifications: specs,
+    overview: p.description ? p.description.slice(0, 150) : `${areaFormatted} located in ${p.location || 'Hyderabad'}. Verified genuine property directly listed on Open Plots & Villas.`,
+    about: p.description || `${p.title || 'Property'} located in the prime zone of ${p.location || 'Hyderabad'}. Features clear legal titles, verified documentation, and immediate registration capability.`,
+    nearby: nearbyList,
+    rawDetails: {
+      propId: `OPV-${p.id}`,
+      propertyType: normalizedType,
+      quotedPrice: formattedPrice,
+      plotSize: areaFormatted,
+      totalPrice: formattedPrice,
+      projectName: parsedDesc.projectName || p.project_name || p.title,
+      city: p.city || 'Hyderabad',
+      location: p.location || 'Hyderabad'
+    }
   };
 }
 
@@ -591,6 +670,7 @@ export async function handleChatRequest(
       groundingSourceType = 'supabase_property';
 
       if (filtered.length > 0) {
+        // TIER 1: EXACT MATCH (Category + Location + Budget + Approvals)
         matchedProperties = filtered.slice(0, 6);
 
         // Check if query is an attribute question about a specific project (e.g. "What is RERA of X?")
@@ -600,7 +680,7 @@ export async function handleChatRequest(
         );
 
         if (!isFactualAttributeQuery) {
-          // GENERATE SHORT DYNAMIC SEARCH SUMMARY DIRECTLY (no long property duplicate text)
+          // GENERATE SHORT DYNAMIC SEARCH SUMMARY DIRECTLY
           finalAnswer = generatePropertySearchSummary(rawQuery, filters, matchedProperties, language);
         } else {
           // Formulate strict grounding string for Gemini to answer the specific attribute question
@@ -619,6 +699,72 @@ Record #${idx + 1}:
 - Direct Listing ID: #${p.id}
 `.trim()).join('\n\n');
         }
+      } else if (filters.property_type.length > 0) {
+        // TIER 2: CATEGORY-FIRST SMART FALLBACK (Keep exact Category & Budget, relax Location)
+        const categoryMatches = propertiesList.map(normalizeDatabaseRecord).filter(p => {
+          // Strict Category match
+          const hasType = filters.property_type.includes(p.normalizedType);
+          if (!hasType) return false;
+
+          // Approvals match if specified
+          if (filters.approval.length > 0) {
+            const hasApproval = filters.approval.some(reqApp => p.normalizedApprovals.includes(reqApp));
+            if (!hasApproval) return false;
+          }
+
+          // Budget match if specified
+          if (filters.budget_max !== null && p.priceNumeric > 0 && p.priceNumeric > filters.budget_max) return false;
+          if (filters.budget_min !== null && p.priceNumeric > 0 && p.priceNumeric < filters.budget_min) return false;
+
+          return true;
+        });
+
+        if (categoryMatches.length > 0) {
+          matchedProperties = categoryMatches.slice(0, 6);
+          const reqLoc = filters.location.length > 0 ? filters.location.join(', ') : 'Hyderabad';
+          
+          const typeDisplayMap: Record<PropertyCategory, string> = {
+            PLOT: 'Open Plots',
+            COMMERCIAL: 'Commercial Properties',
+            APARTMENT: 'Apartments / Flats',
+            VILLA: 'Villas',
+            FARM_LAND: 'Farm Lands',
+            FARM_HOUSE: 'Farm Houses'
+          };
+          const mainCategory = filters.property_type[0];
+          const displayCategoryName = typeDisplayMap[mainCategory] || 'Properties';
+          const availableLocations = Array.from(new Set(matchedProperties.map(p => p.location))).slice(0, 3).join(', ');
+
+          if (mainCategory === 'COMMERCIAL') {
+            const prop = matchedProperties[0];
+            finalAnswer = `**🏡 Commercial Properties Available on OPV**
+
+✨ **Here's What I Found**
+
+**Property Type:** Commercial Properties
+**Available Location:** ${prop.location}
+**Projects Found:** ${matchedProperties.length}
+
+Currently, we do not have commercial properties listed inside ${reqLoc} city limits online. However, we have **${matchedProperties.length} verified commercial property** in **${prop.location}** (*${prop.title}*) listed below.
+
+Our OPV advisors also have exclusive offline commercial properties and lands across Hyderabad. Feel free to contact an advisor below.`.trim();
+          } else {
+            finalAnswer = `**🏡 ${displayCategoryName} Available on OPV**
+
+✨ **Here's What I Found**
+
+**Property Type:** ${displayCategoryName}
+**Available Locations:** ${availableLocations}
+**Projects Found:** ${matchedProperties.length}
+
+Currently, we do not have active ${displayCategoryName.toLowerCase()} listed directly in **${reqLoc}** in our online catalog. However, here are **${matchedProperties.length} verified ${displayCategoryName.toLowerCase()}** available in active prime growth corridors (${availableLocations}) listed below.
+
+Our OPV advisors also have exclusive offline listings in ${reqLoc}. Connect with an advisor below via Phone or WhatsApp.`.trim();
+          }
+        } else {
+          matchedProperties = [];
+          groundingData = `ZERO_RESULTS: No verified listings in the active OPV Supabase database currently meet the requested criteria.`;
+        }
       } else {
         // STRICT ZERO-RESULT HANDLING: No properties match all criteria
         matchedProperties = [];
@@ -630,9 +776,9 @@ Record #${idx + 1}:
 
 INSTRUCTIONS FOR YOUR RESPONSE:
 1. Explain clearly and politely that zero active verified listings in our online database currently match these exact specifications.
-2. Provide a helpful real-estate explanation where relevant (for instance, DTCP approvals typically apply to plotted layouts rather than apartments, which generally fall under HMDA, RERA, or GHMC purview).
+2. Provide a helpful real-estate explanation where relevant.
 3. Do NOT invent, fabricate, or substitute alternative properties.
-4. Inform the user that OPV property advisors have direct access to exclusive offline and upcoming inventories across Hyderabad.
+4. Inform the user that OPV property advisors have direct access to exclusive offline and upcoming inventories.
 5. Offer to connect with an OPV advisor via phone or WhatsApp.`;
       }
     } catch (dbErr: any) {
@@ -689,6 +835,10 @@ INSTRUCTIONS FOR YOUR RESPONSE:
       const eduTopic = getEducationalTopicKnowledge(rawQuery);
       if (eduTopic) {
         finalAnswer = `${eduTopic.explanation}\n\n${eduTopic.followUp}`;
+      } else if (filters.property_type.length > 0 || filters.intent === 'PROPERTY_SEARCH') {
+        const propTypeName = filters.property_type.length > 0 ? filters.property_type.map(t => t.toLowerCase().replace('_', ' ')).join(', ') : 'property';
+        const locName = filters.location.length > 0 ? filters.location.join(', ') : 'Hyderabad';
+        finalAnswer = `Currently, there are no active verified **${propTypeName}** listings in **${locName}** available in our online catalog.\n\nHowever, our OPV property advisors have direct access to exclusive offline listings and upcoming commercial and land opportunities across Hyderabad. Please connect directly with an OPV advisor below via Phone or WhatsApp.`;
       } else {
         finalAnswer = `I don't have that specific information in our active records right now. Please connect directly with an OPV advisor who can assist you.`;
       }

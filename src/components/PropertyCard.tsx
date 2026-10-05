@@ -175,7 +175,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {property.area}
+                  {property.area || property.size || 'Standard Unit'}
                 </div>
                 <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">
                   {pLocale.size}

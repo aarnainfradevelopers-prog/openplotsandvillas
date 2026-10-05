@@ -121,24 +121,20 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
   // Safe audio stream helper with deviceId selection & fallback
   const getAudioStream = async (deviceId?: string): Promise<MediaStream> => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
       throw new Error('Microphone access is not supported by your browser.');
     }
 
-    if (deviceId) {
+    if (deviceId && deviceId !== 'default' && deviceId !== '') {
       try {
         return await navigator.mediaDevices.getUserMedia({
           audio: {
-            deviceId: { exact: deviceId }
+            deviceId: { ideal: deviceId }
           }
         });
       } catch (err: any) {
-        if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-          console.warn('Selected device unavailable, falling back to default audio input');
-          triggerError('Selected microphone is not available. Defaulting to system microphone.', 5000);
-          return await navigator.mediaDevices.getUserMedia({ audio: true });
-        }
-        throw err;
+        console.warn('Selected device unavailable, falling back to default audio input:', err);
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
       }
     }
 
@@ -146,9 +142,18 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   };
 
   // Check initial permission status if navigator.permissions is available
+  // Check initial permission status and auto-discover audio devices
   const checkInitialPermissions = useCallback(async () => {
     const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
     setIsSupported(!!SpeechRecognition);
+
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        setAudioDevices(audioInputs);
+      }
+    } catch (_) {}
 
     if (navigator.permissions && navigator.permissions.query) {
       try {
@@ -169,6 +174,23 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
   useEffect(() => {
     checkInitialPermissions();
+
+    const handleDeviceChange = async () => {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices.filter(d => d.kind === 'audioinput');
+          setAudioDevices(audioInputs);
+        }
+      } catch (_) {}
+    };
+
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      return () => {
+        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+      };
+    }
   }, [checkInitialPermissions]);
 
   // Clean up all resources
@@ -435,9 +457,27 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     setInterimText('');
   }, [onTranscript, onSendMessage]);
 
-  // Mode A: Speech-to-Text via Web Speech API with language support and safe fallbacks
+  // Mode A: Speech-to-Text via Web Speech API with universal device auto-connect & fallback
   const startListening = useCallback(
-    (retryWithFallbackLang = false) => {
+    async (retryWithFallbackLang = false) => {
+      // 1. Proactively ensure microphone permission & hardware stream is awake
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        try {
+          const testStream = await getAudioStream(selectedDeviceId);
+          testStream.getTracks().forEach(t => t.stop());
+          setPermissionState('granted');
+        } catch (permErr: any) {
+          console.warn('Microphone access check notice:', permErr);
+          const friendlyMsg = getFriendlyErrorMessage(permErr);
+          triggerError(friendlyMsg, 6000);
+          if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+            setPermissionState('denied');
+            setShowHelpModal(true);
+            return;
+          }
+        }
+      }
+
       const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 
       // If SpeechRecognition unavailable, gracefully fallback to voice recording mode

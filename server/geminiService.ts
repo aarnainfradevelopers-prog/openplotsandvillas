@@ -359,20 +359,21 @@ export function extractFallbackFilters(query: string): StructuredPropertySearchF
 
   // 2. Property Categories
   const propertyTypes: PropertyCategory[] = [];
+  const hasCommercial = /\b(commercial|shop|shops|office|offices|retail)\b/i.test(q);
+  const hasCommercialPlot = /\b(commercial\s*plot|commercial\s*plots|commercial\s*land)\b/i.test(q);
   const hasFarmHouse = /\b(farm\s*house|farmhouse)\b/i.test(q);
   const hasFarmLand = /\b(farm\s*land|farmland|agricultural|agriculture\s*land)\b/i.test(q);
   const hasVillaPlot = /\b(villa\s*plot|villas\s*plot|villa\s*plots|villas\s*plots)\b/i.test(q);
   const hasApartment = /\b(apartment|apartments|flat|flats|high\s*rise|residential\s*flat)\b/i.test(q);
   const hasVilla = /\b(villa|villas|independent\s*house|duplex|triplex)\b/i.test(q) && !hasVillaPlot;
-  const hasPlot = /\b(plot|plots|open\s*plot|open\s*plots|venture|residential\s*plot|plotted)\b/i.test(q) || hasVillaPlot;
-  const hasCommercial = /\b(commercial|shop|shops|office|offices|retail)\b/i.test(q);
+  const hasPlot = (/\b(plot|plots|open\s*plot|open\s*plots|venture|residential\s*plot|plotted)\b/i.test(q) || hasVillaPlot) && !hasCommercial && !hasCommercialPlot;
 
   if (hasFarmHouse) propertyTypes.push('FARM_HOUSE');
   if (hasFarmLand) propertyTypes.push('FARM_LAND');
   if (hasApartment) propertyTypes.push('APARTMENT');
   if (hasVilla) propertyTypes.push('VILLA');
-  if (hasPlot && !hasVilla) propertyTypes.push('PLOT');
-  if (hasCommercial) propertyTypes.push('COMMERCIAL');
+  if (hasCommercial || hasCommercialPlot) propertyTypes.push('COMMERCIAL');
+  if (hasPlot && !hasVilla && !hasCommercial && !hasCommercialPlot) propertyTypes.push('PLOT');
 
   // 3. Locations
   const knownLocations = [
@@ -483,7 +484,7 @@ USER INPUT: "${query}"
 
 EXTRACTION RULES:
 1. "intent":
-   - "PROPERTY_SEARCH": ONLY when the user explicitly wants to find, show, search, list, display, recommend, or buy properties/projects matching criteria (e.g. "RERA apartments", "HMDA plots in Shadnagar", "find villas in Hyderabad", "show properties under 1 crore", "RERA properties in Kokapet").
+   - "PROPERTY_SEARCH": ONLY when the user explicitly wants to find, show, search, list, display, recommend, or buy properties/projects matching criteria (e.g. "RERA apartments", "HMDA plots in Shadnagar", "find villas in Hyderabad", "show properties under 1 crore", "RERA properties in Kokapet", "commercial plots in Hyderabad").
      CRITICAL: An approval keyword alone (e.g. "RERA", "HMDA", "DTCP", "GHMC") is NOT a property search!
    - "GENERAL_INFORMATION": questions, definitions, meanings, explanations, or terms about real-estate concepts, approvals, regulations, legal procedures, documentation, services (e.g. "RERA", "What is RERA?", "RERA meaning", "HMDA", "What is HMDA approval?", "DTCP meaning", "What is GHMC?", "What is EC?", "Mutation meaning", "Property registration process", "LRS", "Vastu", "rera enti", "hmda ante").
      When intent is "GENERAL_INFORMATION", also extract "topic" (e.g. "RERA"), "question_type" ("definition" | "process" | "rules" | "service"), and "requested_information".
@@ -494,9 +495,12 @@ EXTRACTION RULES:
    - Include if mentioned. NOTE: The presence of an approval alone does NOT make the intent PROPERTY_SEARCH!
 3. "property_type":
    - Array of strings from: ["APARTMENT", "VILLA", "PLOT", "FARM_LAND", "FARM_HOUSE", "COMMERCIAL"].
-   - CRITICAL RULE: NEVER infer or invent a property type if the user did not explicitly mention it!
-     "RERA" does NOT mean apartment. "HMDA" does NOT mean plot. "DTCP" does NOT mean open plot.
-     If no specific property category was mentioned by the user, keep this array EMPTY ([]).
+   - CRITICAL RULES:
+     * "COMMERCIAL": Use for commercial plots, commercial land, shops, offices, retail spaces, commercial spaces. ("commercial plot" or "commercial land" is ALWAYS "COMMERCIAL", NEVER "PLOT").
+     * "PLOT": Use for residential open plots, layout plots, venture plots, villa plots. Never include "PLOT" if the user specified "commercial plot" or "commercial land".
+     * NEVER infer or invent a property type if the user did not explicitly mention it!
+     * "RERA" does NOT mean apartment. "HMDA" does NOT mean plot. "DTCP" does NOT mean open plot.
+     * If no specific property category was mentioned by the user, keep this array EMPTY ([]).
 4. "location":
    - Array of location names in title case (e.g. ["Hyderabad"], ["Shadnagar"], etc.). Do not invent a location if not mentioned.
 5. "budget_min" and "budget_max":
