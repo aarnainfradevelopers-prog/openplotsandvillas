@@ -29,7 +29,7 @@ interface PropertyDetailModalProps {
   currentLanguage?: LanguageCode;
 }
 
-const MODAL_TABS = ['Approvals', 'Overview', 'Amenities'] as const;
+const MODAL_TABS = ['Overview', 'Approvals', 'Amenities'] as const;
 type ModalTabType = typeof MODAL_TABS[number];
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
@@ -39,7 +39,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onEnquire,
   currentLanguage = 'en'
 }) => {
-  const [activeTab, setActiveTab] = useState<ModalTabType>('Approvals');
+  const [activeTab, setActiveTab] = useState<ModalTabType>('Overview');
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(false);
 
@@ -48,8 +48,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   if (!isOpen || !property) return null;
 
   const tabLabels: Record<ModalTabType, string> = {
-    Approvals: currentLanguage === 'te' ? 'అనుమతులు' : currentLanguage === 'hi' ? 'अनुमोदन' : currentLanguage === 'ta' ? 'அங்கீகாரங்கள்' : 'Approvals',
     Overview: pLocale.overviewTab || 'Overview',
+    Approvals: currentLanguage === 'te' ? 'అనుమతులు' : currentLanguage === 'hi' ? 'अनुमोदन' : currentLanguage === 'ta' ? 'அங்கீகாரங்கள்' : 'Approvals',
     Amenities: pLocale.amenitiesTab || 'Amenities'
   };
 
@@ -233,7 +233,14 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             ))}
           </div>
 
-          {/* Tab 1: Approvals */}
+          {/* Tab 1: Overview */}
+          {activeTab === 'Overview' && (
+            <div>
+              <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
+            </div>
+          )}
+
+          {/* Tab 2: Approvals */}
           {activeTab === 'Approvals' && (
             <div className="space-y-4">
               <div className="bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-4 sm:p-5">
@@ -314,13 +321,6 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   </span>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Tab 2: Overview */}
-          {activeTab === 'Overview' && (
-            <div>
-              <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
             </div>
           )}
 

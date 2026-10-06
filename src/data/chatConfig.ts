@@ -6,9 +6,9 @@ export const OPV_LANGUAGES: LanguageOption[] = [
     label: 'English (US)',
     nativeName: 'English (US)',
     speechCode: 'en-US',
-    welcomeGreeting: 'Hello! Welcome to Open Plots & Villas AI Assistant.',
+    welcomeGreeting: 'Hello 👋 Welcome to Open Plots & Villas AI Assistant.',
     welcomeSubtitle: 'Search verified plots, villas, and apartments from our database. How can I help you today?',
-    placeholder: 'Search plots, villas, apartments, locations, budgets...',
+    placeholder: '✦ Ask OPV AI anything about properties...',
     suggestions: [
       'Find open plots in Shadnagar',
       'Show luxury villas in Hyderabad',

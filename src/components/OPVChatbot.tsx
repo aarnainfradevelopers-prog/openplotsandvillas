@@ -677,8 +677,13 @@ export const OPVChatbot: React.FC = () => {
   };
 
   // Quick suggestion button options in square form matching reference, dynamically localized
-  const chipIcons = [Building2, MapPin, Home, Sprout, Store];
-  const suggestionChips = (currentLangConfig.suggestions && currentLangConfig.suggestions.length > 0 && currentLanguage !== 'en')
+  const chipIcons: (string | React.ComponentType<{ className?: string }>)[] = ['🏢', '📍', '🏠', '🌱', '🏪', '✨', '🛡️', '🏢'];
+  const suggestionChips: {
+    label: string;
+    query: string;
+    icon: string | React.ComponentType<{ className?: string }>;
+    subtitle?: string;
+  }[] = (currentLangConfig.suggestions && currentLangConfig.suggestions.length > 0 && currentLanguage !== 'en')
     ? currentLangConfig.suggestions.slice(0, 5).map((sug, idx) => ({
       label: sug,
       query: sug,
@@ -688,39 +693,50 @@ export const OPVChatbot: React.FC = () => {
       {
         label: 'Apartments in Hyderabad',
         query: 'apartments in hyd',
-        icon: Building2,
+        icon: '🏢',
         subtitle: '2, 3 & 4 BHK High-rises'
       },
       {
         label: 'Open Plots in Hyd',
         query: 'open plots in Hyd',
-        icon: MapPin,
+        icon: '📍',
         subtitle: 'HMDA & DTCP Approved'
       },
       {
         label: 'Gated Luxury Villas',
         query: 'gated luxury villas in hyderabad',
-        icon: Home,
+        icon: '🏠',
         subtitle: 'Kokapet, Tellapur, Mokila'
       },
       {
         label: 'Farm Lands',
         query: 'farm lands in hyderabad',
-        icon: Sprout,
+        icon: '🌱',
         subtitle: 'Agriculture & Farm Houses'
       },
       {
         label: 'Commercial Plots',
         query: 'commercial properties in hyd',
-        icon: Store,
+        icon: '🏪',
         subtitle: 'offices & Retail Shops'
       },
       {
         label: '360° Elite Services',
         query: '360 elite services',
-        icon: Sparkles,
+        icon: '✨',
         subtitle: 'Property buying & Selling '
-
+      },
+      {
+        label: 'RERA',
+        query: 'rera',
+        icon: '🛡️',
+        subtitle: 'RERA Approved Properties'
+      },
+      {
+        label: 'HMDA',
+        query: 'hmda',
+        icon: '🏢',
+        subtitle: 'HMDA Approved Properties'
       },
     ];
 
@@ -799,7 +815,7 @@ export const OPVChatbot: React.FC = () => {
                 {currentLanguage === 'en' ? (
                   <>
                     <span className="block text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200 mb-0.5">
-                      Hello!
+                      Hello 👋
                     </span>
                     <span className="block text-2xl sm:text-[34px] font-black text-slate-900 dark:text-white leading-tight">
                       OPV <span className="text-emerald-600 dark:text-emerald-400">AI Assistant</span>
@@ -835,7 +851,7 @@ export const OPVChatbot: React.FC = () => {
               <div className="w-full max-w-3xl sm:max-w-[740px] mx-auto px-3 sm:px-6 pt-2" style={{ marginTop: '24px' }}>
                 <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
                   {suggestionChips.map((chip, idx) => {
-                    const ChipIcon = chip.icon;
+                    const IconComponent = typeof chip.icon !== 'string' ? chip.icon : null;
                     return (
                       <button
                         key={idx}
@@ -850,7 +866,13 @@ export const OPVChatbot: React.FC = () => {
                           minWidth: '140px'
                         }}
                       >
-                        <ChipIcon className="w-4 h-4 text-slate-800 dark:text-slate-200 shrink-0 stroke-[2]" />
+                        {typeof chip.icon === 'string' ? (
+                          <span className="text-[17px] leading-none shrink-0 select-none flex items-center justify-center w-5 h-5" role="img" aria-hidden="true">
+                            {chip.icon}
+                          </span>
+                        ) : IconComponent ? (
+                          <IconComponent className="w-4 h-4 text-slate-800 dark:text-slate-200 shrink-0 stroke-[2]" />
+                        ) : null}
                         <span className="whitespace-nowrap">{chip.label}</span>
                       </button>
                     );
@@ -894,7 +916,7 @@ export const OPVChatbot: React.FC = () => {
               {/* Quick Suggestion Options matching Reference Style */}
               <div className="w-full max-w-4xl px-3 sm:px-6 pb-2.5 overflow-x-auto scrollbar-none flex items-center justify-start sm:justify-center gap-2.5 sm:gap-3 flex-nowrap">
                 {suggestionChips.map((chip, idx) => {
-                  const ChipIcon = chip.icon;
+                  const IconComponent = typeof chip.icon !== 'string' ? chip.icon : null;
                   return (
                     <button
                       key={idx}
@@ -909,7 +931,13 @@ export const OPVChatbot: React.FC = () => {
                         minWidth: '140px'
                       }}
                     >
-                      <ChipIcon className="w-4 h-4 text-slate-800 dark:text-slate-200 shrink-0 stroke-[2]" />
+                      {typeof chip.icon === 'string' ? (
+                        <span className="text-[17px] leading-none shrink-0 select-none flex items-center justify-center w-5 h-5" role="img" aria-hidden="true">
+                          {chip.icon}
+                        </span>
+                      ) : IconComponent ? (
+                        <IconComponent className="w-4 h-4 text-slate-800 dark:text-slate-200 shrink-0 stroke-[2]" />
+                      ) : null}
                       <span className="whitespace-nowrap">{chip.label}</span>
                     </button>
                   );

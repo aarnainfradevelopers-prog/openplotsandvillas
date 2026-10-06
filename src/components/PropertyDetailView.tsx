@@ -26,7 +26,7 @@ interface PropertyDetailViewProps {
   currentLanguage?: LanguageCode;
 }
 
-const TABS = ['Approvals', 'Overview', 'Amenities'] as const;
+const TABS = ['Overview', 'Approvals', 'Amenities'] as const;
 type TabType = typeof TABS[number];
 
 export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
@@ -35,7 +35,7 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   onDetails,
   currentLanguage = 'en'
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('Approvals');
+  const [activeTab, setActiveTab] = useState<TabType>('Overview');
   const [imgIndex, setImgIndex] = useState(0);
   const [isFav, setIsFav] = useState(property.isFavorite || false);
 
@@ -43,8 +43,8 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   const websiteUrl = getPropertyWebsiteUrl(property);
 
   const tabLabels: Record<TabType, string> = {
-    Approvals: currentLanguage === 'te' ? 'అనుమతులు' : currentLanguage === 'hi' ? 'अनुमोदन' : currentLanguage === 'ta' ? 'அங்கீகாரங்கள்' : 'Approvals',
     Overview: pLocale.overviewTab || 'Overview',
+    Approvals: currentLanguage === 'te' ? 'అనుమతులు' : currentLanguage === 'hi' ? 'अनुमोदन' : currentLanguage === 'ta' ? 'அங்கீகாரங்கள்' : 'Approvals',
     Amenities: pLocale.amenitiesTab || 'Amenities'
   };
 
@@ -372,6 +372,12 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
 
             {/* Tab Panel Contents */}
             <div className="min-h-[140px] text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              {activeTab === 'Overview' && (
+                <div className="py-1">
+                  <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
+                </div>
+              )}
+
               {activeTab === 'Approvals' && (
                 <div className="space-y-2 py-1 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -406,12 +412,6 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
                       </>
                     )}
                   </div>
-                </div>
-              )}
-
-              {activeTab === 'Overview' && (
-                <div className="py-1">
-                  <StructuredPropertyCards property={property} currentLanguage={currentLanguage} />
                 </div>
               )}
 
