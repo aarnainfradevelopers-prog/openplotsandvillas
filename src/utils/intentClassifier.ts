@@ -8,6 +8,7 @@
 export type IntentType =
   | 'PROPERTY_SEARCH'
   | 'PROJECT_INFORMATION'
+  | 'OPV_SERVICES'
   | 'GENERAL_INQUIRY'
   | 'GREETING'
   | 'OUT_OF_SCOPE'
@@ -274,6 +275,22 @@ export function classifyIntent(rawQuery: string): ClassifiedIntent {
   if (isThanks) {
     return {
       intent: 'GREETING',
+      normalizedQuery: normalized,
+      originalQuery: original
+    };
+  }
+
+  // 4. OPV 360° ELITE SERVICES & COMPREHENSIVE REAL ESTATE SOLUTIONS
+  const isServicesPattern =
+    /\b(360|360°|elite\s*services?|opv\s*services?|what\s*services?|services?\s*provided|services?\s*offered|real\s*estate\s*services?)\b/i.test(normalized) ||
+    normalized.includes('360 elite') ||
+    normalized.includes('elite service') ||
+    normalized === 'services' ||
+    normalized === 'opv services';
+
+  if (isServicesPattern) {
+    return {
+      intent: 'OPV_SERVICES',
       normalizedQuery: normalized,
       originalQuery: original
     };

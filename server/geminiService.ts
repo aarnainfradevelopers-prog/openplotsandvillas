@@ -98,7 +98,8 @@ export function checkIsGeneralEducationalQuery(rawQuery: string): boolean {
     'property tax', 'sale deed', 'agreement of sale', 'patta', 'passbook', 'dharani', 'market value',
     'guidance value', 'stamp duty', 'carpet area', 'built up area', 'built-up area', 'super built up area',
     'super built-up area', 'plinth area', 'undivided share', 'uds', 'occupancy certificate', 'oc',
-    'commencement certificate', 'cc', 'possession', 'bhk', 'khata'
+    'commencement certificate', 'cc', 'possession', 'bhk', 'khata',
+    '360 elite services', '360 elite', 'elite services', 'opv services', '360 services'
   ];
 
   const containsTopic = REAL_ESTATE_TOPICS.some(t => {
@@ -140,8 +141,8 @@ export function checkIsGeneralEducationalQuery(rawQuery: string): boolean {
     return true;
   }
 
-  // General company/website questions
-  if (/\b(about\s*opv|who\s*is\s*opv|what\s*is\s*opv|opv\s*services|services\s*offered|founder|ceo|contact|office\s*address|phone\s*number)\b/i.test(cleanQ)) {
+  // General company, website, guides, and service questions
+  if (/\b(website|web\s*site|portal|platform|openplotsandvillas|about\s*(opv|company|us)|who\s*is\s*opv|what\s*is\s*opv|opv\s*services|services\s*offered|founder|ceo|contact|office|address|phone|email|whatsapp|site\s*visit|buying\s*guide|selling\s*guide)\b/i.test(cleanQ)) {
     return true;
   }
 
@@ -309,6 +310,62 @@ export const REAL_ESTATE_EDUCATIONAL_KNOWLEDGE: Record<string, EducationalTopicE
     explanation:
       '**BHK** stands for **Bedroom, Hall, and Kitchen**, indicating the room configuration of residential apartments, villas, and independent houses (e.g. 2 BHK, 3 BHK, 4 BHK). In gated communities, BHK configurations often include attached bathrooms, balconies, and utility spaces.',
     followUp: 'Would you like me to show you available BHK properties in Hyderabad?'
+  },
+  elite_services: {
+    topic: '360° Elite Services',
+    questionType: 'service',
+    explanation:
+      '**OPV 360° Elite Services** provides comprehensive, end-to-end real estate solutions: *"From land acquisition and Bhoomi Pooja to Gruhapravesam — End-to-End Real Estate Services on India\'s Premium AI Real Estate Portal."*\n\nKey Services Offered:\n- 📐 **Architectural Design & Planning:** 2D & 3D floor plans, 3D elevations, villa designs, and building approval sanctions.\n- 🏗️ **Construction & Civil Contractor:** Turnkey residential, villa, and commercial construction, renovations, and painting.\n- 📜 **Legal & Documentation Assistance:** 30-year EC audits, title deed clearances, sale agreements, Patta mutation, and registration support.\n- 🏦 **Home Loans & Property Finance:** Fast bank loan sanctions, plot purchase & construction loans, balance transfers, and NRI financing.\n- 🏡 **Interior Design & Smart Homes:** Modular kitchens, wardrobes, false ceilings, lighting design, home theaters, and IoT smart home automation.\n- 🛰️ **Land Survey & Geo-Tagging:** DGPS and GPS boundary survey, drone mapping, and contour layout marking.\n- 🌿 **Layout Development Services:** Venture infra, land leveling, BT/CC internal roads, underground drainage, and avenue plantations.\n- ⚡ **Electrical, Solar & CCTV Security:** Power backup, CCTV setups, rooftop solar, and EV charging stations.\n- 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam rituals.\n- 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, and asset security audits.\n- 🚚 **Packers & Movers:** Safe household shifting and vehicle relocation.\n- 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and chauffeured site visits.',
+    followUp: 'Would you like to connect with an OPV Service Advisor or explore our services at openplotsandvillas.com/services?'
+  },
+  about_opv: {
+    topic: 'About Open Plots & Villas (OPV)',
+    questionType: 'general',
+    explanation:
+      '**Open Plots & Villas (OPV)** is India\'s First AI-Powered Real Estate Ecosystem (openplotsandvillas.com), headquartered in Madhapur, Hyderabad.\n\n- **Mission:** Simplifying property discovery through 100% verified listings, end-to-end transparency, and AI-driven recommendations.\n- **Offerings:** Verified Open Plots, Luxury Villas, Gated Communities, Apartments, and Commercial Spaces across Hyderabad.\n- **Assurance:** Multi-stage legal audits, 30-year EC checks, and statutory RERA, HMDA, and DTCP validation.\n- **Comprehensive Support:** Full lifecycle assistance from chauffeured site visits to legal scrutiny, loans, Bhoomi Pooja, and interior design.',
+    followUp: 'Would you like to explore verified properties or learn more about OPV 360° Elite Services?'
+  },
+  office_location: {
+    topic: 'OPV Head Office Location',
+    questionType: 'general',
+    explanation:
+      '### 📍 Open Plots & Villas Head Office\n- **Address:** #101, Road No: 10, Jaya Kesav Avenue, Kakatiya Hills, Madhapur, Hyderabad, Telangana – 500081\n- **Landmark:** Kakatiya Hills, Madhapur (near Hitec City / Inorbit Mall corridor)\n- **Phone:** +91 99635 13939 | 040 4568 5052\n- **Email:** info@openplotsandvillas.com\n- **Hours:** Monday to Saturday: 9:30 AM – 6:30 PM (Sunday by appointment)\n\nVisitors and property seekers are always welcome to consult with our property experts in person.',
+    followUp: 'Would you like directions or assistance booking an in-person meeting?'
+  },
+  contact_info: {
+    topic: 'OPV Contact & Helpline',
+    questionType: 'general',
+    explanation:
+      '### 📞 Contact Open Plots & Villas\n- **Direct Helpline:** +91 99635 13939\n- **Office Landline:** 040 4568 5052 / 040 4563 5052\n- **WhatsApp Support:** +91 99635 13939\n- **Email:** info@openplotsandvillas.com\n- **Website:** https://openplotsandvillas.com\n- **Support Hours:** Monday to Saturday, 9:30 AM – 6:30 PM IST.',
+    followUp: 'Would you like me to connect you with an OPV advisor right away via WhatsApp or Phone?'
+  },
+  site_visit: {
+    topic: 'Free Chauffeured Site Visits',
+    questionType: 'service',
+    explanation:
+      '### 🚗 Free Chauffeured Site Visits\nOPV provides **complimentary, chauffeured site visits** for buyers and families:\n- **Free Pickup & Drop:** Comfortable AC transport from major Hyderabad hubs to the project location and back.\n- **Dedicated On-Site Advisor:** Accompanied by a knowledgeable consultant who explains plot boundaries, layout dimensions, master plan connectivity, and future appreciation potential.\n- **Direct Document Review:** Review physical copies of verified HMDA/DTCP sanctions and RERA approvals on-site.\n- **Available 7 Days a week** by prior appointment.',
+    followUp: 'Would you like to schedule a free site visit for an upcoming weekend or weekday?'
+  },
+  buying_guide: {
+    topic: 'Property Buying Guide',
+    questionType: 'process',
+    explanation:
+      '### 📖 Steps to Buying Property on OPV\n1. **Search & Shortlist:** Browse verified plots, villas, and apartments on OPV filtered by location and budget.\n2. **Free Chauffeured Site Visit:** Inspect the layout, roads, and amenities first-hand.\n3. **Legal Due Diligence:** In-house verification of 30-year EC, link documents, and RERA/HMDA approvals.\n4. **Home Loan Sanction:** Fast-tracked bank approvals with partner banks (SBI, HDFC, ICICI).\n5. **Agreement of Sale:** Transparent terms and milestone payment schedules.\n6. **Registration & Patta Mutation:** Complete SRO registration support and Dharani/municipal ownership mutation.',
+    followUp: 'Would you like assistance shortlisting verified properties in Hyderabad?'
+  },
+  selling_guide: {
+    topic: 'Property Selling & Listing Guide',
+    questionType: 'process',
+    explanation:
+      '### 📢 How to Sell / List Your Property on OPV\n- **High-Intent Buyers:** Reach thousands of verified buyers and NRI investors actively searching for properties in Hyderabad.\n- **Professional Marketing:** High-resolution photography, drone videos, 3D walkthroughs, and targeted digital promotion.\n- **Accurate Market Valuation:** Guidance from senior property appraisers to ensure you get the best price.\n- **End-to-End Handling:** We manage site visits, buyer queries, and documentation coordination.\n- **To list your property:** Call +91 99635 13939 or email info@openplotsandvillas.com.',
+    followUp: 'Would you like to speak with our listing manager to feature your property on OPV?'
+  },
+  opv_website: {
+    topic: 'Open Plots & Villas (openplotsandvillas.com)',
+    questionType: 'general',
+    explanation:
+      '### 🌐 Open Plots & Villas (openplotsandvillas.com)\n**India\'s First AI-Powered Real Estate Portal.**\n\n- **Verified Inventory:** HMDA, DTCP, and RERA verified open plots, villas, and apartments.\n- **360° Elite Services:** 18 end-to-end turnkey services covering everything from land purchase to Bhoomi Pooja, construction, loans, and interiors.\n- **Guides & Tools:** Comprehensive legal checklists, buyer guides, and smart property filtering.\n- **AI Assistant:** Instant property search, budget matching, and live assistance.\n- **Visit us at:** https://openplotsandvillas.com',
+    followUp: 'What would you like to explore today on openplotsandvillas.com?'
   }
 };
 
@@ -316,6 +373,35 @@ export function getEducationalTopicKnowledge(query: string): EducationalTopicEnt
   if (!query) return null;
   const q = query.toLowerCase();
 
+  // Website & Company Queries
+  if (/\b(website|web\s*site|portal|platform|openplotsandvillas(\.com)?)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.opv_website;
+  }
+  if (/\b(about\s*(opv|company|us|open\s*plots)|who\s*is\s*opv|what\s*is\s*opv|why\s*(choose\s*)?opv)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.about_opv;
+  }
+  if (/\b(office|address|head\s*office|headquarters|location\s*of\s*office|where\s*is\s*(your|the)\s*office)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.office_location;
+  }
+  if (/\b(contact|phone|helpline|call\s*opv|mobile|support\s*number|email|whatsapp)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.contact_info;
+  }
+  if (/\b(site\s*visit|chauffeured|cab|inspection|book\s*(a\s*)?visit)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.site_visit;
+  }
+  if (/\b(how\s*to\s*buy|buying\s*guide|buyer\s*guide|steps\s*to\s*buy)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.buying_guide;
+  }
+  if (/\b(how\s*to\s*sell|selling\s*guide|seller\s*guide|post\s*property|list\s*property)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.selling_guide;
+  }
+
+  // Real Estate Services
+  if (/\b(360|360°|elite\s*services?|opv\s*services?|services?\s*provided|what\s*services?)\b/i.test(q) || q.includes('360 elite') || q === 'services' || q === 'opv services') {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.elite_services;
+  }
+
+  // Educational Regulatory Concepts
   if (/\brera\b/i.test(q)) return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.rera;
   if (/\bhmda\b/i.test(q)) return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.hmda;
   if (/\bdtcp\b/i.test(q)) return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.dtcp;

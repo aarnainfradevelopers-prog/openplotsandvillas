@@ -684,61 +684,61 @@ export const OPVChatbot: React.FC = () => {
     icon: string | React.ComponentType<{ className?: string }>;
     subtitle?: string;
   }[] = (currentLangConfig.suggestions && currentLangConfig.suggestions.length > 0 && currentLanguage !== 'en')
-    ? currentLangConfig.suggestions.slice(0, 5).map((sug, idx) => ({
-      label: sug,
-      query: sug,
-      icon: chipIcons[idx % chipIcons.length]
-    }))
-    : [
-      {
-        label: 'Apartments in Hyderabad',
-        query: 'apartments in hyd',
-        icon: '🏢',
-        subtitle: '2, 3 & 4 BHK High-rises'
-      },
-      {
-        label: 'Open Plots in Hyd',
-        query: 'open plots in Hyd',
-        icon: '📍',
-        subtitle: 'HMDA & DTCP Approved'
-      },
-      {
-        label: 'Gated Luxury Villas',
-        query: 'gated luxury villas in hyderabad',
-        icon: '🏠',
-        subtitle: 'Kokapet, Tellapur, Mokila'
-      },
-      {
-        label: 'Farm Lands',
-        query: 'farm lands in hyderabad',
-        icon: '🌱',
-        subtitle: 'Agriculture & Farm Houses'
-      },
-      {
-        label: 'Commercial Plots',
-        query: 'commercial properties in hyd',
-        icon: '🏪',
-        subtitle: 'offices & Retail Shops'
-      },
-      {
-        label: '360° Elite Services',
-        query: '360 elite services',
-        icon: '✨',
-        subtitle: 'Property buying & Selling '
-      },
-      {
-        label: 'RERA',
-        query: 'rera',
-        icon: '🛡️',
-        subtitle: 'RERA Approved Properties'
-      },
-      {
-        label: 'HMDA',
-        query: 'hmda',
-        icon: '🏢',
-        subtitle: 'HMDA Approved Properties'
-      },
-    ];
+      ? currentLangConfig.suggestions.slice(0, 5).map((sug, idx) => ({
+        label: sug,
+        query: sug,
+        icon: chipIcons[idx % chipIcons.length]
+      }))
+      : [
+        {
+          label: 'Apartments in Hyderabad',
+          query: 'apartments in hyd',
+          icon: '🏢',
+          subtitle: '2, 3 & 4 BHK High-rises'
+        },
+        {
+          label: 'Open Plots in Hyd',
+          query: 'open plots in Hyd',
+          icon: '📍',
+          subtitle: 'HMDA & DTCP Approved'
+        },
+        {
+          label: 'Gated Luxury Villas',
+          query: 'gated luxury villas in hyderabad',
+          icon: '🏠',
+          subtitle: 'Kokapet, Tellapur, Mokila'
+        },
+        {
+          label: 'Farm Lands',
+          query: 'farm lands in hyderabad',
+          icon: '🌱',
+          subtitle: 'Agriculture & Farm Houses'
+        },
+        {
+          label: 'Commercial Plots',
+          query: 'commercial properties in hyd',
+          icon: '🏪',
+          subtitle: 'offices & Retail Shops'
+        },
+        {
+          label: '360° Elite Services',
+          query: '360 elite services',
+          icon: '✨',
+          subtitle: 'Property buying & Selling '
+        },
+        {
+          label: 'RERA',
+          query: 'rera',
+          icon: '🛡️',
+          subtitle: 'RERA Approved Properties'
+        },
+        {
+          label: 'HMDA',
+          query: 'hmda',
+          icon: '🏢',
+          subtitle: 'HMDA Approved Properties'
+        },
+      ];
 
   return (
     <div

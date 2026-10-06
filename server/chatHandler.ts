@@ -850,13 +850,42 @@ INSTRUCTIONS FOR YOUR RESPONSE:
     ? `Hello OPV, I am inquiring about ${primaryProj.title}`
     : `Hello OPV, I have an inquiry: ${rawQuery}`;
 
+  const isServicesQuery = /\b(360|360°|elite\s*services?|opv\s*services?)\b/i.test(rawQuery);
+  const isWebsiteQuery = /\b(website|web\s*site|portal|platform|openplotsandvillas)\b/i.test(rawQuery);
+  const isContactQuery = /\b(contact|phone|office|address|headquarters)\b/i.test(rawQuery);
+  const isSiteVisitQuery = /\b(site\s*visit|chauffeured|cab)\b/i.test(rawQuery);
+
+  let finalActions = getStandardActions('9963513939', customWa);
+
+  if (isServicesQuery) {
+    finalActions = [
+      { label: 'Explore All 360° Services ↗', url: 'https://openplotsandvillas.com/services', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I want to inquire about 360° Elite Services')
+    ];
+  } else if (isWebsiteQuery) {
+    finalActions = [
+      { label: 'Visit openplotsandvillas.com ↗', url: 'https://openplotsandvillas.com', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I have a question about the platform')
+    ];
+  } else if (isContactQuery) {
+    finalActions = [
+      { label: 'View Contact Page ↗', url: 'https://openplotsandvillas.com/contact', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I want to connect with your team')
+    ];
+  } else if (isSiteVisitQuery) {
+    finalActions = [
+      { label: 'Book Site Visit ↗', url: 'https://openplotsandvillas.com/contact', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I would like to schedule a free chauffeured site visit')
+    ];
+  }
+
   const translatedUserPrompt = await translationPromise;
 
   return {
     content: finalAnswer,
     properties: matchedProperties, // ALWAYS an array: [] when 0 matches!
-    actions: getStandardActions('9963513939', customWa),
-    category: primaryProj ? (primaryProj.normalizedType === 'PLOT' ? 'plots' : 'villas') : 'general',
+    actions: finalActions,
+    category: isServicesQuery ? 'services' : (primaryProj ? (primaryProj.normalizedType === 'PLOT' ? 'plots' : 'villas') : 'general'),
     sourceType: groundingSourceType,
     translatedUserPrompt: (translatedUserPrompt && translatedUserPrompt !== rawQuery) ? translatedUserPrompt : undefined
   };

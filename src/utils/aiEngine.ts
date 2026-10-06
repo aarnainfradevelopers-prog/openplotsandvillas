@@ -2,6 +2,7 @@ import { OPV_COMPANY_PROFILE, OPV_LANGUAGES } from '../data/chatConfig';
 import { ActionLink, LanguageCode, PropertyItem } from '../types/chat';
 import { searchLiveProperties } from '../data/propertyData';
 import { classifyIntent, normalizeQuery } from './intentClassifier';
+import { findWebsiteKnowledge } from '../data/websiteKnowledge';
 
 export interface AIResponse {
   content: string;
@@ -389,7 +390,100 @@ Tell me what type of property, location, or budget you are searching for.`,
     };
   }
 
-  // 3. PROPERTY & PROJECT SEARCH (SUPABASE IS THE ONLY SOURCE)
+  // 3. OPV WEBSITE KNOWLEDGE (About Us, Office Location, Contacts, Site Visits, Buyer/Seller Guides)
+  const websiteKnowledgeMatch = findWebsiteKnowledge(rawQuery) || findWebsiteKnowledge(normalizedQuery);
+  if (websiteKnowledgeMatch && websiteKnowledgeMatch.id !== '360_elite_services') {
+    return {
+      content: websiteKnowledgeMatch.content,
+      actions: [
+        { label: websiteKnowledgeMatch.linkLabel, url: websiteKnowledgeMatch.linkUrl, action: 'explore' },
+        ...getStandardActions(`Hello OPV, I want to inquire regarding ${websiteKnowledgeMatch.title}`)
+      ],
+      category: 'general',
+      properties: []
+    };
+  }
+
+  // 4. OPV 360° ELITE SERVICES (Sourced directly from openplotsandvillas.com/services)
+  if (
+    intent === 'OPV_SERVICES' ||
+    /\b(360|360°|elite\s*services?|opv\s*services?|what\s*services?|services?\s*provided|services?\s*offered|real\s*estate\s*services?)\b/i.test(normalizedQuery) ||
+    normalizedQuery.includes('360 elite') ||
+    normalizedQuery.includes('elite service') ||
+    normalizedQuery === 'services' ||
+    normalizedQuery === 'opv services'
+  ) {
+    let serviceContent = `### 🌟 OPV 360° Elite Services
+**From Land Acquisition & Bhoomi Pooja to Gruhapravesam — End-to-End Real Estate Solutions on India's Premium AI Real Estate Portal.**
+
+Open Plots & Villas (OPV) delivers comprehensive, verified turnkey solutions for property buyers, sellers, and investors:
+
+* 📐 **Architectural Design & Planning:** Visionary house plans, villa designs, 2D/3D floor plans, smart 3D modeling, and building approval plans.
+* 🏗️ **Construction & Civil Contracting:** Residential, villa, and commercial turnkey civil contracting, high-quality renovations, and painting.
+* 📜 **Legal & Documentation Assistance:** 30-year Encumbrance Certificate (EC) review, title deed clearance, sale agreements, Patta mutation, and registration support.
+* 🏦 **Home Loan & Property Finance:** Fast approvals and competitive rates for home loans, open plot loans, construction loans, balance transfers, and NRI financing.
+* 🏡 **Interior Design & Smart Homes:** Premium modular kitchens, wardrobes, false ceilings, lighting design, home theaters, and IoT smart home automation.
+* 🛰️ **Land Survey & Geo-Tagging:** DGPS and GPS boundary surveys, drone mapping, topographic contour mapping, and layout marking.
+* 🌿 **Layout Development Services:** Venture infrastructure, land leveling, internal BT & CC roads, underground drainage, and avenue plantations.
+* ⚡ **Electrical, Solar & CCTV Security:** Complete electrical installations, CCTV surveillance, fire safety systems, rooftop solar, and EV charging stations.
+* 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam muhurtham rituals.
+* 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, asset security audits, and utility bill tracking.
+* 🚚 **Packers & Movers:** Safe household shifting, corporate office relocation, and vehicle transportation.
+* 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and chauffeured site visits.
+
+Would you like to connect directly with an OPV Service Advisor or book a free consultation?`;
+
+    if (language === 'te') {
+      serviceContent = `### 🌟 OPV 360° ఎలైట్ సర్వీసెస్ (360° Elite Services)
+**భూమి కొనుగోలు, భూమి పూజ నుండి గృహప్రవేశం వరకు — సమగ్ర ఎండ్-టు-ఎండ్ రియల్ ఎస్టేట్ సేవలు.**
+
+ఓపెన్ ప్లాట్స్ & విల్లాస్ (OPV) ప్రాపర్టీ కొనుగోలుదారులు, అమ్మకందారులు మరియు పెట్టుబడిదారులకు పూర్తి స్థాయి సేవలను అందిస్తుంది:
+
+* 📐 **ఆర్కిటెక్చరల్ డిజైన్ & ప్లానింగ్:** 2D & 3D ఫ్లోర్ ప్లాన్స్, ఎలివేషన్, మరియు భవన నిర్మాణ అనుమతులు.
+* 🏗️ **నిర్మాణ & సివిల్ కాంట్రాక్టర్:** విల్లా మరియు నివాస గృహాల టర్న్‌కీ నిర్మాణం, పునరుద్ధరణ పనులు.
+* 📜 **లీగల్ & డాక్యుమెంటేషన్:** 30 ఏళ్ల EC పరిశీలన, టైటిల్ క్లియరెన్స్, సేల్ డీడ్ డ్రాఫ్టింగ్, పట్టా మ్యుటేషన్ & రిజిస్ట్రేషన్ సహాయం.
+* 🏦 **హోమ్ లోన్ & ప్రాపర్టీ ఫైనాన్స్:** ప్రముఖ జాతీయ బ్యాంకుల నుండి వేగవంతమైన హోమ్, ప్లాట్ & ఎన్‌ఆర్‌ఐ (NRI) లోన్ మంజూరు.
+* 🏡 **ఇంటీరియర్ డిజైన్ & స్మార్ట్ హోమ్:** మాడ్యులర్ కిచెన్, వార్డ్‌రోబ్స్, ఫాల్స్ సీలింగ్ & స్మార్ట్ హోమ్ ఆటోమేషన్.
+* 🛰️ **ల్యాండ్ సర్వే & జియో ట్యాగింగ్:** DGPS & GPS సరిహద్దు సర్వే, డ్రోన్ మ్యాపింగ్ & లేఅవుట్ మార్కింగ్.
+* 🌿 **లేఅవుట్ డెవలప్‌మెంట్:** ల్యాండ్ లెవలింగ్, బీటీ/సీసీ రోడ్లు, భూగర్భ డ్రైనేజీ & అవెన్యూ ప్లాంటేషన్.
+* ⚡ **ఎలక్ట్రికల్, సోలార్ & సీసీటీవీ భద్రత:** రూఫ్‌టాప్ సోలార్, సీసీటీవీ సెటప్ & ఈవీ ఛార్జర్స్.
+* 🌺 **వాస్తు & ఆధ్యాత్మిక సేవలు:** 100% వాస్తు పరిశీలన, భూమి పూజ & గృహప్రవేశ పూజలు.
+* 🛡️ **ప్రాపర్టీ మేనేజ్‌మెంట్:** సైట్ తనిఖీలు, సరిహద్దు రక్షణ & ఆస్తి నిర్వహణ.
+* 🚚 **ప్యాకర్స్ & మూవర్స్:** సురక్షితమైన గృహ మరియు కార్యాలయ తరలింపు.
+
+మీరు OPV సర్వీస్ సలహాదారునితో మాట్లాడాలనుకుంటున్నారా? క్రింది బటన్ల ద్వారా నేరుగా సంప్రదించండి.`;
+    } else if (language === 'hi') {
+      serviceContent = `### 🌟 OPV 360° एलीट सर्विसेज (360° Elite Services)
+**भूमि अधिग्रहण, भूमि पूजन से लेकर गृह प्रवेश तक — भारत के प्रीमियम AI रियल एस्टेट पोर्टल पर संपूर्ण सेवाएं।**
+
+ओपन प्लॉट्स एंड विला (OPV) संपत्ति खरीदारों, विक्रेताओं और निवेशकों के लिए पूर्ण एंड-टू-एंड सेवाएं प्रदान करता है:
+
+* 📐 **वास्तुकला डिजाइन और योजना:** 2D और 3D फ्लोर प्लान, 3D एलिवेशन, संरचनात्मक चित्र और भवन निर्माण अनुमोदन।
+* 🏗️ **निर्माण और सिविल ठेकेदारी:** टर्नकी आवासीय और विला निर्माण, नवीनीकरण और सिविल कार्य।
+* 📜 **कानूनी और दस्तावेजीकरण सहायता:** 30-वर्षीय ईसी (EC) जांच, कानूनी शीर्षक सत्यापन, बिक्री समझौता और पट्टा म्यूटेशन।
+* 🏦 **होम लोन और प्रॉपर्टी फाइनेंस:** त्वरित बैंक लोन स्वीकृति, प्लॉट लोन, निर्माण लोन और एनआरआई (NRI) फंडिंग।
+* 🏡 **इंटीरियर डिजाइन और स्मार्ट होम:** मॉड्यूलर किचन, वार्डरोब, फॉल्स सीलिंग और स्मार्ट होम ऑटोमेशन।
+* 🛰️ **भूमि सर्वेक्षण और जियो-टैगिंग:** डीजीपीएस (DGPS) और जीपीएस सीमा सर्वेक्षण, ड्रोन मैपिंग और लेआउट मार्किंग।
+* 🌿 **लेआउट विकास सेवाएं:** भूमि समतलीकरण, बीटी/सीसी सड़कें, भूमिगत जल निकासी और वृक्षारोपण।
+* ⚡ **इलेक्ट्रिकल, सोलर और सीसीटीवी सुरक्षा:** रूफटॉप सोलर, सीसीटीवी सर्विलांस और ईवी चार्जिंग स्टेशन।
+* 🌺 **वास्तु और आध्यात्मिक सेवाएं:** 100% वास्तु सलाह, भूमि पूजन और गृह प्रवेश अनुष्ठान।
+* 🛡️ **संपत्ति प्रबंधन और सुरक्षा:** नियमित साइट निरीक्षण, चारदीवारी सुरक्षा और संपत्ति की देखभाल।
+
+क्या आप OPV सेवा सलाहकार से बात करना चाहते हैं? नीचे दिए गए विकल्पों से संपर्क करें।`;
+    }
+
+    return {
+      content: serviceContent,
+      actions: [
+        { label: 'Explore Services ↗', url: 'https://openplotsandvillas.com/services', action: 'explore' },
+        ...getStandardActions('Hello OPV, I want to inquire about 360° Elite Services')
+      ],
+      category: 'services',
+      properties: []
+    };
+  }
+
+  // 4. PROPERTY & PROJECT SEARCH (SUPABASE IS THE ONLY SOURCE)
   if (intent === 'PROPERTY_SEARCH' || intent === 'PROJECT_INFORMATION') {
     const liveMatches = searchLiveProperties(rawQuery);
     if (liveMatches.length > 0) {
