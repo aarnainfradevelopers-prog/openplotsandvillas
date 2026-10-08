@@ -55,11 +55,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleVoiceTranscript = (transcript: string) => {
-    setInputText(prev => {
-      const separator = prev && !prev.endsWith(' ') ? ' ' : '';
-      return `${prev}${separator}${transcript}`;
-    });
+  const handleVoiceTranscript = (transcript: string, autoSend: boolean = false) => {
+    if (autoSend) {
+      if (transcript.trim() && !isLoading) {
+        onSendMessage(transcript.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
+        setInputText('');
+        setAttachedFiles([]);
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+      }
+    } else {
+      setInputText(transcript);
+    }
   };
 
   const handleTriggerUpload = () => {
@@ -165,7 +173,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <MicrophoneButton
               currentLanguage={currentLanguage}
               onTranscript={handleVoiceTranscript}
-              onSendMessage={onSendMessage}
+              onSendMessage={(msg, attachments) => {
+                setInputText('');
+                setAttachedFiles([]);
+                onSendMessage(msg, attachments);
+              }}
+              disabled={isLoading}
             />
 
             {/* 2. Language Dropdown after microphone */}

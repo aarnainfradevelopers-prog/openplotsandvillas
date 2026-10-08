@@ -13,7 +13,8 @@ import {
   Sparkles,
   Building,
   Building2,
-  Check
+  Check,
+  BookUser
 } from 'lucide-react';
 import { PropertyItem, LanguageCode } from '../types/chat';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
@@ -26,6 +27,7 @@ interface PropertyDetailModalProps {
   onClose: () => void;
   property: PropertyItem | null;
   onEnquire: (property: PropertyItem) => void;
+  onViewNumber?: (property: PropertyItem) => void;
   currentLanguage?: LanguageCode;
 }
 
@@ -37,6 +39,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onClose,
   property,
   onEnquire,
+  onViewNumber,
   currentLanguage = 'en'
 }) => {
   const [activeTab, setActiveTab] = useState<ModalTabType>('Overview');
@@ -352,11 +355,14 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               {property.agent?.avatar || 'M'}
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-900 dark:text-white">
-                {property.agent?.name || 'MANCHALA DAIVAPRAKASH'}
+              <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>{property.sellerName ? `${property.sellerName} (${property.sellerType || 'Owner'})` : (property.agent?.name || 'OPV Property Advisory')}</span>
+                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded">
+                  Managed via OPV
+                </span>
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                {property.agent?.role || 'Senior Property Advisor • OPV'} • {property.agent?.phone || '+91 9963513939'}
+                Seller details managed through OPV • OPV Desk: +91 9963513939
               </div>
             </div>
           </div>
@@ -381,6 +387,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <MessageCircle className="w-4 h-4" />
               <span>WhatsApp</span>
             </a>
+
+            {onViewNumber && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onViewNumber(property);
+                }}
+                className="py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white border border-slate-900/80 dark:border-slate-400 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                <BookUser className="w-4 h-4 stroke-[2]" />
+                <span>View Number</span>
+              </button>
+            )}
 
             <a
               href={`tel:${property.agent?.phone || '+91 9963513939'}`}

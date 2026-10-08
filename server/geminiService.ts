@@ -83,8 +83,8 @@ export function checkIsGeneralEducationalQuery(rawQuery: string): boolean {
   // Explicit property search verbs/actions
   const hasSearchAction = /\b(show\s*me|show|find|search|list|display|recommend|give\s*me|get\s*me|look\s*for|looking\s*for|buy|want\s*to\s*buy|available|kavali|chupandi|choopandi)\b/i.test(cleanQ);
 
-  // Locations
-  const hasLocation = /\b(hyderabad|hyd|shadnagar|kokapet|tellapur|mokila|lemoor|kothur|sadashivpet|patancheru|gachibowli|shamshabad|kadthal|maheshwaram|attapur|bhanur|uppal|rajapur|kandukur|nednur|kallepally|balanagar|jubilee\s*hills|banjara\s*hills|madhapur|hitec\s*city|kondapur|manikonda|financial\s*district|nizampet|kompally|miyapur|bachupally|medchal|kollur|chevella|shankarpally|adibatla)\b/i.test(cleanQ);
+  // Locations across India
+  const hasLocation = /\b(hyderabad|hyd|shadnagar|kokapet|tellapur|mokila|lemoor|kothur|sadashivpet|patancheru|gachibowli|shamshabad|kadthal|maheshwaram|attapur|bhanur|uppal|rajapur|kandukur|nednur|kallepally|balanagar|jubilee\s*hills|banjara\s*hills|madhapur|hitec\s*city|kondapur|manikonda|financial\s*district|nizampet|kompally|miyapur|bachupally|medchal|kollur|chevella|shankarpally|adibatla|mumbai|bombay|pune|poona|bangalore|bengaluru|delhi|new\s*delhi|gurgaon|gurugram|noida|chennai|kolkata|ahmedabad|jaipur|kochi|andheri|powai|bandra|thane|worli|hinjewadi|kharadi|wakad|baner|devanahalli|whitefield|sarjapur|electronic\s*city)\b/i.test(cleanQ);
 
   // Budget
   const hasBudget = /\b(under|below|within|upto|less than|between)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(lakh|lakhs|cr|crore|l)?/i.test(cleanQ) || /\b\d+(\.\d+)?\s*(cr|crore|crores|lakh|lakhs)\b/i.test(cleanQ);
@@ -99,7 +99,10 @@ export function checkIsGeneralEducationalQuery(rawQuery: string): boolean {
     'guidance value', 'stamp duty', 'carpet area', 'built up area', 'built-up area', 'super built up area',
     'super built-up area', 'plinth area', 'undivided share', 'uds', 'occupancy certificate', 'oc',
     'commencement certificate', 'cc', 'possession', 'bhk', 'khata',
-    '360 elite services', '360 elite', 'elite services', 'opv services', '360 services'
+    '360 elite services', '360 elite', 'elite services', 'opv services', '360 services',
+    'rent', 'lease', 'exclusive rent', 'lease properties', 'exclusive rent/lease properties',
+    'rent/lease', 'rental properties', 'pg', 'hostel', 'co-living', 'coliving', 'paying guest',
+    'pg hostel', 'pg/hostel & co-living', 'pg/hostel & co-living properties'
   ];
 
   const containsTopic = REAL_ESTATE_TOPICS.some(t => {
@@ -142,7 +145,7 @@ export function checkIsGeneralEducationalQuery(rawQuery: string): boolean {
   }
 
   // General company, website, guides, and service questions
-  if (/\b(website|web\s*site|portal|platform|openplotsandvillas|about\s*(opv|company|us)|who\s*is\s*opv|what\s*is\s*opv|opv\s*services|services\s*offered|founder|ceo|contact|office|address|phone|email|whatsapp|site\s*visit|buying\s*guide|selling\s*guide)\b/i.test(cleanQ)) {
+  if (/\b(website|web\s*site|portal|platform|openplotsandvillas|about\s*(opv|company|us)|who\s*is\s*opv|what\s*is\s*opv|opv\s*services|services\s*offered|founder|ceo|contact|office|address|phone|email|whatsapp|site\s*visit|buying\s*guide|selling\s*guide|rent|lease|rental|exclusive\s*rent|pg|hostel|co[\s-]?living|coliving|paying\s*guest)\b/i.test(cleanQ)) {
     return true;
   }
 
@@ -315,42 +318,42 @@ export const REAL_ESTATE_EDUCATIONAL_KNOWLEDGE: Record<string, EducationalTopicE
     topic: '360° Elite Services',
     questionType: 'service',
     explanation:
-      '**OPV 360° Elite Services** provides comprehensive, end-to-end real estate solutions: *"From land acquisition and Bhoomi Pooja to Gruhapravesam — End-to-End Real Estate Services on India\'s Premium AI Real Estate Portal."*\n\nKey Services Offered:\n- 📐 **Architectural Design & Planning:** 2D & 3D floor plans, 3D elevations, villa designs, and building approval sanctions.\n- 🏗️ **Construction & Civil Contractor:** Turnkey residential, villa, and commercial construction, renovations, and painting.\n- 📜 **Legal & Documentation Assistance:** 30-year EC audits, title deed clearances, sale agreements, Patta mutation, and registration support.\n- 🏦 **Home Loans & Property Finance:** Fast bank loan sanctions, plot purchase & construction loans, balance transfers, and NRI financing.\n- 🏡 **Interior Design & Smart Homes:** Modular kitchens, wardrobes, false ceilings, lighting design, home theaters, and IoT smart home automation.\n- 🛰️ **Land Survey & Geo-Tagging:** DGPS and GPS boundary survey, drone mapping, and contour layout marking.\n- 🌿 **Layout Development Services:** Venture infra, land leveling, BT/CC internal roads, underground drainage, and avenue plantations.\n- ⚡ **Electrical, Solar & CCTV Security:** Power backup, CCTV setups, rooftop solar, and EV charging stations.\n- 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam rituals.\n- 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, and asset security audits.\n- 🚚 **Packers & Movers:** Safe household shifting and vehicle relocation.\n- 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and chauffeured site visits.',
+      '**OPV 360° Elite Services** provides comprehensive, end-to-end real estate solutions: *"From land acquisition and Bhoomi Pooja to Gruhapravesam — End-to-End Real Estate Services on India\'s Premium AI Real Estate Portal."*\n\nKey Services Offered:\n- 📐 **Architectural Design & Planning:** 2D & 3D floor plans, 3D elevations, villa designs, and building approval sanctions.\n- 🏗️ **Construction & Civil Contractor:** Turnkey residential, villa, and commercial construction, renovations, and painting.\n- 📜 **Legal & Documentation Assistance:** 30-year EC audits, title deed clearances, sale agreements, Patta mutation, and registration support.\n- 🏦 **Home Loans & Property Finance:** Fast bank loan sanctions, plot purchase & construction loans, balance transfers, and NRI financing.\n- 🏡 **Interior Design & Smart Homes:** Modular kitchens, wardrobes, false ceilings, lighting design, home theaters, and IoT smart home automation.\n- 🛰️ **Land Survey & Geo-Tagging:** DGPS and GPS boundary survey, drone mapping, and contour layout marking.\n- 🌿 **Layout Development Services:** Venture infra, land leveling, BT/CC internal roads, underground drainage, and avenue plantations.\n- ⚡ **Electrical, Solar & CCTV Security:** Power backup, CCTV setups, rooftop solar, and EV charging stations.\n- 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam rituals.\n- 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, and asset security audits.\n- 🚚 **Packers & Movers:** Safe household shifting and vehicle relocation.\n- 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and free site visits with AC car pickup & drop.',
     followUp: 'Would you like to connect with an OPV Service Advisor or explore our services at openplotsandvillas.com/services?'
   },
   about_opv: {
     topic: 'About Open Plots & Villas (OPV)',
     questionType: 'general',
     explanation:
-      '**Open Plots & Villas (OPV)** is India\'s First AI-Powered Real Estate Ecosystem (openplotsandvillas.com), headquartered in Madhapur, Hyderabad.\n\n- **Mission:** Simplifying property discovery through 100% verified listings, end-to-end transparency, and AI-driven recommendations.\n- **Offerings:** Verified Open Plots, Luxury Villas, Gated Communities, Apartments, and Commercial Spaces across Hyderabad.\n- **Assurance:** Multi-stage legal audits, 30-year EC checks, and statutory RERA, HMDA, and DTCP validation.\n- **Comprehensive Support:** Full lifecycle assistance from chauffeured site visits to legal scrutiny, loans, Bhoomi Pooja, and interior design.',
+      '**Open Plots & Villas (OPV)** is India\'s First AI-Powered Real Estate Ecosystem (openplotsandvillas.com), headquartered in Madhapur, Hyderabad.\n\n- **Mission:** Simplifying property discovery through 100% verified listings, end-to-end transparency, and AI-driven recommendations.\n- **Offerings:** Verified Open Plots, Luxury Villas, Gated Communities, Apartments, and Commercial Spaces across Hyderabad.\n- **Assurance:** Multi-stage legal audits, 30-year EC checks, and statutory RERA, HMDA, and DTCP validation.\n- **Comprehensive Support:** Full lifecycle assistance from free AC car site visits to legal scrutiny, loans, Bhoomi Pooja, and interior design.',
     followUp: 'Would you like to explore verified properties or learn more about OPV 360° Elite Services?'
   },
   office_location: {
-    topic: 'OPV Head Office Location',
+    topic: 'Reach Out to Open Plots & Villas',
     questionType: 'general',
     explanation:
-      '### 📍 Open Plots & Villas Head Office\n- **Address:** #101, Road No: 10, Jaya Kesav Avenue, Kakatiya Hills, Madhapur, Hyderabad, Telangana – 500081\n- **Landmark:** Kakatiya Hills, Madhapur (near Hitec City / Inorbit Mall corridor)\n- **Phone:** +91 99635 13939 | 040 4568 5052\n- **Email:** info@openplotsandvillas.com\n- **Hours:** Monday to Saturday: 9:30 AM – 6:30 PM (Sunday by appointment)\n\nVisitors and property seekers are always welcome to consult with our property experts in person.',
-    followUp: 'Would you like directions or assistance booking an in-person meeting?'
+      '### 🏢 Reach Out to Open Plots & Villas\nYou can reach out to our team directly via **WhatsApp** or by calling our official **OPV number**:\n\n- 💬 **WhatsApp:** Reach out on WhatsApp at **+91 99635 13939** for immediate project details, site visit bookings, and verified documentation.\n- 📞 **Call on OPV Number:** **+91 99635 13939**\n- ✉️ **Email:** info@openplotsandvillas.com\n- 🌐 **Website:** https://openplotsandvillas.com\n- ⏰ **Support Hours:** Monday to Saturday: 9:30 AM – 6:30 PM IST',
+    followUp: 'Would you like to connect with an OPV advisor on WhatsApp or Phone right now?'
   },
   contact_info: {
-    topic: 'OPV Contact & Helpline',
+    topic: 'Reach Out to Open Plots & Villas',
     questionType: 'general',
     explanation:
-      '### 📞 Contact Open Plots & Villas\n- **Direct Helpline:** +91 99635 13939\n- **Office Landline:** 040 4568 5052 / 040 4563 5052\n- **WhatsApp Support:** +91 99635 13939\n- **Email:** info@openplotsandvillas.com\n- **Website:** https://openplotsandvillas.com\n- **Support Hours:** Monday to Saturday, 9:30 AM – 6:30 PM IST.',
-    followUp: 'Would you like me to connect you with an OPV advisor right away via WhatsApp or Phone?'
+      '### 📞 Reach Out to Open Plots & Villas\nYou can reach out to our team directly via **WhatsApp** or by calling our official **OPV number**:\n\n- 💬 **WhatsApp Support:** Reach out on WhatsApp at **+91 99635 13939**\n- 📞 **Call on OPV Number:** **+91 99635 13939**\n- ✉️ **Email:** info@openplotsandvillas.com\n- 🌐 **Website:** https://openplotsandvillas.com\n- ⏰ **Support Hours:** Monday to Saturday: 9:30 AM – 6:30 PM IST',
+    followUp: 'Would you like to connect with an OPV advisor on WhatsApp or Phone right now?'
   },
   site_visit: {
-    topic: 'Free Chauffeured Site Visits',
+    topic: 'Free Site Visits (Free AC Car Pickup & Drop)',
     questionType: 'service',
     explanation:
-      '### 🚗 Free Chauffeured Site Visits\nOPV provides **complimentary, chauffeured site visits** for buyers and families:\n- **Free Pickup & Drop:** Comfortable AC transport from major Hyderabad hubs to the project location and back.\n- **Dedicated On-Site Advisor:** Accompanied by a knowledgeable consultant who explains plot boundaries, layout dimensions, master plan connectivity, and future appreciation potential.\n- **Direct Document Review:** Review physical copies of verified HMDA/DTCP sanctions and RERA approvals on-site.\n- **Available 7 Days a week** by prior appointment.',
-    followUp: 'Would you like to schedule a free site visit for an upcoming weekend or weekday?'
+      '### 🚗 Free Property Site Visits (Free AC Car Pickup & Drop)\nOPV provides **complimentary site visits with free AC car pickup and drop** for buyers and families:\n- **Free Doorstep Pickup & Drop:** Comfortable AC car transport directly to the project location and back from your home or pickup point.\n- **Dedicated On-Site Advisor:** Accompanied by a knowledgeable consultant who explains plot boundaries, layout dimensions, master plan connectivity, and future appreciation potential.\n- **Direct Document Review:** Review physical copies of verified HMDA/DTCP sanctions and RERA approvals on-site.\n- **Available 7 Days a week** by prior appointment.',
+    followUp: 'Would you like to schedule a free site visit with car pickup & drop for an upcoming weekend or weekday?'
   },
   buying_guide: {
     topic: 'Property Buying Guide',
     questionType: 'process',
     explanation:
-      '### 📖 Steps to Buying Property on OPV\n1. **Search & Shortlist:** Browse verified plots, villas, and apartments on OPV filtered by location and budget.\n2. **Free Chauffeured Site Visit:** Inspect the layout, roads, and amenities first-hand.\n3. **Legal Due Diligence:** In-house verification of 30-year EC, link documents, and RERA/HMDA approvals.\n4. **Home Loan Sanction:** Fast-tracked bank approvals with partner banks (SBI, HDFC, ICICI).\n5. **Agreement of Sale:** Transparent terms and milestone payment schedules.\n6. **Registration & Patta Mutation:** Complete SRO registration support and Dharani/municipal ownership mutation.',
+      '### 📖 Steps to Buying Property on OPV\n1. **Search & Shortlist:** Browse verified plots, villas, and apartments on OPV filtered by location and budget.\n2. **Free Site Visit:** Inspect the layout, roads, and amenities first-hand with our free car pickup & drop and on-site advisor.\n3. **Legal Due Diligence:** In-house verification of 30-year EC, link documents, and RERA/HMDA approvals.\n4. **Home Loan Sanction:** Fast-tracked bank approvals with partner banks (SBI, HDFC, ICICI).\n5. **Agreement of Sale:** Transparent terms and milestone payment schedules.\n6. **Registration & Patta Mutation:** Complete SRO registration support and Dharani/municipal ownership mutation.',
     followUp: 'Would you like assistance shortlisting verified properties in Hyderabad?'
   },
   selling_guide: {
@@ -366,6 +369,76 @@ export const REAL_ESTATE_EDUCATIONAL_KNOWLEDGE: Record<string, EducationalTopicE
     explanation:
       '### 🌐 Open Plots & Villas (openplotsandvillas.com)\n**India\'s First AI-Powered Real Estate Portal.**\n\n- **Verified Inventory:** HMDA, DTCP, and RERA verified open plots, villas, and apartments.\n- **360° Elite Services:** 18 end-to-end turnkey services covering everything from land purchase to Bhoomi Pooja, construction, loans, and interiors.\n- **Guides & Tools:** Comprehensive legal checklists, buyer guides, and smart property filtering.\n- **AI Assistant:** Instant property search, budget matching, and live assistance.\n- **Visit us at:** https://openplotsandvillas.com',
     followUp: 'What would you like to explore today on openplotsandvillas.com?'
+  },
+  exclusive_rent_lease: {
+    topic: 'Exclusive Rent & Lease Properties',
+    questionType: 'service',
+    explanation:
+      '### 🔑 Exclusive Rent & Lease Properties on OPV\n**Verified Residential & Commercial Rentals Across Hyderabad.**\n\nOpen Plots & Villas (openplotsandvillas.com) features a dedicated portal for verified rental and lease properties with zero-brokerage direct owner options:\n- 🏠 **Residential Rentals:** 1, 2, 3 & 4 BHK high-rise apartments and luxury gated community villas (Fully-Furnished, Semi-Furnished, Unfurnished) in Kokapet, Tellapur, Mokila, Madhapur, Gachibowli, and Financial District.\n- 🏢 **Commercial Leases:** Corporate IT/ITeS office spaces, retail showrooms, shops, and industrial warehouses along ORR growth corridors.\n- 🛡️ **OPV Verification:** 100% verified owners, digital rental agreements, tenant background checks, and move-in coordination.\n- 📞 **Direct Contact:** Call OPV Rental Desk at +91 99635 13939.',
+    followUp: 'Would you like assistance finding a rental property or leasing out your property?'
+  },
+  pg_hostel_coliving: {
+    topic: 'PG / Hostel & Co-Living Properties',
+    questionType: 'service',
+    explanation:
+      '### 🛏️ PG / Hostel & Co-Living Properties on OPV\n**Verified, Comfortable & Affordable Stays Near Hyderabad IT Corridors.**\n\nOpen Plots & Villas offers dedicated accommodations for students, IT professionals, and working executives:\n- 🏢 **Stay Types:** Executive Co-Living spaces (private, double & triple sharing), verified Ladies Hostels with 24/7 CCTV & female wardens, Men’s Hostels/PGs, and Studio 1 RK apartments.\n- 🌟 **All-Inclusive Amenities:** 3 nutritious daily home-cooked meals, high-speed WiFi, 24/7 power backup, daily housekeeping, washing machines, and AC/Non-AC room options.\n- 📍 **Prime Hubs:** Walking distance to offices and metro in Madhapur, Hitec City, Gachibowli, Kondapur, Financial District, and KPHB.\n- 🛡️ **Flexible Terms:** Low security deposits and zero long-term lock-in hassles.\n- 📞 **Instant Booking:** Call +91 99635 13939 or chat on WhatsApp.',
+    followUp: 'Would you like to check current PG room availability or schedule a visit?'
+  },
+  post_property_free: {
+    topic: 'Post Property for Free on OPV',
+    questionType: 'process',
+    explanation:
+      '### 📢 Post Your Property for FREE on OPV\n**Reach 100,000+ Genuine Buyers & Tenants with Zero Fees.**\n\n- 🆓 **100% Free Listing:** Zero hidden charges to post your open plot, villa, flat, or commercial space.\n- 📸 **Rich Media:** Upload photos, layout floor plans, videos, and project brochures.\n- 🤖 **AI Matchmaking:** Automatic recommendations to active buyers searching in your locality.\n- 🔒 **Direct Inquiries:** Verified leads directly to your phone and WhatsApp.\n- ⚡ **To Post:** Visit https://openplotsandvillas.com/post-property/ or contact +91 99635 13939.',
+    followUp: 'Would you like help listing your property today on OPV?'
+  },
+  exclusive_owner_properties: {
+    topic: 'Exclusive Owner Properties (0% Brokerage)',
+    questionType: 'general',
+    explanation:
+      '### 🤝 Exclusive Direct Owner Properties on OPV\n- 💰 **Zero Brokerage:** Connect straight with verified property owners without paying commission fees.\n- 🔍 **Verified Ownership:** Verified identity and documentation before listing.\n- 🏠 **Available Units:** Resale plots, direct-owner apartments, and independent villas.\n- 📞 **Direct Contact:** Access owner contacts directly on openplotsandvillas.com/properties/.',
+    followUp: 'Would you like to explore zero-brokerage owner listings?'
+  },
+  top_developers: {
+    topic: 'Top Developers & Builders in Hyderabad',
+    questionType: 'general',
+    explanation:
+      '### 🏗️ Top Developers in Hyderabad on OPV\n- 🏢 **Aparna Constructions:** 66+ Projects, 23+ Years Exp. Gated communities across Tellapur, Nallagandla, Chandanagar, and Kompally.\n- 🏢 **Ramky Group:** 31+ Projects, 20+ Years Exp. Integrated townships in Gachibowli and Warangal Highway.\n- 🏢 **My Home Group:** 29+ Projects, 25+ Years Exp. Iconic high-rises in Kokapet Neopolis, Financial District, and Madhapur.\n- Explore full builder portfolios at https://openplotsandvillas.com/developers/.',
+    followUp: 'Would you like to view projects by any specific developer?'
+  },
+  property_agents_experts: {
+    topic: 'Verified Property Experts & Agents',
+    questionType: 'general',
+    explanation:
+      '### 🧑‍💼 Verified Property Experts on OPV\n- 📍 **Hyperlocal Specialists:** Experienced advisors specialized in Madhapur, Gachibowli, Kompally, Nizampet, Shadnagar, Kollur, and Mokila.\n- 🛡️ **RERA Compliant:** Ethical, verified advisors assisting with site visits, price negotiations, and SRO registration.\n- Directory: https://openplotsandvillas.com/agents/.',
+    followUp: 'Would you like to connect with a property advisor in your preferred location?'
+  },
+  mobile_app_download: {
+    topic: 'Download OPV Mobile App',
+    questionType: 'general',
+    explanation:
+      '### 📱 OPV Mobile App — Real Estate in Your Pocket\n- 🔍 **Instant Geo-Search:** Search plots and villas near your live GPS location.\n- 🔔 **Instant Alerts:** Real-time updates on price drops and new launches.\n- 🚗 **1-Tap Site Visits:** Book free site visits with car pickup & drop directly from your smartphone.\n- 🎁 **Refer & Earn:** Earn rewards and cash credits.\n- Download from the **Google Play Store** (Search "Open Plots & Villas").',
+    followUp: 'Would you like the direct download link for the Android app?'
+  },
+  possession_timelines: {
+    topic: 'Properties by Possession Timeline',
+    questionType: 'general',
+    explanation:
+      '### ⏳ Properties by Possession Timeline\n- 🔑 **Ready to Move:** Move in immediately with Occupancy Certificate (OC) received.\n- 🏗️ **Under Construction:** Construction-linked payment plans with completion in 12–24 months.\n- 🚀 **New Launch:** Lowest introductory prices and first pick of premium corner units.\n- 📜 **Open Plots:** Immediate registration at Sub-Registrar Office (SRO).',
+    followUp: 'Are you looking for Ready-to-Move or Under-Construction properties?'
+  },
+  zone_wise_hyderabad: {
+    topic: 'Zone-Wise Growth Corridors in Hyderabad',
+    questionType: 'general',
+    explanation:
+      '### 🗺️ Zone-Wise Real Estate Growth Zones in Hyderabad\n- 🌇 **West Hyderabad:** Hitec City, Madhapur, Gachibowli, Financial District, Kokapet Neopolis, Tellapur, Mokila. (Luxury & Tech Hub)\n- ✈️ **South Hyderabad:** Shamshabad, Kothur, Shadnagar, Lemoor, Maheshwaram. (Airport & Pharma City Corridor)\n- 🌳 **North Hyderabad:** Kompally, Medchal, Nizampet, Bachupally. (Green Residential Hub)\n- 🏭 **East Hyderabad:** Uppal, Pocharam, Ghatkesar, Adibatla Aerospace SEZ.',
+    followUp: 'Which growth corridor would you like to explore for investment?'
+  },
+  youtube_shorts_tours: {
+    topic: 'OPV YouTube Shorts & Video Tours',
+    questionType: 'general',
+    explanation:
+      '### 🎥 OPV YouTube Shorts & Property Video Tours\n- 📹 High-definition drone aerial walkthroughs of ventures, road widths, and gated amenities.\n- 💡 60-second real estate insights and market analysis.\n- Watch and subscribe at https://www.youtube.com/@openplotsandvillas/shorts.',
+    followUp: 'Would you like to watch virtual video tours of our featured projects?'
   }
 };
 
@@ -392,8 +465,40 @@ export function getEducationalTopicKnowledge(query: string): EducationalTopicEnt
   if (/\b(how\s*to\s*buy|buying\s*guide|buyer\s*guide|steps\s*to\s*buy)\b/i.test(q)) {
     return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.buying_guide;
   }
-  if (/\b(how\s*to\s*sell|selling\s*guide|seller\s*guide|post\s*property|list\s*property)\b/i.test(q)) {
+  if (/\b(how\s*to\s*sell|selling\s*guide|seller\s*guide|sell\s*property)\b/i.test(q)) {
     return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.selling_guide;
+  }
+  if (/\b(post\s*(property|plot|villa|flat|free)?|list\s*property|how\s*to\s*post|post\s*property\s*free|free\s*listing)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.post_property_free;
+  }
+  if (/\b(exclusive\s*owner|owner\s*properties|direct\s*owner|zero\s*brokerage|no\s*brokerage)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.exclusive_owner_properties;
+  }
+  if (/\b(top\s*developers?|builders?|developers?\s*(in\s*hyderabad)?|aparna|ramky|my\s*home)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.top_developers;
+  }
+  if (/\b(agents?|brokers?|property\s*experts?|real\s*estate\s*agents?|consultants?)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.property_agents_experts;
+  }
+  if (/\b(app|mobile\s*app|download\s*app|play\s*store|android\s*app|opv\s*app)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.mobile_app_download;
+  }
+  if (/\b(possession(\s*timeline)?|ready\s*to\s*move|under\s*construction|new\s*launch)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.possession_timelines;
+  }
+  if (/\b(zone|zones|corridors?|regions?|west\s*hyderabad|south\s*hyderabad|north\s*hyderabad|east\s*hyderabad)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.zone_wise_hyderabad;
+  }
+  if (/\b(youtube|shorts|video\s*tour|walkthrough|videos)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.youtube_shorts_tours;
+  }
+
+  // Exclusive Rent/Lease & PG/Hostel/Co-Living
+  if (/\b(exclusive\s*rent|rent\/?lease|rent\s*(and|&|or)?\s*lease|rental\s*properties|properties\s*for\s*(rent|lease)|rent\s*(flat|apartment|house|villa|commercial|office|shop)|lease\s*properties|commercial\s*lease|rent\s*in\s*hyderabad|houses?\s*for\s*rent|flats?\s*for\s*rent|rental|lease|rent)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.exclusive_rent_lease;
+  }
+  if (/\b(pg|hostel|co[\s-]?living|paying\s*guest|pg\/?hostel|ladies\s*hostel|mens\s*hostel|executive\s*pg|student\s*hostel|co[\s-]?living\s*properties)\b/i.test(q)) {
+    return REAL_ESTATE_EDUCATIONAL_KNOWLEDGE.pg_hostel_coliving;
   }
 
   // Real Estate Services
@@ -461,14 +566,18 @@ export function extractFallbackFilters(query: string): StructuredPropertySearchF
   if (hasCommercial || hasCommercialPlot) propertyTypes.push('COMMERCIAL');
   if (hasPlot && !hasVilla && !hasCommercial && !hasCommercialPlot) propertyTypes.push('PLOT');
 
-  // 3. Locations
+  // 3. Locations across India
   const knownLocations = [
     'shadnagar', 'kokapet', 'tellapur', 'mokila', 'lemoor', 'kothur',
     'sadashivpet', 'patancheru', 'gachibowli', 'shamshabad', 'kadthal',
     'maheshwaram', 'attapur', 'bhanur', 'uppal', 'rajapur', 'kandukur',
     'nednur', 'kallepally', 'balanagar', 'jubilee hills', 'banjara hills',
     'madhapur', 'hitec city', 'kondapur', 'manikonda', 'financial district',
-    'nizampet', 'kompally', 'miyapur', 'bachupally', 'hyderabad'
+    'nizampet', 'kompally', 'miyapur', 'bachupally', 'hyderabad',
+    'mumbai', 'andheri', 'andheri west', 'andheri east', 'powai', 'bandra', 'bandra west', 'thane', 'thane west', 'worli',
+    'pune', 'hinjewadi', 'kharadi', 'wakad', 'baner',
+    'bangalore', 'bengaluru', 'devanahalli', 'whitefield', 'sarjapur', 'electronic city',
+    'delhi', 'new delhi', 'gurgaon', 'gurugram', 'noida', 'chennai', 'kolkata', 'ahmedabad', 'jaipur', 'kochi'
   ];
   const locations: string[] = [];
   for (const loc of knownLocations) {
@@ -693,13 +802,18 @@ export async function generateGeminiResponse(
   }
 
   const systemInstruction = `
-You are the official AI Assistant for Open Plots & Villas (OPV) - Hyderabad's leading verified real estate platform.
+You are the official AI Assistant for Open Plots & Villas (OPV) - India's AI-powered verified real estate platform.
 
 CORE OPERATIONAL RULES:
 1. Grounding & Factual Integrity:
    - Base your answers on the Grounding Data provided below whenever applicable.
-   - Official Information Integrity: RERA numbers, HMDA numbers, DTCP numbers, LP numbers, prices, plot sizes, amenities, approvals, and locations MUST come directly from Grounding Data. NEVER invent fake RERA numbers or fake properties.
-   - Zero-Result Explanations: If Grounding Data indicates ZERO_RESULTS, explain honestly that zero verified listings in OPV online database currently match the exact specifications.
+   - Zero-Result Explanations:
+     * If the user is asking about a project office, site office, developer address, or visit, follow RULE 7 below. NEVER talk about "price points" or "superior ROI in adjacent emerging corridors" for office/address queries!
+     * Only if the user specifically searched for properties by budget or location with zero listings found, explain professionally:
+       "Currently, there are no active verified properties in this exact zone at this price point on our portal. In prime corridors like this, verified HMDA/RERA projects typically start at a different price range.
+
+However, we have high-growth investment opportunities in adjacent emerging corridors that offer superior ROI and clear titles. Would you like to review those, or have an advisor notify you as soon as a suitable property becomes available?"
+       If the user converses in another language (${language}), adapt this advisory message naturally and fluently into ${language}.
 
 2. GENERAL / EDUCATIONAL REAL ESTATE QUESTIONS (CRITICAL):
    - When the user asks about real estate concepts, terms, approvals, regulations, definitions, documentation, or services (such as RERA, HMDA, DTCP, GHMC, EC, Mutation, Registration, Patta, LRS, Vastu, BHK, Carpet Area, etc., in English, Telugu, or Tenglish):
@@ -725,6 +839,31 @@ CORE OPERATIONAL RULES:
    - If "${language}" is NOT 'en', YOU MUST WRITE YOUR ENTIRE RESPONSE NATURALLY AND FLUENTLY IN THE USER'S SELECTED LANGUAGE (${language}) (e.g. Tamil for 'ta', Telugu for 'te', Hindi for 'hi', Kannada for 'kn', Malayalam for 'ml', Bengali for 'bn', Marathi for 'mr', Gujarati for 'gu', etc.).
    - Even if grounding data and database records are in English, translate the explanation into the selected language (${language}) so the user receives an answer completely in their chosen language.
    - Keep established technical real-estate acronyms (like RERA, HMDA, DTCP, GHMC, EC) identifiable while explaining them fully in ${language}.
+
+5. STRICT PRIVACY & CONTACT POLICY:
+   - NEVER show or mention any physical office address (such as street address in Madhapur, Kakatiya Hills, building numbers, etc.). Do NOT show physical office address at all.
+   - NEVER proactively dump phone numbers in regular property search responses, educational answers, or general messages.
+   - ONLY when the user specifically asks for office address, phone number, or how to contact:
+     Direct them to reach out via WhatsApp or call on the official OPV number (+91 99635 13939) or email (info@openplotsandvillas.com).
+
+6. PLATFORM BRANDING & INTRODUCTIONS (MANDATORY IN ALL SITUATIONS):
+   - At ANY point or in any situation where you introduce yourself, welcome the user, or describe the platform, ALWAYS identify Open Plots & Villas (OPV) as:
+     "Open Plots & Villas (OPV), India's AI-powered verified real estate platform"
+   - Whenever starting an introduction or greeting (e.g. when user says "hi", "hello", "hii", or any conversation opening), your introduction MUST ALWAYS start with:
+     "Hello! Welcome to Open Plots & Villas (OPV), India's AI-powered verified real estate platform."
+   - NEVER say "Hyderabad's leading verified real estate platform". ALWAYS say "India's AI-powered verified real estate platform".
+
+7. PROJECT OFFICE, SITE OFFICE & DEVELOPER LOCATION QUERIES (MANDATORY CASUAL & HELPFUL TONE):
+   - When the user asks for a project office, builder/developer office, site office, sales office, or physical address (e.g., "can i get a sanjeevani project office ?", "where is sanjeevani office", "site office address"):
+     * Do NOT give stiff, robotic paragraphs about "price points", "adjacent emerging corridors", or "superior ROI".
+     * Respond in a casual, warm, clear, and helpful tone using this structure:
+       "We don't publish developer site office addresses directly on the portal for security and verification reasons.
+
+However, our OPV team can easily coordinate with the [Project Name] project team to share the exact location, arrange a site visit, or connect you with the builder directly.
+
+Would you like me to connect you with an OPV advisor on WhatsApp or via phone (+91 99635 13939) to get the exact location and visit details?"
+     * Replace [Project Name] with the project mentioned by the user (e.g., "Sanjeevani"). If no specific project was mentioned, use "developer".
+     * If the user converses in another language (${language}), adapt this casual, helpful message naturally and fluently into ${language}.
 
 CURRENT GROUNDING SOURCE: ${groundingSourceType.toUpperCase()}
 GROUNDING DATA:

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, X, Trash2, MessageSquare, Sparkles } from 'lucide-react';
+import { Plus, X, Trash2, MessageSquare, Sparkles, Building2 } from 'lucide-react';
 import { ChatSession, LanguageCode } from '../types/chat';
 import { getDashboardStrings } from '../data/dashboardTranslations';
 import { getQuickTranslation } from '../utils/aiEngine';
@@ -22,6 +22,7 @@ export interface ChatSidebarProps {
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
   currentLanguage?: LanguageCode;
+  onOpenPostProperty?: () => void;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -34,7 +35,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onClearHistory,
   onDeleteSession = () => {},
   isDarkMode = false,
-  currentLanguage = 'en'
+  currentLanguage = 'en',
+  onOpenPostProperty
 }) => {
   const locale = getDashboardStrings(currentLanguage);
 
@@ -127,6 +129,24 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight mt-0.5 font-normal truncate">
                 {locale.startFreshSearch}
               </div>
+            </div>
+          </button>
+
+          {/* Post Property as Seller Button */}
+          <button
+            type="button"
+            onClick={() => {
+              onOpenPostProperty?.();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all font-bold text-xs cursor-pointer border border-slate-200/60 dark:border-slate-700/60 shadow-2xs"
+          >
+            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Building2 className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="leading-tight text-xs font-bold text-slate-900 dark:text-white">Post Property</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal truncate">List as Owner or Agent</div>
             </div>
           </button>
         </div>

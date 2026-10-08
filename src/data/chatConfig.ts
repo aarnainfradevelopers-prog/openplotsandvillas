@@ -6,8 +6,8 @@ export const OPV_LANGUAGES: LanguageOption[] = [
     label: 'English (US)',
     nativeName: 'English (US)',
     speechCode: 'en-US',
-    welcomeGreeting: 'Hello 👋 Welcome to Open Plots & Villas AI Assistant.',
-    welcomeSubtitle: 'Search verified plots, villas, and apartments from our database. How can I help you today?',
+    welcomeGreeting: "Hello 👋 Welcome to Open Plots & Villas (OPV), India's AI-powered verified real estate platform.",
+    welcomeSubtitle: 'Search verified plots, villas, and apartments across India. How can I help you today?',
     placeholder: '✦ Ask OPV AI anything about properties...',
     suggestions: [
       'Find open plots in Shadnagar',

@@ -147,6 +147,12 @@ function buildPropertySearchIntro(query: string, properties: PropertyItem[], lan
   } else if (/\b(open\s*plot|open\s*plots|plot|plots|venture|layouts|plotted)\b/i.test(q)) {
     headerType = 'Open Plot';
     summaryType = 'Open Plots';
+  } else if (/\b(pg|hostel|co[\s-]?living|paying\s*guest)\b/i.test(q)) {
+    headerType = 'PG & Co-Living';
+    summaryType = 'PG / Hostel & Co-Living Accommodations';
+  } else if (/\b(rent|rental|lease)\b/i.test(q)) {
+    headerType = 'Rental & Lease';
+    summaryType = 'Rent & Lease Properties';
   }
 
   // 2. Location
@@ -390,17 +396,22 @@ Tell me what type of property, location, or budget you are searching for.`,
     };
   }
 
-  // 3. OPV WEBSITE KNOWLEDGE (About Us, Office Location, Contacts, Site Visits, Buyer/Seller Guides)
+  // 3. OPV WEBSITE KNOWLEDGE (About Us, Office Location, Contacts, Site Visits, Buyer/Seller Guides, Rent/Lease, PG/Hostel)
   const websiteKnowledgeMatch = findWebsiteKnowledge(rawQuery) || findWebsiteKnowledge(normalizedQuery);
   if (websiteKnowledgeMatch && websiteKnowledgeMatch.id !== '360_elite_services') {
+    let matchedProps: PropertyItem[] = [];
+    if (websiteKnowledgeMatch.id === 'exclusive_rent_lease' || websiteKnowledgeMatch.id === 'pg_hostel_coliving') {
+      const liveMatches = searchLiveProperties(rawQuery);
+      matchedProps = liveMatches.filter(p => p.status === 'For Rent' || (p.rawDetails && p.rawDetails.propertyType?.toLowerCase().includes('rent')));
+    }
     return {
       content: websiteKnowledgeMatch.content,
       actions: [
         { label: websiteKnowledgeMatch.linkLabel, url: websiteKnowledgeMatch.linkUrl, action: 'explore' },
         ...getStandardActions(`Hello OPV, I want to inquire regarding ${websiteKnowledgeMatch.title}`)
       ],
-      category: 'general',
-      properties: []
+      category: websiteKnowledgeMatch.id === 'exclusive_rent_lease' ? 'rent' : websiteKnowledgeMatch.id === 'pg_hostel_coliving' ? 'coliving' : 'general',
+      properties: matchedProps
     };
   }
 
@@ -429,7 +440,7 @@ Open Plots & Villas (OPV) delivers comprehensive, verified turnkey solutions for
 * 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam muhurtham rituals.
 * 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, asset security audits, and utility bill tracking.
 * 🚚 **Packers & Movers:** Safe household shifting, corporate office relocation, and vehicle transportation.
-* 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and chauffeured site visits.
+* 🤝 **Property Buying & Selling:** Verified open plots, gated community villas, agricultural farm lands, and free site visits with AC car pickup & drop.
 
 Would you like to connect directly with an OPV Service Advisor or book a free consultation?`;
 

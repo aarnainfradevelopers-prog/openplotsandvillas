@@ -16,7 +16,8 @@ import {
   RotateCw,
   SmilePlus,
   ThumbsDown,
-  ThumbsUp
+  ThumbsUp,
+  Building2
 } from 'lucide-react';
 import { ChatMessageItem, LanguageCode, PropertyItem } from '../types/chat';
 import { OPV_LANGUAGES } from '../data/chatConfig';
@@ -173,10 +174,12 @@ interface ChatMessageProps {
   currentLanguage: LanguageCode;
   onSelectPropertyDetails: (property: PropertyItem) => void;
   onEnquireProperty: (property: PropertyItem) => void;
+  onViewNumberProperty: (property: PropertyItem) => void;
   onToggleFavorite?: (property: PropertyItem) => void;
   onOpenPropertyModal?: (property: PropertyItem) => void;
   onEditMessage?: (messageId: string, newContent: string) => void;
   onRegenerate?: (messageId: string) => void;
+  onOpenPostPropertyModal?: () => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -184,10 +187,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   currentLanguage,
   onSelectPropertyDetails,
   onEnquireProperty,
+  onViewNumberProperty,
   onToggleFavorite,
   onOpenPropertyModal,
   onEditMessage,
-  onRegenerate
+  onRegenerate,
+  onOpenPostPropertyModal
 }) => {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -668,6 +673,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <PropertyDetailView
                 property={message.selectedPropertyDetail}
                 onEnquire={onEnquireProperty}
+                onViewNumber={onViewNumberProperty}
                 onDetails={onOpenPropertyModal || onSelectPropertyDetails}
                 currentLanguage={currentLanguage}
               />
@@ -677,46 +683,125 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* If this message has property cards list (Images 2 & 3) */}
           {message.properties && message.properties.length > 0 && !message.selectedPropertyDetail && (
             <div className={message.content ? "mt-4" : "mt-0"}>
-              <h3 className="text-[15px] font-bold text-slate-800 dark:text-white mb-3">
-                {PROJECTS_FOR_YOU_MAP[currentLanguage] || PROJECTS_FOR_YOU_MAP.en}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-2">
-                {message.properties.map(property => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    onDetails={onSelectPropertyDetails}
-                    onEnquire={onEnquireProperty}
-                    onToggleFavorite={onToggleFavorite}
-                    currentLanguage={currentLanguage}
-                  />
-                ))}
-              </div>
+              {(() => {
+                const exactList = message.properties.filter(p => !p.isNearby);
+                const nearbyList = message.properties.filter(p => p.isNearby);
+
+                return (
+                  <div className="space-y-4">
+                    {/* Exact Matches */}
+                    {exactList.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 shadow-xs" />
+                          <h3 className="text-[14px] sm:text-[15px] font-bold text-slate-800 dark:text-white">
+                            {exactList.length === message.properties.length
+                              ? (PROJECTS_FOR_YOU_MAP[currentLanguage] || PROJECTS_FOR_YOU_MAP.en)
+                              : `Matching Properties (${exactList.length})`}
+                          </h3>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 my-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 snap-x items-stretch">
+                          {exactList.map(property => (
+                            <div key={property.id} className="snap-start shrink-0">
+                              <PropertyCard
+                                property={property}
+                                onDetails={onSelectPropertyDetails}
+                                onEnquire={onEnquireProperty}
+                                onViewNumber={onViewNumberProperty}
+                                onToggleFavorite={onToggleFavorite}
+                                currentLanguage={currentLanguage}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Nearby Recommendations */}
+                    {nearbyList.length > 0 && (
+                      <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 shadow-xs" />
+                          <h3 className="text-[14px] sm:text-[15px] font-bold text-slate-800 dark:text-white">
+                            Nearby Properties &amp; Recommendations ({nearbyList.length})
+                          </h3>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 my-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 snap-x items-stretch">
+                          {nearbyList.map(property => (
+                            <div key={property.id} className="snap-start shrink-0">
+                              <PropertyCard
+                                property={property}
+                                onDetails={onSelectPropertyDetails}
+                                onEnquire={onEnquireProperty}
+                                onViewNumber={onViewNumberProperty}
+                                onToggleFavorite={onToggleFavorite}
+                                currentLanguage={currentLanguage}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {/* Action Chips */}
           {message.actions && message.actions.length > 0 && !message.selectedPropertyDetail && (
             <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-              {message.actions.map((act, i) => (
-                <a
-                  key={i}
-                  href={act.url}
-                  target={act.url?.startsWith('http') ? '_blank' : undefined}
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-[13px] font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-50 border transition-all shadow-2xs cursor-pointer"
-                  style={{
-                    backgroundColor: 'rgb(255, 255, 255)',
-                    borderColor: 'rgb(203, 213, 225)',
-                    borderRadius: '10px',
-                    minHeight: '40px',
-                    minWidth: '140px'
-                  }}
-                >
-                  {getActionIcon(act.action)}
-                  <span>{cleanActionLabel(act.label)}</span>
-                </a>
-              ))}
+              {message.actions.map((act, i) => {
+                if (act.action === 'enquire') {
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onEnquireProperty(message.properties?.[0] || null as any)}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 rounded-xl transition-all shadow-xs cursor-pointer"
+                      style={{ minHeight: '40px' }}
+                    >
+                      <Phone className="w-3.5 h-3.5 fill-white text-white" />
+                      <span>{cleanActionLabel(act.label) === 'Enquire Now' ? 'Contact Agent' : cleanActionLabel(act.label)}</span>
+                    </button>
+                  );
+                }
+
+                if (act.action === 'post_property') {
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onOpenPostPropertyModal?.()}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-[13px] font-bold text-slate-800 dark:text-white bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl transition-all shadow-2xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700"
+                      style={{ minHeight: '40px' }}
+                    >
+                      <Building2 className="w-4 h-4 text-emerald-600" />
+                      <span>{cleanActionLabel(act.label)}</span>
+                    </button>
+                  );
+                }
+
+                return (
+                  <a
+                    key={i}
+                    href={act.url}
+                    target={act.url?.startsWith('http') ? '_blank' : undefined}
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-[13px] font-semibold text-slate-800 hover:text-slate-950 hover:bg-slate-50 border transition-all shadow-2xs cursor-pointer"
+                    style={{
+                      backgroundColor: 'rgb(255, 255, 255)',
+                      borderColor: 'rgb(203, 213, 225)',
+                      borderRadius: '10px',
+                      minHeight: '40px',
+                      minWidth: '140px'
+                    }}
+                  >
+                    {getActionIcon(act.action)}
+                    <span>{cleanActionLabel(act.label)}</span>
+                  </a>
+                );
+              })}
             </div>
           )}
         </div>

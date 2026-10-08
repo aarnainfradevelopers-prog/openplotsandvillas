@@ -21,6 +21,10 @@ import { ChatInput } from './ChatInput';
 import { EnquiryModal } from './EnquiryModal';
 import { PropertyDetailModal } from './PropertyDetailModal';
 import { AccountModal } from './AccountModal';
+import { PostPropertyModal } from './PostPropertyModal';
+import { ViewNumberModal } from './ViewNumberModal';
+import { LeadManagementModal } from './LeadManagementModal';
+import { FileSpreadsheet } from 'lucide-react';
 import {
   ChatMessageItem,
   ChatSession,
@@ -81,6 +85,15 @@ export const OPVChatbot: React.FC = () => {
   const [selectedPropertyForEnquiry, setSelectedPropertyForEnquiry] = useState<PropertyItem | null>(null);
   const [detailModalProperty, setDetailModalProperty] = useState<PropertyItem | null>(null);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isPostPropertyModalOpen, setIsPostPropertyModalOpen] = useState(false);
+  const [isViewNumberModalOpen, setIsViewNumberModalOpen] = useState(false);
+  const [selectedPropertyForViewNumber, setSelectedPropertyForViewNumber] = useState<PropertyItem | null>(null);
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+
+  const handleViewNumberProperty = (property: PropertyItem) => {
+    setSelectedPropertyForViewNumber(property);
+    setIsViewNumberModalOpen(true);
+  };
 
   // User Account Details (Aarna Infra Developers)
   const [userAccount, setUserAccount] = useState<UserAccount>(() => {
@@ -691,6 +704,12 @@ export const OPVChatbot: React.FC = () => {
       }))
       : [
         {
+          label: 'Post Property (Seller)',
+          query: 'post property',
+          icon: '📝',
+          subtitle: 'List Flat, Villa, Plot'
+        },
+        {
           label: 'Apartments in Hyderabad',
           query: 'apartments in hyd',
           icon: '🏢',
@@ -764,6 +783,7 @@ export const OPVChatbot: React.FC = () => {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(prev => !prev)}
         currentLanguage={currentLanguage}
+        onOpenPostProperty={() => setIsPostPropertyModalOpen(true)}
       />
 
       {/* Main Chat Workspace matching Square Yards AI layout */}
@@ -796,8 +816,28 @@ export const OPVChatbot: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Corner: Empty container keeping header alignment clean */}
-          <div className="flex items-center gap-2" />
+          {/* Right Corner: Leads Database & Post Property buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsLeadModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
+              title="View all captured buyer and seller leads in Google Sheets format"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Leads Sheet</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsPostPropertyModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer"
+              title="Post your property with OPV"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Post Property</span>
+            </button>
+          </div>
         </header>
 
         {/* Main Content Area: Welcome to OPV Plots Hero Landing if no messages, or Conversation Stream if active */}
@@ -885,7 +925,7 @@ export const OPVChatbot: React.FC = () => {
           <>
             {/* Scrollable Conversation Stream - Centered in middle screen */}
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 px-3 sm:px-6 py-6 flex flex-col items-center">
-              <div className="w-full max-w-4xl space-y-6">
+              <div className="w-full max-w-4xl lg:max-w-6xl xl:max-w-7xl space-y-6">
                 {currentSession.messages.map(msg => (
                   <ChatMessage
                     key={msg.id}
@@ -895,6 +935,8 @@ export const OPVChatbot: React.FC = () => {
                     onEnquireProperty={handleEnquireProperty}
                     onToggleFavorite={handleToggleFavorite}
                     onOpenPropertyModal={prop => setDetailModalProperty(prop)}
+                    onViewNumberProperty={handleViewNumberProperty}
+                    onOpenPostPropertyModal={() => setIsPostPropertyModalOpen(true)}
                     onEditMessage={handleEditMessage}
                     onRegenerate={handleRegenerate}
                   />
@@ -1071,13 +1113,34 @@ export const OPVChatbot: React.FC = () => {
           setDetailModalProperty(null);
           handleEnquireProperty(prop);
         }}
+        onViewNumber={prop => {
+          setDetailModalProperty(null);
+          handleViewNumberProperty(prop);
+        }}
       />
 
-      {/* Enquiry Modal */}
+      {/* Enquiry Modal (Buyer Connect Flow - Contact Agent) */}
       <EnquiryModal
         isOpen={isEnquiryModalOpen}
         onClose={() => setIsEnquiryModalOpen(false)}
         property={selectedPropertyForEnquiry}
+        onViewPropertyDetails={prop => setDetailModalProperty(prop)}
+      />
+
+      {/* View Number Modal (Direct Connect Split View - Image 2) */}
+      <ViewNumberModal
+        isOpen={isViewNumberModalOpen}
+        onClose={() => setIsViewNumberModalOpen(false)}
+        property={selectedPropertyForViewNumber}
+      />
+
+      {/* Seller Post Property Modal */}
+      <PostPropertyModal
+        isOpen={isPostPropertyModalOpen}
+        onClose={() => setIsPostPropertyModalOpen(false)}
+        onPropertyPosted={prop => {
+          setDetailModalProperty(prop);
+        }}
       />
 
       {/* Account Details Modal */}
@@ -1086,6 +1149,12 @@ export const OPVChatbot: React.FC = () => {
         onClose={() => setIsAccountModalOpen(false)}
         account={userAccount}
         onSaveAccount={updated => setUserAccount(updated)}
+      />
+
+      {/* Lead Management Database & Google Sheets Sync Modal */}
+      <LeadManagementModal
+        isOpen={isLeadModalOpen}
+        onClose={() => setIsLeadModalOpen(false)}
       />
     </div>
   );

@@ -165,7 +165,7 @@ const OUT_OF_SCOPE_PATTERNS = [
   // Weather
   /\b(weather|temperature|forecast|climate|rain today|cyclone)\b/i,
   // Dining & Food
-  /\b(restaurant|restaurants|food delivery|biryani|swiggy|zomato|cafe|dinner|lunch|breakfast|hotel booking|room booking)\b/i,
+  /\b(restaurant|restaurants|food delivery|biryani|swiggy|zomato|cafe|dinner|lunch|breakfast|hotel booking|resort booking)\b/i,
   // Travel & Tickets
   /\b(flight tickets|flights|train ticket|irctc|bus ticket|redbus|airline)\b/i,
   // Politics
@@ -221,7 +221,32 @@ const KNOWN_LOCATIONS = [
   'madhapur',
   'kompally',
   'nizampet',
-  'hyderabad'
+  'hyderabad',
+  'mumbai',
+  'andheri',
+  'powai',
+  'bandra',
+  'thane',
+  'worli',
+  'pune',
+  'hinjewadi',
+  'kharadi',
+  'wakad',
+  'baner',
+  'bangalore',
+  'bengaluru',
+  'devanahalli',
+  'whitefield',
+  'sarjapur',
+  'electronic city',
+  'delhi',
+  'gurgaon',
+  'noida',
+  'chennai',
+  'kolkata',
+  'ahmedabad',
+  'jaipur',
+  'kochi'
 ];
 
 /**
@@ -313,10 +338,10 @@ export function classifyIntent(rawQuery: string): ClassifiedIntent {
     /\b(what|explain|meaning|definition|process|rules|how|why|difference|details|info)\b/i.test(normalized) ||
     /^(rera|hmda|dtcp|ghmc|municipality|gram panchayat|panchayat|ec|encumbrance|mutation|registration|patta|lrs|vastu|home loan|tax|sale deed|agreement of sale|bhk|carpet area)$/i.test(normalized);
 
-  const hasSpecificPropType = /\b(plot|plots|villa|villas|apartment|apartments|flat|flats|farmland|farmlands|commercial|house|houses)\b/i.test(normalized);
+  const hasSpecificPropType = /\b(plot|plots|villa|villas|apartment|apartments|flat|flats|farmland|farmlands|commercial|house|houses|rent|lease|rental|pg|hostel|co[\s-]?living|coliving)\b/i.test(normalized);
   const hasLoc = KNOWN_LOCATIONS.some(loc => normalized.includes(loc));
   const hasBudgetWord = /\b(under|budget|lakh|lakhs|cr|crore|crores|price|cost|below)\b/i.test(normalized) || /\b\d+(\.\d+)?\s*(l|cr|lakh|crore)\b/i.test(normalized);
-  const hasSearchVerb = /\b(show|find|search|available|look|looking|want|need|buy)\b/i.test(normalized);
+  const hasSearchVerb = /\b(show|find|search|available|look|looking|want|need|buy|rent|lease)\b/i.test(normalized);
 
   if (isEduPattern && !hasSearchVerb && !hasBudgetWord && !hasLoc) {
     return {

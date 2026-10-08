@@ -276,8 +276,8 @@ export async function fetchLiveSupabaseProperties(): Promise<PropertyItem[]> {
       return cachedLiveProperties || [];
     }
 
-    // Filter available/approved properties
-    const active = data.filter(p => !p.status || p.status === 'available' || p.status === 'approved' || p.status === 'For Sale');
+    // Filter available/approved properties (Sale & Rent)
+    const active = data.filter(p => !p.status || p.status === 'available' || p.status === 'approved' || p.status === 'For Sale' || p.status === 'For Rent' || p.status === 'rent' || p.purpose === 'Rent' || p.purpose === 'rent');
     const mapped = active.map(mapSupabaseToPropertyItem);
     
     cachedLiveProperties = mapped;

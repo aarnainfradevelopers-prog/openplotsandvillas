@@ -11,6 +11,7 @@ import {
   type PropertyCategory,
   type StructuredPropertySearchFilter
 } from './geminiService.ts';
+import { INITIAL_PAN_INDIA_PROPERTIES } from '../src/data/propertyData.ts';
 
 export interface ChatRequestPayload {
   message: string;
@@ -113,6 +114,12 @@ interface NormalizedPropertyRecord {
   overview: string;
   about: string;
   nearby: string[];
+  sellerId?: string;
+  sellerName?: string;
+  sellerType?: string;
+  isNearby?: boolean;
+  nearbyDistanceKm?: number;
+  nearbyNote?: string;
   rawDetails?: any;
 }
 
@@ -226,13 +233,13 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
   const agentPhone = p['phone number'] || p.owner_phone || '+91 9963513939';
 
   return {
-    id: `db-${p.id}`,
+    id: p.id ? (String(p.id).startsWith('PROP-') ? String(p.id) : `db-${p.id}`) : `db-${Date.now()}`,
     title: p.title || p.project_name || 'Verified Property Listing',
     normalizedType,
     normalizedApprovals: Array.from(approvalsSet),
     location: p.location || 'Hyderabad',
     city: p.city || 'Hyderabad',
-    fullLocation: `${p.location || ''} ${p.city || ''} ${p.title || ''}`.toLowerCase(),
+    fullLocation: `${p.location || ''} ${p.locality || ''} ${p.city || ''} ${p.state || ''} ${p.title || ''}`.toLowerCase(),
     price: formattedPrice,
     priceNumeric: priceNum,
     priceDisplay: formattedPrice,
@@ -243,13 +250,13 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
     bhk: propBhk > 0 ? propBhk : null,
     bedrooms: propBhk > 0 ? propBhk : null,
     bathrooms: p.bathrooms || parsedDesc.bathrooms || null,
-    imageUrl: (p.images && p.images[0] && !p.images[0].startsWith('file://')) ? p.images[0] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
-    images: (p.images || []).filter((img: string) => !img.startsWith('file://')),
+    imageUrl: (p.images && p.images[0] && !p.images[0].startsWith('file://')) ? p.images[0] : (p.imageUrl || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'),
+    images: (p.images && p.images.length > 0) ? p.images.filter((img: string) => !img.startsWith('file://')) : [p.imageUrl || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'],
     isFeatured: Boolean(p.is_featured),
     status: p.status === 'For Rent' ? 'For Rent' : 'For Sale',
     reraNumber: rera,
     lpNumber: lp,
-    amenities: amenities.slice(0, 10),
+    amenities: (p.amenities || amenities).slice(0, 10),
     projectName: parsedDesc.projectName || p.project_name || '',
     agent: {
       name: agentName,
@@ -257,10 +264,16 @@ function normalizeDatabaseRecord(p: any): NormalizedPropertyRecord {
       role: 'Senior Property Advisor • OPV',
       avatar: agentName.charAt(0).toUpperCase() || 'M'
     },
-    specifications: specs,
-    overview: p.description ? p.description.slice(0, 150) : `${areaFormatted} located in ${p.location || 'Hyderabad'}. Verified genuine property directly listed on Open Plots & Villas.`,
-    about: p.description || `${p.title || 'Property'} located in the prime zone of ${p.location || 'Hyderabad'}. Features clear legal titles, verified documentation, and immediate registration capability.`,
-    nearby: nearbyList,
+    specifications: (p.specifications && p.specifications.length > 0) ? p.specifications : specs,
+    overview: p.overview || (p.description ? p.description.slice(0, 150) : `${areaFormatted} located in ${p.location || 'Hyderabad'}. Verified genuine property directly listed on Open Plots & Villas.`),
+    about: p.about || p.description || `${p.title || 'Property'} located in the prime zone of ${p.location || 'Hyderabad'}. Features clear legal titles, verified documentation, and immediate registration capability.`,
+    nearby: (p.nearby && p.nearby.length > 0) ? p.nearby : nearbyList,
+    sellerId: p.sellerId || '',
+    sellerName: p.sellerName || '',
+    sellerType: p.sellerType || 'Owner',
+    isNearby: Boolean(p.isNearby),
+    nearbyDistanceKm: p.nearbyDistanceKm,
+    nearbyNote: p.nearbyNote,
     rawDetails: {
       propId: `OPV-${p.id}`,
       propertyType: normalizedType,
@@ -350,7 +363,11 @@ export function generatePropertySearchSummary(
         'maheshwaram', 'attapur', 'bhanur', 'uppal', 'rajapur', 'kandukur',
         'nednur', 'kallepally', 'balanagar', 'jubilee hills', 'banjara hills',
         'madhapur', 'hitec city', 'kondapur', 'manikonda', 'financial district',
-        'nizampet', 'kompally', 'miyapur', 'bachupally', 'hyderabad', 'hyd'
+        'nizampet', 'kompally', 'miyapur', 'bachupally', 'hyderabad', 'hyd',
+        'mumbai', 'andheri', 'andheri west', 'andheri east', 'powai', 'bandra', 'bandra west', 'thane', 'thane west', 'worli',
+        'pune', 'hinjewadi', 'kharadi', 'wakad', 'baner',
+        'bangalore', 'bengaluru', 'devanahalli', 'whitefield', 'sarjapur', 'electronic city',
+        'delhi', 'new delhi', 'gurgaon', 'gurugram', 'noida', 'chennai', 'kolkata', 'ahmedabad', 'jaipur', 'kochi'
       ];
       for (const loc of knownLocations) {
         if (new RegExp(`\\b${loc}\\b`, 'i').test(q)) {
@@ -616,7 +633,8 @@ export async function handleChatRequest(
         console.warn('Supabase property query error:', error.message);
       }
 
-      const propertiesList: any[] = allProperties || [];
+      const liveProps = allProperties || [];
+      const propertiesList: any[] = [...liveProps, ...INITIAL_PAN_INDIA_PROPERTIES];
 
       // Apply STRICT AND FILTERING across all dimensions
       const filtered = propertiesList.map(normalizeDatabaseRecord).filter(p => {
@@ -757,29 +775,56 @@ Our OPV advisors also have exclusive offline commercial properties and lands acr
 **Available Locations:** ${availableLocations}
 **Projects Found:** ${matchedProperties.length}
 
-Currently, we do not have active ${displayCategoryName.toLowerCase()} listed directly in **${reqLoc}** in our online catalog. However, here are **${matchedProperties.length} verified ${displayCategoryName.toLowerCase()}** available in active prime growth corridors (${availableLocations}) listed below.
+Currently, there are no active verified ${displayCategoryName.toLowerCase()} listed directly in **${reqLoc}** on our portal. In prime corridors like this, verified HMDA/RERA projects typically start at a different price range or move quickly off-market.
 
-Our OPV advisors also have exclusive offline listings in ${reqLoc}. Connect with an advisor below via Phone or WhatsApp.`.trim();
+However, we have **${matchedProperties.length} high-growth verified ${displayCategoryName.toLowerCase()}** in adjacent emerging corridors (${availableLocations}) that offer superior ROI and clear titles, listed below.
+
+Our OPV advisors also have access to exclusive offline listings in ${reqLoc}. Connect with an advisor below via Phone or WhatsApp.`.trim();
           }
         } else {
           matchedProperties = [];
-          groundingData = `ZERO_RESULTS: No verified listings in the active OPV Supabase database currently meet the requested criteria.`;
+          groundingData = `ZERO_RESULTS: Currently, there are no active verified properties matching this exact requirement on our portal.`;
         }
       } else {
         // STRICT ZERO-RESULT HANDLING: No properties match all criteria
         matchedProperties = [];
-        groundingData = `ZERO_RESULTS: No verified listings in the active OPV Supabase database currently meet ALL of the user's requested search criteria:
+        const isOfficeQuery = /\b(office|head\s*office|site\s*office|project\s*office|sales\s*office|builder\s*office|developer\s*office|address)\b/i.test(rawQuery);
+        const projectName = filters.target_project || (/([A-Za-z0-9]+)\s+project/i.exec(rawQuery)?.[1]?.trim()) || 'this project';
+
+        if (isOfficeQuery) {
+          groundingData = `PROJECT_OFFICE_INQUIRY: The user is asking about the office/location for "${projectName}".
+INSTRUCTIONS FOR YOUR RESPONSE:
+1. Speak in a warm, casual, and friendly advisor tone. NEVER use stiff corporate jargon or mention "price points", "adjacent emerging corridors", or "superior ROI".
+2. Respond clearly using this format:
+"We don't publish developer site office addresses directly on the portal for security and verification reasons.
+
+However, our OPV team can easily coordinate with the ${projectName !== 'this project' ? `${projectName} project team` : 'developer project team'} to share the exact location, arrange a site visit, or connect you with the builder directly.
+
+Would you like me to connect you with an OPV advisor on WhatsApp or via phone (+91 99635 13939) to get the exact location and visit details?"
+3. Adapt naturally into the user's selected language (${language}) if not English.`;
+        } else if (filters.target_project && !filters.budget_max) {
+          groundingData = `ZERO_RESULTS: Currently, there are no active verified properties listed for project "${filters.target_project}" on our portal.
+INSTRUCTIONS:
+1. Speak in a warm, friendly real estate advisor tone.
+2. State clearly: "Currently, there are no active verified units listed under '${filters.target_project}' on our portal. However, our team can check upcoming phases or recommend similar verified projects nearby. Would you like to connect with an advisor on WhatsApp or phone (+91 99635 13939)?"
+3. Adapt into ${language} if requested.`;
+        } else {
+          groundingData = `ZERO_RESULTS: Currently, there are no active verified properties in this exact zone at this price point on our portal.
 - Requested Approvals: ${filters.approval.join(', ') || 'Any'}
 - Requested Property Types: ${filters.property_type.join(', ') || 'Any'}
 - Requested Locations: ${filters.location.join(', ') || 'Any'}
 - Requested Budget: ${filters.budget_max ? 'Under ₹' + filters.budget_max : 'Any'}
 
 INSTRUCTIONS FOR YOUR RESPONSE:
-1. Explain clearly and politely that zero active verified listings in our online database currently match these exact specifications.
-2. Provide a helpful real-estate explanation where relevant.
-3. Do NOT invent, fabricate, or substitute alternative properties.
-4. Inform the user that OPV property advisors have direct access to exclusive offline and upcoming inventories.
-5. Offer to connect with an OPV advisor via phone or WhatsApp.`;
+1. Speak in a sophisticated, market-specialist advisory tone. NEVER use technical terms like "database", "Supabase", "records", or "data table".
+2. State clearly and professionally:
+"Currently, there are no active verified properties in this exact zone at this price point on our portal. In prime corridors like this, verified HMDA/RERA projects typically start at a different price range.
+
+However, we have high-growth investment opportunities in adjacent emerging corridors that offer superior ROI and clear titles. Would you like to review those, or have an advisor notify you as soon as a suitable property becomes available?"
+3. Adapt the text naturally into the selected language (${language}) if the user is asking in Telugu, Hindi, Tamil, etc.
+4. Highlight that Open Plots & Villas represents 100% legally verified projects with clear titles and RERA/HMDA approvals.
+5. Offer to connect with an OPV advisor via WhatsApp or by calling our OPV helpline (+91 99635 13939).`;
+        }
       }
     } catch (dbErr: any) {
       console.warn('Supabase property query error:', dbErr?.message || dbErr);
@@ -791,19 +836,35 @@ INSTRUCTIONS FOR YOUR RESPONSE:
   // =========================================================================
   if (!groundingData && !finalAnswer) {
     groundingSourceType = isGeneralInfo ? 'general' : 'opv_website';
-    const eduTopic = getEducationalTopicKnowledge(rawQuery);
-    const retrieved = await retrieveWebsiteContent(rawQuery);
+    const isOfficeQuery = /\b(office|head\s*office|site\s*office|project\s*office|sales\s*office|builder\s*office|developer\s*office|address)\b/i.test(rawQuery);
+    const projectName = filters.target_project || (/([A-Za-z0-9]+)\s+project/i.exec(rawQuery)?.[1]?.trim()) || 'this project';
 
-    const parts: string[] = [];
-    if (eduTopic) {
-      parts.push(`Official Real Estate Reference:\nTopic: ${eduTopic.topic}\nExplanation: ${eduTopic.explanation}\n\nSuggested Follow-up Question: ${eduTopic.followUp}`);
-    }
-    if (retrieved.found && retrieved.text) {
-      parts.push(`OPV Website Source (${retrieved.url}):\nPage Title: ${retrieved.title}\nRetrieved Page Text:\n${retrieved.text}`);
-    }
+    if (isOfficeQuery && filters.target_project) {
+      groundingData = `PROJECT_OFFICE_INQUIRY: The user is asking about the office/location for "${projectName}".
+INSTRUCTIONS FOR YOUR RESPONSE:
+1. Speak in a warm, casual, and friendly advisor tone.
+2. Respond clearly using this format:
+"We don't publish developer site office addresses directly on the portal for security and verification reasons.
 
-    if (parts.length > 0) {
-      groundingData = parts.join('\n\n');
+However, our OPV team can easily coordinate with the ${projectName !== 'this project' ? `${projectName} project team` : 'developer project team'} to share the exact location, arrange a site visit, or connect you with the builder directly.
+
+Would you like me to connect you with an OPV advisor on WhatsApp or via phone (+91 99635 13939) to get the exact location and visit details?"
+3. Adapt naturally into ${language} if not English.`;
+    } else {
+      const eduTopic = getEducationalTopicKnowledge(rawQuery);
+      const retrieved = await retrieveWebsiteContent(rawQuery);
+
+      const parts: string[] = [];
+      if (eduTopic) {
+        parts.push(`Official Real Estate Reference:\nTopic: ${eduTopic.topic}\nExplanation: ${eduTopic.explanation}\n\nSuggested Follow-up Question: ${eduTopic.followUp}`);
+      }
+      if (retrieved.found && retrieved.text) {
+        parts.push(`OPV Website Source (${retrieved.url}):\nPage Title: ${retrieved.title}\nRetrieved Page Text:\n${retrieved.text}`);
+      }
+
+      if (parts.length > 0) {
+        groundingData = parts.join('\n\n');
+      }
     }
   }
 
@@ -851,6 +912,8 @@ INSTRUCTIONS FOR YOUR RESPONSE:
     : `Hello OPV, I have an inquiry: ${rawQuery}`;
 
   const isServicesQuery = /\b(360|360°|elite\s*services?|opv\s*services?)\b/i.test(rawQuery);
+  const isRentQuery = /\b(exclusive\s*rent|rent\/?lease|rent\s*(and|&|or)?\s*lease|rental\s*properties|properties\s*for\s*(rent|lease)|rent|lease)\b/i.test(rawQuery);
+  const isPgQuery = /\b(pg|hostel|co[\s-]?living|paying\s*guest|pg\/?hostel)\b/i.test(rawQuery);
   const isWebsiteQuery = /\b(website|web\s*site|portal|platform|openplotsandvillas)\b/i.test(rawQuery);
   const isContactQuery = /\b(contact|phone|office|address|headquarters)\b/i.test(rawQuery);
   const isSiteVisitQuery = /\b(site\s*visit|chauffeured|cab)\b/i.test(rawQuery);
@@ -861,6 +924,16 @@ INSTRUCTIONS FOR YOUR RESPONSE:
     finalActions = [
       { label: 'Explore All 360° Services ↗', url: 'https://openplotsandvillas.com/services', action: 'explore' },
       ...getStandardActions('9963513939', 'Hello OPV, I want to inquire about 360° Elite Services')
+    ];
+  } else if (isRentQuery) {
+    finalActions = [
+      { label: 'Explore Rent & Lease on OPV ↗', url: 'https://openplotsandvillas.com/', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I want to inquire about Rent/Lease properties')
+    ];
+  } else if (isPgQuery) {
+    finalActions = [
+      { label: 'Explore PG & Co-Living on OPV ↗', url: 'https://openplotsandvillas.com/', action: 'explore' },
+      ...getStandardActions('9963513939', 'Hello OPV, I want to inquire about PG/Hostel and Co-Living rooms')
     ];
   } else if (isWebsiteQuery) {
     finalActions = [
@@ -875,7 +948,7 @@ INSTRUCTIONS FOR YOUR RESPONSE:
   } else if (isSiteVisitQuery) {
     finalActions = [
       { label: 'Book Site Visit ↗', url: 'https://openplotsandvillas.com/contact', action: 'explore' },
-      ...getStandardActions('9963513939', 'Hello OPV, I would like to schedule a free chauffeured site visit')
+      ...getStandardActions('9963513939', 'Hello OPV, I would like to schedule a free site visit with AC car pickup & drop')
     ];
   }
 

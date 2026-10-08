@@ -140,6 +140,10 @@ function parseHtmlContent(html: string, url: string): { title: string; text: str
     .replace(/\s+/g, ' ')
     .trim();
 
+  // Remove physical street address to adhere to privacy guidelines
+  cleanBody = cleanBody.replace(/(#101,?\s*Road No:?\s*10|Jaya Kesav Avenue|Kakatiya Hills|500081)/gi, '');
+  jsonLdText = jsonLdText.replace(/(#101,?\s*Road No:?\s*10|Jaya Kesav Avenue|Kakatiya Hills|500081)/gi, '');
+
   // Combine title, JSON-LD context, and clean text
   const combinedText = [
     `Page Title: ${title}`,

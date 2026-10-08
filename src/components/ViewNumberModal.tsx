@@ -13,29 +13,25 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { PropertyItem } from '../types/chat';
-import { submitPropertyLead } from '../services/supabaseService';
 import { submitBuyerEnquiry, openGoogleSheetInNewTab, getGoogleSheetUrl, isGoogleSheetsWebhookConfigured } from '../services/googleSheetsService';
-import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
 
-interface EnquiryModalProps {
+interface ViewNumberModalProps {
   isOpen: boolean;
   onClose: () => void;
   property?: PropertyItem | null;
-  onViewPropertyDetails?: (property: PropertyItem) => void;
 }
 
-export const EnquiryModal: React.FC<EnquiryModalProps> = ({
+export const ViewNumberModal: React.FC<ViewNumberModalProps> = ({
   isOpen,
   onClose,
-  property,
-  onViewPropertyDetails
+  property
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
@@ -70,7 +66,6 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
   };
   const agentName = formatBrandOrAgentName(rawAgentName);
   const rawAgentPhone = currentProperty.agent?.phone || '+91 9963513939';
-  const propImg = currentProperty.images && currentProperty.images.length > 0 ? currentProperty.images[0] : OPV_FALLBACK_IMAGE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,39 +85,26 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const fullPhone = `${countryCode} ${cleanPhone}`;
-
-      // 1. Submit lead to Google Sheets (BUYERS and ENQUIRIES sheets)
+      // 1. Submit lead to Google Sheets and backend
       await submitBuyerEnquiry({
         buyerName: name.trim(),
-        phone: fullPhone,
+        phone: `${countryCode} ${cleanPhone}`,
         email: email.trim() || undefined,
         preferredLocation: currentProperty.location || currentProperty.city || '',
-        message: `Contact Agent enquiry for: ${currentProperty.title} (ID: ${currentProperty.id})`,
+        message: `Buyer viewed listing number for: ${currentProperty.title} (ID: ${currentProperty.id})`,
         property: currentProperty,
-        serviceType: 'Contact Agent Enquiry'
+        serviceType: 'View Listing Contact Number'
       });
 
-      // 2. Also sync to Supabase lead tracking
-      const rawId = currentProperty.id?.replace(/^db-/, '');
-      const propIdNum = rawId && !isNaN(Number(rawId)) ? Number(rawId) : null;
-      submitPropertyLead({
-        name: name.trim(),
-        phone: fullPhone,
-        email: email.trim() || undefined,
-        property_id: propIdNum,
-        message: `Contact Agent Enquiry. Property: ${currentProperty.title || 'General Influx'}`
-      }).catch(err => console.warn('Supabase lead sync logged:', err));
+      setIsSuccess(true);
 
-      setSubmitted(true);
-
-      // 3. Automatically open Google Sheets in a new tab as requested
+      // 2. Automatically open Google Sheets in a new tab as requested
       setTimeout(() => {
         openGoogleSheetInNewTab();
       }, 300);
     } catch (err: any) {
-      console.warn('Enquiry submission handled with local safety buffer:', err);
-      setSubmitted(true);
+      console.warn('View number submission fallback:', err);
+      setIsSuccess(true);
       setTimeout(() => {
         openGoogleSheetInNewTab();
       }, 300);
@@ -132,7 +114,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
   };
 
   const handleResetAndClose = () => {
-    setSubmitted(false);
+    setIsSuccess(false);
     setName('');
     setEmail('');
     setPhoneNumber('');
@@ -183,7 +165,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   <MessageSquare className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <p className="text-xs sm:text-[12.5px] font-semibold text-slate-700 dark:text-slate-300 leading-snug">
-                  Discuss price, booking, site visit, and documentation directly
+                  Discuss rent, deposit, furnishing, maintenance, and move-in conditions
                 </p>
               </div>
 
@@ -193,15 +175,15 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   <Clock className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <p className="text-xs sm:text-[12.5px] font-semibold text-slate-700 dark:text-slate-300 leading-snug">
-                  Shortlist similar verified properties in the same locality faster
+                  Shortlist similar rental homes in the same locality faster
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="mt-5 pt-3 border-t border-emerald-200/80 dark:border-emerald-950 text-xs text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span>Verified OPV Lead Desk Assurance</span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-emerald-200/80 dark:border-emerald-950 text-xs text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span>Verified OPV Lead Desk Assurance</span>
           </div>
         </div>
 
@@ -215,7 +197,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
                   Connect with the Listing Agent
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                  Share your details to contact the person handling this property listing
+                  Share your details to contact the person handling this rental listing
                 </p>
               </div>
               <button
@@ -240,7 +222,7 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
               </div>
             </div>
 
-            {submitted ? (
+            {isSuccess ? (
               /* Success State - Only Done Button per user request */
               <div className="py-6 space-y-4 text-center">
                 <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-xs">

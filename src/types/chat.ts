@@ -40,7 +40,7 @@ export interface LanguageOption {
 export interface ActionLink {
   label: string;
   url?: string;
-  action?: 'call' | 'whatsapp' | 'explore' | 'loan' | 'contact' | 'bhoomi_pooja' | 'legal' | 'details' | 'enquire';
+  action?: 'call' | 'whatsapp' | 'explore' | 'loan' | 'contact' | 'bhoomi_pooja' | 'legal' | 'details' | 'enquire' | 'post_property';
   icon?: string;
 }
 
@@ -58,6 +58,113 @@ export interface StructuredPropertyDetails {
   location?: string;
   landmark?: string;
   facing?: string;
+}
+
+export type BuyerLeadStatus =
+  | 'New'
+  | 'Contacted'
+  | 'Follow-up'
+  | 'Site Visit Scheduled'
+  | 'Interested'
+  | 'Negotiation'
+  | 'Closed'
+  | 'Not Interested';
+
+export type SellerListingStatus =
+  | 'Pending'
+  | 'Under Review'
+  | 'Verified'
+  | 'Active'
+  | 'Rejected'
+  | 'Sold'
+  | 'Inactive';
+
+export type SellerType = 'Owner' | 'Agent' | 'Builder' | 'Developer';
+
+// TAB 1: SELLERS (Google Sheets Structure)
+export interface SellerRecord {
+  sellerId: string;
+  sellerName: string;
+  sellerType: SellerType | string;
+  mobileNumber: string;
+  whatsappNumber: string;
+  email: string;
+  sellerAddress: string;
+  propertyId: string;
+  propertyType: string;
+  propertyTitle: string;
+  propertyAddress: string;
+  city: string;
+  state: string;
+  createdDate: string;
+  verificationStatus: SellerListingStatus;
+  listingStatus: SellerListingStatus;
+}
+
+// TAB 2: BUYERS (Google Sheets Structure)
+export interface BuyerLeadRecord {
+  buyerLeadId: string;
+  buyerName: string;
+  email: string;
+  phoneNumber: string;
+  city: string;
+  preferredLocation: string;
+  propertyType: string;
+  budget: string;
+  message: string;
+  propertyId: string;
+  propertyTitle: string;
+  source: string;
+  enquiryDate: string;
+  leadStatus: BuyerLeadStatus;
+  assignedTo: string;
+  notes: string;
+}
+
+// TAB 3: PROPERTIES (Google Sheets Structure)
+export interface PropertyRecord {
+  propertyId: string;
+  propertyType: string;
+  propertyTitle: string;
+  price: string;
+  area: string;
+  areaUnit: string;
+  address: string;
+  locality: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude?: number;
+  longitude?: number;
+  sellerId: string;
+  sellerName: string;
+  approvalType: string;
+  reraNumber?: string;
+  hmdaNumber?: string;
+  dtcpNumber?: string;
+  listingStatus: SellerListingStatus;
+  verificationStatus: SellerListingStatus;
+  createdDate: string;
+}
+
+// TAB 4: ENQUIRIES (Google Sheets Structure)
+export interface EnquiryRecord {
+  enquiryId: string;
+  buyerLeadId: string;
+  buyerName: string;
+  buyerPhone: string;
+  propertyId: string;
+  propertyTitle: string;
+  sellerId: string;
+  sellerName: string;
+  enquiryType: string;
+  message: string;
+  date: string;
+  time: string;
+  status: BuyerLeadStatus;
+  assignedTo: string;
+  followUpDate: string;
+  notes: string;
 }
 
 export interface PropertyItem {
@@ -94,6 +201,23 @@ export interface PropertyItem {
   isFavorite?: boolean;
   rawDetails?: StructuredPropertyDetails;
   websiteUrl?: string;
+
+  // Pan-India & Lead Management Attributes
+  propertyId?: string;
+  sellerId?: string;
+  sellerName?: string;
+  sellerType?: SellerType | string;
+  city?: string;
+  state?: string;
+  locality?: string;
+  pincode?: string;
+  latitude?: number;
+  longitude?: number;
+  isNearby?: boolean;
+  nearbyDistanceKm?: number;
+  nearbyNote?: string;
+  verificationStatus?: SellerListingStatus;
+  listingStatus?: SellerListingStatus;
 }
 
 export interface AttachedFile {

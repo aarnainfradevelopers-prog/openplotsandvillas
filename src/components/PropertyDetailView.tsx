@@ -11,7 +11,9 @@ import {
   Check,
   ShieldCheck,
   CheckCircle2,
-  Building2
+  Building2,
+  BookUser,
+  Phone
 } from 'lucide-react';
 import { PropertyItem, LanguageCode } from '../types/chat';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
@@ -22,6 +24,7 @@ import { getCleanOverviewData, getPropertyWebsiteUrl } from '../utils/propertyOv
 interface PropertyDetailViewProps {
   property: PropertyItem;
   onEnquire: (property: PropertyItem) => void;
+  onViewNumber?: (property: PropertyItem) => void;
   onDetails?: (property: PropertyItem) => void;
   currentLanguage?: LanguageCode;
 }
@@ -32,6 +35,7 @@ type TabType = typeof TABS[number];
 export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
   property,
   onEnquire,
+  onViewNumber,
   onDetails,
   currentLanguage = 'en'
 }) => {
@@ -472,25 +476,36 @@ export const PropertyDetailView: React.FC<PropertyDetailViewProps> = ({
               </div>
             </div>
 
-            {/* Right: Action Buttons */}
+            {/* Right: Action Buttons (More Details | View Number | Contact Agent) */}
             <div className="flex items-center gap-2 sm:gap-2.5">
               <a
                 href={websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3.5 sm:px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                className="px-3 sm:px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
               >
                 <span>{pLocale.moreDetails}</span>
                 <span className="text-sm leading-none font-bold">↗</span>
               </a>
 
+              {onViewNumber && (
+                <button
+                  type="button"
+                  onClick={() => onViewNumber(property)}
+                  className="px-3 sm:px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-900/80 dark:border-slate-400 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+                >
+                  <BookUser className="w-3.5 h-3.5 stroke-[2] text-slate-900 dark:text-white" />
+                  <span>View Number</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => onEnquire(property)}
-                className="px-4 sm:px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                className="px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 border border-emerald-600"
               >
-                <span>{pLocale.enquire}</span>
-                <span className="text-sm leading-none font-bold">→</span>
+                <Phone className="w-3.5 h-3.5 fill-white text-white" />
+                <span>Contact Agent</span>
               </button>
             </div>
           </div>

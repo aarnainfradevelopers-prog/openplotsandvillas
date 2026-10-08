@@ -31,7 +31,7 @@ declare global {
 
 interface MicrophoneButtonProps {
   currentLanguage: LanguageCode;
-  onTranscript: (transcript: string) => void;
+  onTranscript: (transcript: string, autoSend?: boolean) => void;
   onSendMessage?: (content: string, attachments?: AttachedFile[]) => void;
   disabled?: boolean;
 }
@@ -70,6 +70,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<any>(null);
+  const silenceTimerRef = useRef<any>(null);
 
   const errorTimerRef = useRef<any>(null);
   const lastSpokenTextRef = useRef('');
@@ -104,7 +105,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         return 'Microphone access is blocked. Please allow microphone access in your browser settings.';
       case 'NotFoundError':
       case 'DevicesNotFoundError':
-        return 'No microphone is available on this computer.';
+        return 'No microphone detected on this computer. Please connect or turn on your microphone or headset.';
       case 'NotReadableError':
       case 'TrackStartError':
         return 'The microphone is being used by another application or could not be accessed.';
@@ -228,6 +229,10 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
+    }
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
     if (errorTimerRef.current) {
       clearTimeout(errorTimerRef.current);
@@ -434,56 +439,57 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   };
 
   // Stop listening cleanly and commit any pending speech
-  const stopListening = useCallback(() => {
-    const speechToCommit = lastSpokenTextRef.current.trim();
-    if (speechToCommit && speechToCommit !== committedTextRef.current) {
-      onTranscript(speechToCommit);
-      committedTextRef.current = speechToCommit;
-      lastSpokenTextRef.current = '';
-
-      if (onSendMessage) {
-        setTimeout(() => {
-          onSendMessage(speechToCommit);
-        }, 300);
+  const stopListening = useCallback(
+    (shouldSend = false) => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
       }
-    }
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (_) {}
-    }
-    setIsListening(false);
-    setInterimText('');
-  }, [onTranscript, onSendMessage]);
-
-  // Mode A: Speech-to-Text via Web Speech API with universal device auto-connect & fallback
-  const startListening = useCallback(
-    async (retryWithFallbackLang = false) => {
-      // 1. Proactively ensure microphone permission & hardware stream is awake
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      if (recognitionRef.current) {
         try {
-          const testStream = await getAudioStream(selectedDeviceId);
-          testStream.getTracks().forEach(t => t.stop());
-          setPermissionState('granted');
-        } catch (permErr: any) {
-          console.warn('Microphone access check notice:', permErr);
-          const friendlyMsg = getFriendlyErrorMessage(permErr);
-          triggerError(friendlyMsg, 6000);
-          if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
-            setPermissionState('denied');
-            setShowHelpModal(true);
-            return;
-          }
+          recognitionRef.current.onresult = null;
+          recognitionRef.current.onerror = null;
+          recognitionRef.current.onend = null;
+          recognitionRef.current.stop();
+        } catch (_) {}
+        recognitionRef.current = null;
+      }
+
+      const speechToCommit = lastSpokenTextRef.current.trim();
+      setIsListening(false);
+      setInterimText('');
+
+      if (speechToCommit) {
+        onTranscript(speechToCommit, false);
+        if (shouldSend && onSendMessage) {
+          onSendMessage(speechToCommit);
+          lastSpokenTextRef.current = '';
+          committedTextRef.current = speechToCommit;
         }
       }
+    },
+    [onTranscript, onSendMessage]
+  );
 
-      const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  // Mode A: Speech-to-Text via Web Speech API
+  const startListening = useCallback(
+    async (retryWithFallbackLang = false) => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
 
-      // If SpeechRecognition unavailable, gracefully fallback to voice recording mode
+      const SpeechRecognition =
+        typeof window !== 'undefined' &&
+        (window.SpeechRecognition || window.webkitSpeechRecognition);
+
+      // If SpeechRecognition unavailable in this browser
       if (!SpeechRecognition) {
-        console.warn('SpeechRecognition unavailable in this browser; starting audio voice recording mode.');
-        startAudioRecordingMode(selectedDeviceId);
+        console.warn('SpeechRecognition unavailable in this browser.');
+        triggerError('Speech recognition is supported on Google Chrome, Microsoft Edge, and Chromium-based browsers.', 6000);
+        setShowHelpModal(true);
+        setActiveTab('browser');
         return;
       }
 
@@ -501,7 +507,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
       try {
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
@@ -517,55 +523,53 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         recognition.onstart = () => {
           setIsListening(true);
           setErrorMessage(null);
+          setPermissionState('granted');
         };
 
         recognition.onresult = (event: any) => {
-          let interim = '';
           let finalPiece = '';
+          let interimPiece = '';
 
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
+          for (let i = 0; i < event.results.length; ++i) {
             const result = event.results[i];
             const text = result[0]?.transcript || '';
             if (result.isFinal) {
               finalPiece += (finalPiece ? ' ' : '') + text.trim();
             } else {
-              interim += text;
+              interimPiece += (interimPiece ? ' ' : '') + text.trim();
             }
           }
 
-          if (finalPiece) {
-            onTranscript(finalPiece);
-            committedTextRef.current = finalPiece;
-            lastSpokenTextRef.current = '';
+          const fullSpoken = (finalPiece + (interimPiece ? (finalPiece ? ' ' : '') + interimPiece : '')).trim();
 
-            // Send query automatically when final sentence is spoken
-            if (onSendMessage) {
-              setTimeout(() => {
-                onSendMessage(finalPiece);
-              }, 400);
-            }
-          } else if (interim.trim()) {
-            lastSpokenTextRef.current = interim.trim();
+          if (fullSpoken) {
+            lastSpokenTextRef.current = fullSpoken;
+            setInterimText(fullSpoken);
+            onTranscript(fullSpoken, false);
+
+            // Auto-send after 2.5 seconds of silence once speech has been recognized
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = setTimeout(() => {
+              if (lastSpokenTextRef.current.trim()) {
+                stopListening(true);
+              }
+            }, 2500);
           }
-
-          setInterimText(interim);
         };
 
         recognition.onerror = (event: any) => {
-          console.warn('Speech recognition error event:', event.error);
+          console.warn('Speech recognition notice:', event.error);
           const err = event.error;
 
-          // If speech recognition fails (network, not-allowed, service-not-allowed),
-          // fallback to voice recording mode so the user is never stranded
-          if (
-            err === 'network' ||
-            err === 'service-not-allowed' ||
-            err === 'audio-capture' ||
-            err === 'not-allowed'
-          ) {
-            console.info('Speech recognition failed; switching to audio recorder mode due to:', err);
+          if (err === 'not-allowed' || err === 'service-not-allowed') {
+            if (audioDevices.length === 0) {
+              triggerError('No microphone detected on this computer. Please plug in or turn on your headset/microphone.', 8000);
+            } else {
+              setPermissionState('denied');
+              triggerError('Microphone permission blocked. Click the lock icon in the browser address bar to allow.', 7000);
+            }
+            setShowHelpModal(true);
             setIsListening(false);
-            startAudioRecordingMode(selectedDeviceId);
             return;
           }
 
@@ -575,46 +579,53 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           }
 
           if (err === 'no-speech') {
-            if (!lastSpokenTextRef.current) {
-              triggerError('No speech detected. Speak closer to your microphone.', 5000);
-            }
-          } else if (err !== 'aborted') {
-            triggerError(`Voice notice: ${err}`);
+            // Natural silence - keep listening without interrupting
+            return;
           }
 
-          if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
-            onTranscript(lastSpokenTextRef.current);
-            committedTextRef.current = lastSpokenTextRef.current;
-            if (onSendMessage) {
-              onSendMessage(lastSpokenTextRef.current);
-            }
-            lastSpokenTextRef.current = '';
+          if (err === 'audio-capture') {
+            triggerError('Microphone hardware in use or not found. Check system sound settings.', 6000);
+            setIsListening(false);
+            return;
+          }
+
+          if (err === 'network') {
+            triggerError('Speech recognition network error. Please check your internet connection.', 5000);
+            setIsListening(false);
+            return;
+          }
+
+          if (err !== 'aborted') {
+            triggerError(`Voice notice: ${err}`);
           }
 
           setIsListening(false);
         };
 
         recognition.onend = () => {
-          if (lastSpokenTextRef.current && lastSpokenTextRef.current !== committedTextRef.current) {
-            onTranscript(lastSpokenTextRef.current);
-            committedTextRef.current = lastSpokenTextRef.current;
-            if (onSendMessage) {
-              onSendMessage(lastSpokenTextRef.current);
-            }
-            lastSpokenTextRef.current = '';
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
           }
-          setIsListening(false);
-          setInterimText('');
+          const speechToCommit = lastSpokenTextRef.current.trim();
+          if (speechToCommit && speechToCommit !== committedTextRef.current) {
+            stopListening(true);
+          } else {
+            setIsListening(false);
+            setInterimText('');
+          }
         };
 
         recognitionRef.current = recognition;
         recognition.start();
       } catch (err: any) {
-        console.warn('SpeechRecognition failed to start; switching to audio recorder mode:', err);
-        startAudioRecordingMode(selectedDeviceId);
+        console.warn('SpeechRecognition failed to start:', err);
+        const friendlyMsg = getFriendlyErrorMessage(err);
+        triggerError(friendlyMsg);
+        setIsListening(false);
       }
     },
-    [selectedDeviceId, selectedLang.speechCode, selectedLang.code, onTranscript, onSendMessage, triggerError]
+    [selectedLang.speechCode, selectedLang.code, onTranscript, triggerError, stopListening]
   );
 
   const toggleListening = () => {
@@ -626,7 +637,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     if (isListening) {
-      stopListening();
+      stopListening(true);
     } else {
       startListening();
     }
@@ -634,7 +645,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
   // Instant Voice Query selection handler (calls onTranscript & onSendMessage)
   const handleSelectQuickPrompt = (prompt: string) => {
-    onTranscript(prompt);
+    onTranscript(prompt, true);
     if (onSendMessage) {
       onSendMessage(prompt);
     }
@@ -715,7 +726,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             </div>
             <button
               type="button"
-              onClick={stopListening}
+              onClick={() => stopListening(true)}
               className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg ml-1 cursor-pointer transition-colors flex items-center gap-1"
             >
               <Send className="w-2.5 h-2.5" />

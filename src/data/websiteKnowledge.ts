@@ -31,7 +31,7 @@ export const OPV_WEBSITE_KNOWLEDGE: WebsiteKnowledgeEntry[] = [
 Our website provides verified property discovery, investor advisory, and end-to-end real estate solutions:
 
 * 🔍 **Verified Property Search:** Explore verified Open Plots, Luxury Villas, Gated Communities, Apartments, and Commercial Spaces across Hyderabad with RERA, HMDA, and DTCP approvals.
-* 🌟 **360° Elite Services:** 18 turnkey service verticals including free chauffeured site visits, legal title audits, Bhoomi Pooja coordination, Vastu consultancy, home loans, and interior design.
+* 🌟 **360° Elite Services:** 18 turnkey service verticals including free AC car site visits (free pickup & drop), legal title audits, Bhoomi Pooja coordination, Vastu consultancy, home loans, and interior design.
 * 📖 **Guides & Resources:** Detailed Buyer's Guides, Seller's Listing Guides, and Legal FAQs covering Dharani, EC, Mutation, and Registration norms.
 * 🤖 **OPV AI Assistant:** Real-time conversational AI to help you find plots and villas matching your exact budget and preferred locations.
 * 📞 **Direct Support:** Book a free site visit or speak directly with our property advisors.`,
@@ -47,50 +47,46 @@ Our website provides verified property discovery, investor advisory, and end-to-
     content: `### 🏢 About Open Plots & Villas (OPV)
 **India's First AI-Powered Real Estate Platform — Simple • Transparent • Reliable.**
 
-Open Plots & Villas (OPV) is Hyderabad's premier property technology platform that revolutionizes the way people **discover, buy, sell, rent, and invest** in real estate.
+Open Plots & Villas (OPV) is India's AI-powered verified real estate platform that revolutionizes the way people **discover, buy, sell, rent, and invest** in real estate.
 
 * **Our Purpose:** Making property discovery simpler, safer, and fully transparent. We connect buyers, sellers, landlords, and developers with verified properties and trusted real estate services all in one place.
 * **What We Offer:** Verified Open Plots, Luxury Villas, Gated Communities, High-Rise Apartments, Agricultural Farm Lands, and Prime Commercial Spaces across Hyderabad.
 * **Quality Assurance:** Multi-layer verification including **RERA registration checks**, **30-year legal title audits**, and digital documentation guarantees.
-* **End-to-End Solutions:** Complete support from property discovery and free chauffeured site visits to Bhoomi Pooja, Gruhapravesam, home loans, registration, and interior design.`,
+* **End-to-End Solutions:** Complete support from property discovery and free AC car site visits to Bhoomi Pooja, Gruhapravesam, home loans, registration, and interior design.`,
     linkUrl: 'https://openplotsandvillas.com/about/',
     linkLabel: 'Learn More on OPV About Us ↗'
   },
 
-  // 2. OFFICE ADDRESS & LOCATION
+  // 2. OFFICE & REACH OUT INFORMATION
   {
     id: 'office_location',
     patterns: /\b(office\s*(address|location)?|where\s*(is|are)\s*(your|opv|the)\s*office|head\s*office|headquarters|location\s*of\s*office|visit\s*(your\s*)?office|address)\b/i,
-    title: 'OPV Head Office Location',
-    content: `### 📍 Open Plots & Villas — Office Address
-You are welcome to visit our head office in Hyderabad:
+    title: 'Reach Out to Open Plots & Villas',
+    content: `### 🏢 Reach Out to Open Plots & Villas
+You can reach out to our advisory team directly via WhatsApp or Call on our official OPV numbers:
 
-* **Address:** #101, Road No: 10, Jaya Kesav Avenue, Kakatiya Hills, Madhapur, Hyderabad, Telangana – 500081
-* **Landmark:** Kakatiya Hills, Madhapur (near Hitec City growth corridor)
-* **Phone:** +91 99635 13939 | 040 4568 5052
-* **Email:** info@openplotsandvillas.com
-* **Working Hours:** Monday – Saturday: 9:30 AM – 6:30 PM (Sunday by appointment)
-
-Our property consultants and legal advisors are available in-person to guide your investment decisions.`,
+* 💬 **WhatsApp Support:** Reach out on WhatsApp at **+91 99635 13939** for immediate project details, site visit bookings, and verified documentation.
+* 📞 **Call on OPV Number:** Call our helpline at **+91 99635 13939**
+* ✉️ **Email:** info@openplotsandvillas.com
+* 🌐 **Website:** https://openplotsandvillas.com
+* ⏰ **Support Hours:** Monday to Saturday: 9:30 AM – 6:30 PM IST`,
     linkUrl: 'https://openplotsandvillas.com/contact/',
-    linkLabel: 'View on OPV Contact Page ↗'
+    linkLabel: 'Reach Out on OPV Contact Page ↗'
   },
 
   // 3. CONTACT NUMBERS & HELPLINE
   {
     id: 'contact_info',
     patterns: /\b(contact(\s*us)?|phone(\s*number)?|call(\s*opv)?|mobile(\s*number)?|helpline|customer\s*care|support\s*(team|number)?|email|whatsapp\s*number)\b/i,
-    title: 'OPV Contact & Support Information',
-    content: `### 📞 Contact Open Plots & Villas
-Speak directly with our property advisory desk:
+    title: 'Reach Out to Open Plots & Villas',
+    content: `### 📞 Reach Out to Open Plots & Villas
+You can connect directly with our advisory desk via WhatsApp or Call on our official OPV numbers:
 
-* **Primary Helpline:** [+91 99635 13939](tel:+919963513939)
-* **Office Landline:** [040 4568 5052](tel:04045685052) / [040 4563 5052](tel:04045635052)
-* **WhatsApp Desk:** [+91 99635 13939](https://wa.me/919963513939) (Instant property assistance)
-* **Official Email:** [info@openplotsandvillas.com](mailto:info@openplotsandvillas.com)
-* **Support Timings:** Monday to Saturday, 9:30 AM – 6:30 PM IST
-
-You can also request a callback or book a property site visit anytime!`,
+* 💬 **WhatsApp Support:** Reach out on WhatsApp at **+91 99635 13939**
+* 📞 **Call on OPV Number:** Call our helpline at **+91 99635 13939**
+* ✉️ **Official Email:** info@openplotsandvillas.com
+* 🌐 **Website:** https://openplotsandvillas.com
+* ⏰ **Support Timings:** Monday to Saturday, 9:30 AM – 6:30 PM IST`,
     linkUrl: 'https://openplotsandvillas.com/contact/',
     linkLabel: 'Open Contact Desk ↗'
   },
@@ -116,7 +112,7 @@ Open Plots & Villas offers full-spectrum, verified turnkey services:
 * 🌺 **Vastu & Spiritual Services:** 100% Vastu audits, Bhoomi Pooja coordination, and Gruhapravesam muhurtham rituals.
 * 🛡️ **Property Management & Asset Care:** Regular on-site inspections, boundary fencing, asset security audits, and utility bill tracking.
 * 🚚 **Packers & Movers:** Safe household shifting, corporate office relocation, and vehicle transportation.
-* 🤝 **OPV Verified Properties:** Verified open plot sales, gated community villas, agricultural farm lands, and chauffeured site visits.`,
+* 🤝 **OPV Verified Properties:** Verified open plot sales, gated community villas, agricultural farm lands, and free site visits with AC car pickup & drop.`,
     linkUrl: 'https://openplotsandvillas.com/services/',
     linkLabel: 'Explore All 360° Elite Services ↗'
   },
@@ -124,19 +120,19 @@ Open Plots & Villas offers full-spectrum, verified turnkey services:
   // 5. SITE VISIT BOOKING
   {
     id: 'site_visit',
-    patterns: /\b(site\s*visit|visit\s*(the\s*)?plot|visit\s*(the\s*)?villa|see\s*the\s*property|cab|transport|inspection|book\s*(a\s*)?visit)\b/i,
-    title: 'Book a Free Chauffeured Site Visit',
-    content: `### 🚗 Free Chauffeured Property Site Visits
-Open Plots & Villas provides **complimentary, guided site visits** for interested buyers and families:
+    patterns: /\b(site\s*visit|visit\s*(the\s*)?plot|visit\s*(the\s*)?villa|see\s*the\s*property|cab|transport|inspection|book\s*(a\s*)?visit|car\s*pickup|pickup\s*and\s*drop|chauffeured)\b/i,
+    title: 'Book a Free Site Visit (Free AC Car Pickup & Drop)',
+    content: `### 🚗 Free Property Site Visits (Free AC Car Pickup & Drop)
+Open Plots & Villas provides **free guided site visits with comfortable AC car pickup and drop** for interested buyers and families:
 
-* **Chauffeured Pickup & Drop:** Free comfortable transport to the venture and back from key pickup hubs in Hyderabad.
+* **Free Doorstep Pickup & Drop:** Free comfortable AC car transport directly to the project venture and back from your home or major hubs across Hyderabad.
 * **On-Site Expert Advisor:** An experienced OPV property advisor accompanies you to explain layout boundaries, approvals, road dimensions, and connectivity.
 * **Documentation Transparency:** Review verified HMDA/DTCP layout permissions and RERA documents directly on-site.
 * **Flexible Timings:** Available 7 days a week (including weekends).
 
 To schedule your visit, call **+91 99635 13939** or tap **Chat on WhatsApp** below with your preferred day and location.`,
     linkUrl: 'https://openplotsandvillas.com/contact/',
-    linkLabel: 'Book a Site Visit on OPV ↗'
+    linkLabel: 'Book a Free Site Visit on OPV ↗'
   },
 
   // 6. HOW TO BUY PROPERTY ON OPV
@@ -146,7 +142,7 @@ To schedule your visit, call **+91 99635 13939** or tap **Chat on WhatsApp** bel
     title: 'Property Buying Guide on OPV',
     content: `### 📖 Step-by-Step Guide to Buying Property on OPV
 1. **Search & Shortlist:** Explore verified open plots, villas, or apartments on OPV filtered by location, budget, and approval (HMDA/DTCP/RERA).
-2. **Schedule Free Site Visit:** Experience the project first-hand with our chauffeured pickup and on-site advisor.
+2. **Schedule Free Site Visit:** Experience the project first-hand with our free car pickup & drop and on-site advisor.
 3. **Legal Due Diligence:** Our dedicated in-house legal team verifies the 30-year Encumbrance Certificate (EC), link documents, and layout sanctions.
 4. **Loan Assistance:** Get fast-tracked home loan or plot loan approvals through our tie-ups with leading national banks (SBI, HDFC, ICICI).
 5. **Agreement of Sale:** Transparent terms, payment milestones, and token registration.
@@ -239,6 +235,237 @@ Turn your bare plot or villa shell into an architecturally stunning dream home:
 * **Turnkey Execution:** Transparent pricing, 3D previews before construction, and milestone-based project delivery.`,
     linkUrl: 'https://openplotsandvillas.com/services/interior-smart-home/',
     linkLabel: 'Explore Interior & Design Services ↗'
+  },
+
+  // 12. EXCLUSIVE RENT & LEASE PROPERTIES
+  {
+    id: 'exclusive_rent_lease',
+    patterns: /\b(exclusive\s*rent|rent\/?lease|rent\s*(and|&|or)?\s*lease|rental\s*properties|properties\s*for\s*(rent|lease)|rent\s*(flat|flats|apartment|apartments|house|houses|villa|villas|commercial|office|shop|shops)|lease\s*properties|commercial\s*lease|rent\s*in\s*hyderabad|houses?\s*for\s*rent|flats?\s*for\s*rent|villas?\s*for\s*rent|rental|lease|rent)\b/i,
+    title: 'Exclusive Rent & Lease Properties on OPV',
+    content: `### 🔑 Exclusive Rent & Lease Properties on OPV
+**Verified Residential & Commercial Rental Solutions Across Hyderabad.**
+
+Open Plots & Villas (openplotsandvillas.com) provides a dedicated category for verified rental and lease properties with zero-brokerage direct owner options and tenant security:
+
+* 🏠 **Residential Rentals:**
+  * **Flats & High-Rise Apartments:** 1 BHK, 2 BHK, 3 BHK, and 4 BHK units in prime gated communities with 24/7 security, clubhouses, swimming pools, and gym amenities.
+  * **Luxury Gated Villas & Independent Houses:** Spacious duplex and triplex villas in family-friendly growth corridors like Kokapet, Tellapur, Mokila, and Manikonda.
+  * **Flexible Furnishing Options:** Choose from Fully-Furnished (ready to move with electronics & modular fittings), Semi-Furnished, or Unfurnished homes.
+* 🏢 **Commercial Lease & Office Spaces:**
+  * **Plug-and-Play Corporate Workspaces:** Fully equipped IT/ITeS office floors, conference rooms, and executive cabins in Madhapur, Hitec City, and Financial District.
+  * **Retail Shops & Showrooms:** Main-road frontage commercial spaces for retail outlets, bank branches, healthcare clinics, and supermarkets.
+  * **Warehouses & Industrial Godowns:** Secure storage spaces with convenient ORR highway access.
+* 🛡️ **OPV Rental Guarantees:**
+  * **100% Genuine Owner Listings:** Direct contact with property owners with zero fake broker listings.
+  * **Transparent Rental Agreements:** Online draft agreements, legal verification, and stamp duty assistance.
+  * **Tenant & Landlord Background Verification:** Complete peace of mind for both parties.
+  * **Move-In Coordination:** Deep cleaning, painting, and utility handover support.
+
+📞 **Looking to rent a property or lease out your asset?** Call our Rental Desk at **+91 99635 13939** or explore verified rentals online!`,
+    linkUrl: 'https://openplotsandvillas.com/',
+    linkLabel: 'Explore Rent & Lease Properties on OPV ↗'
+  },
+
+  // 13. PG / HOSTEL & CO-LIVING PROPERTIES
+  {
+    id: 'pg_hostel_coliving',
+    patterns: /\b(pg|hostel|co[\s-]?living|paying\s*guest|pg\/?hostel|hostel\s*(and|&)?\s*co[\s-]?living|ladies\s*hostel|mens\s*hostel|executive\s*pg|student\s*hostel|co[\s-]?living\s*properties|pg\s*properties|hostel\s*properties)\b/i,
+    title: 'PG / Hostel & Co-Living Properties on OPV',
+    content: `### 🛏️ PG / Hostel & Co-Living Properties on OPV
+**Comfortable, Verified, & Affordable Accommodations Across Hyderabad's Major Hubs.**
+
+Open Plots & Villas features a dedicated **PG / Hostel & Co-Living** section designed specifically for students, IT professionals, and working executives:
+
+* 🏢 **Accommodation Categories:**
+  * **Executive Co-Living Spaces:** Modern, community-driven living spaces with private rooms, double sharing, and triple sharing for corporate executives.
+  * **Verified Ladies Hostels:** High-security hostels with 24/7 CCTV surveillance, biometric access control, and dedicated female wardens.
+  * **Men's Hostels & Executive PGs:** Affordable, clean, and well-maintained rooms with flexible daily and monthly stay packages.
+  * **Studio Apartments & 1 RK Units:** Independent private living units for working individuals and couples.
+* 🌟 **All-Inclusive Amenities:**
+  * 🍽️ **Hygienic Home-Cooked Food:** 3 nutritious daily meals (South & North Indian menu options).
+  * ⚡ **High-Speed WiFi & Power Backup:** Uninterrupted internet for Work From Home (WFH) and 24/7 generator backup.
+  * 🧹 **Daily Housekeeping:** Regular room sanitization, deep cleaning, and professional maintenance.
+  * 🧺 **Laundry & Appliances:** Washing machines, refrigerators, microwave ovens, and RO drinking water.
+  * ❄️ **AC & Non-AC Rooms:** Air-conditioned and well-ventilated rooms with attached bathrooms and hot water geysers.
+* 📍 **Prime Strategic Locations:**
+  * Walking distance to tech parks and transit metro stations: **Madhapur, Hitec City, Gachibowli, Kondapur, Financial District, Ayyappa Society, KPHB Colony, Ameerpet, and Dilsukhnagar**.
+* 🛡️ **Flexible Terms:**
+  * Zero heavy lock-in periods, minimal security deposits, and transparent monthly pricing.
+
+📞 **Need a PG or Co-Living Room Today?** Call **+91 99635 13939** or tap **Chat on WhatsApp** for instant room availability and site visits!`,
+    linkUrl: 'https://openplotsandvillas.com/',
+    linkLabel: 'Explore PG & Co-Living Options on OPV ↗'
+  },
+
+  // 14. POST PROPERTY FOR FREE (FOR OWNERS, AGENTS & BUILDERS)
+  {
+    id: 'post_property_free',
+    patterns: /\b(post\s*(property|plot|villa|flat|apartment|free)?|list\s*(property|free)?|how\s*to\s*post|post\s*property\s*free|free\s*listing|add\s*property)\b/i,
+    title: 'Post Property for Free on OPV',
+    content: `### 📢 Post Your Property for FREE on OPV
+**Reach Over 100,000+ Genuine Buyers & Tenants Across Hyderabad with Zero Listing Fees.**
+
+Property owners, landlords, developers, and certified agents can advertise residential and commercial properties directly on Open Plots & Villas:
+
+* 🆓 **100% Free Listing:** Zero hidden charges to post your open plot, villa, apartment, commercial space, or rental property.
+* 📸 **Rich Media Support:** Upload photos, layout floor plans, videos, YouTube walkthrough links, and project brochures.
+* 🤖 **AI Matchmaking:** Our AI engine automatically recommends your property to active buyers and investors searching in your locality.
+* 🔒 **Direct Inquiries:** Receive genuine, verified leads directly to your phone and WhatsApp with no fake broker calls.
+* ⚡ **Fast Verification:** Listings are reviewed and made live within 24 hours after basic title verification.
+
+👉 **Ready to list?** Click below to post your property or contact our listing desk at **+91 99635 13939**.`,
+    linkUrl: 'https://openplotsandvillas.com/post-property/',
+    linkLabel: 'Post Property for FREE Now ↗'
+  },
+
+  // 15. EXCLUSIVE OWNER PROPERTIES (DIRECT OWNER / 0% BROKERAGE)
+  {
+    id: 'exclusive_owner_properties',
+    patterns: /\b(exclusive\s*owner|owner\s*properties|direct\s*owner|zero\s*brokerage|no\s*brokerage|without\s*broker|direct\s*seller)\b/i,
+    title: 'Exclusive Direct Owner Properties (0% Brokerage)',
+    content: `### 🤝 Exclusive Owner Properties (Direct from Owners)
+**Buy or Rent Directly from Property Owners with 0% Middleman Fees.**
+
+Open Plots & Villas features a curated section for properties listed directly by genuine owners:
+* 💰 **Zero Brokerage:** Connect straight with individual property owners without paying commission or middleman charges.
+* 🔍 **Verified Ownership:** Basic property paperwork and identity checks are conducted before listing.
+* 🏠 **Available Types:** Direct-owner residential flats, resale plots, independent duplex houses, and rental apartments across Hyderabad.
+* 📞 **Direct Contact:** Get direct phone numbers of property owners to schedule your visit and negotiate pricing transparently.`,
+    linkUrl: 'https://openplotsandvillas.com/properties/',
+    linkLabel: 'Browse Exclusive Owner Properties ↗'
+  },
+
+  // 16. TOP DEVELOPERS & BUILDERS IN HYDERABAD
+  {
+    id: 'top_developers',
+    patterns: /\b(top\s*developers?|builders?|developers?\s*(in\s*hyderabad)?|aparna(\s*constructions)?|ramky(\s*group)?|my\s*home(\s*group)?|best\s*builders)\b/i,
+    title: 'Top Developers & Builders in Hyderabad',
+    content: `### 🏗️ Top Developers & Builders in Hyderabad on OPV
+**Partnering with Hyderabad's Most Trusted and Proven Real Estate Builders.**
+
+Explore verified gated communities, high-rise luxury towers, and plotted ventures from top developers:
+
+* 🏢 **Aparna Constructions:**
+  * 66+ Total Projects | 23+ Years Experience
+  * Gated luxury apartments, villas, and plotted ventures across Tellapur, Nallagandla, Chandanagar, and Kompally.
+* 🏢 **Ramky Group:**
+  * 31+ Total Projects | 20+ Years Experience
+  * Renowned for sustainable townships and integrated gated communities in Gachibowli, Warangal Highway, and Hitec City.
+* 🏢 **My Home Group:**
+  * 29+ Total Projects | 25+ Years Experience
+  * Iconic luxury high-rises and mega commercial spaces in Kokapet (Neopolis), Financial District, and Madhapur.
+
+👉 View project portfolios, construction updates, and upcoming launches on our Developers Portal.`,
+    linkUrl: 'https://openplotsandvillas.com/developers/',
+    linkLabel: 'Explore Top Developers in Hyderabad ↗'
+  },
+
+  // 17. PROPERTY AGENTS & CERTIFIED EXPERTS
+  {
+    id: 'property_agents_experts',
+    patterns: /\b(agents?|brokers?|property\s*experts?|real\s*estate\s*agents?|consultants?|realtor|realtors)\b/i,
+    title: 'Verified Property Experts & Agents on OPV',
+    content: `### 🧑‍💼 Verified Property Experts & Real Estate Advisors
+**Work with Local Experts Who Know Every Locality and Documentation Nuance.**
+
+Open Plots & Villas hosts a network of verified property experts and channel partners across Hyderabad:
+* 📍 **Hyperlocal Knowledge:** Advisors specialize in distinct growth hubs (Madhapur, Gachibowli, Kompally, Nizampet, Shadnagar, Kollur, Mokila).
+* 🛡️ **Verified Credentials:** All registered experts comply with TG-RERA regulations and ethical advisory standards.
+* 🤝 **End-to-End Coordination:** From scheduling on-ground venture visits to negotiating fair market prices and assisting with Sub-Registrar Office (SRO) registration.
+
+Browse our directory to find a trusted advisor specialized in your target neighborhood!`,
+    linkUrl: 'https://openplotsandvillas.com/agents/',
+    linkLabel: 'Explore Property Agents Directory ↗'
+  },
+
+  // 18. MOBILE APP DOWNLOAD (GOOGLE PLAY STORE)
+  {
+    id: 'mobile_app_download',
+    patterns: /\b(app|mobile\s*app|download\s*app|play\s*store|android\s*app|opv\s*app|application)\b/i,
+    title: 'Download the OPV Mobile App',
+    content: `### 📱 Open Plots & Villas Mobile App — Real Estate in Your Pocket
+**Discover, Verify, and Track Hyderabad Properties Anytime, Anywhere.**
+
+Download the official **OPV – Open Plots & Villas** application for Android:
+* 🔍 **Instant Geo-Search:** Search plots, apartments, and villas near your live GPS location.
+* 🔔 **Instant Alerts:** Get notified the moment a new verified listing or price drop occurs in your favorite area.
+* 🚗 **1-Tap Site Visits:** Book free site visits with car pickup & drop directly from the app with real-time driver tracking.
+* 🎁 **Refer & Earn Rewards:** Earn redeemable cash vouchers and service credits when referring friends.
+* 📲 **Available on Google Play Store:** Search for *"Open Plots & Villas"* or scan the QR code on our website.`,
+    linkUrl: 'https://openplotsandvillas.com/',
+    linkLabel: 'Download OPV Mobile App ↗'
+  },
+
+  // 19. REFERRAL & REWARDS PROGRAM
+  {
+    id: 'referral_rewards',
+    patterns: /\b(refer|referral|rewards?|earn\s*money|earn\s*rewards|refer\s*and\s*earn|refer\s*a\s*friend)\b/i,
+    title: 'OPV Refer & Earn Rewards Program',
+    content: `### 🎁 OPV Refer & Earn Rewards Program
+**Earn Exciting Rewards by Recommending OPV to Friends and Family.**
+
+Know someone looking to buy a plot, invest in a villa, sell their land, or rent an office?
+* 🤝 **How It Works:** Share your unique referral link from the OPV app or website with your contact.
+* 🏡 **Any Service Qualifies:** Rewards apply to property purchases, plot sales, construction contracts, interior design, and legal services.
+* 💵 **Redeemable Benefits:** Earn milestone rewards, shopping vouchers, and service discounts credited directly to your OPV account.`,
+    linkUrl: 'https://openplotsandvillas.com/',
+    linkLabel: 'Learn About Refer & Earn Rewards ↗'
+  },
+
+  // 20. PROPERTIES BY POSSESSION TIMELINE
+  {
+    id: 'possession_timelines',
+    patterns: /\b(possession(\s*timeline)?|ready\s*to\s*move|under\s*construction|new\s*launch|handover|completion\s*date)\b/i,
+    title: 'Properties by Possession Timeline',
+    content: `### ⏳ Properties by Possession Timeline on OPV
+**Find Completed Homes or Upcoming Projects Tailored to Your Moving Timeline.**
+
+On Open Plots & Villas, you can filter properties by their completion stage:
+* 🔑 **Ready to Move (Immediate Handover):** Move in tomorrow! Fully completed villas and apartments with Occupancy Certificate (OC) received and active utility connections.
+* 🏗️ **Under Construction (Mid-Stage):** Pay via construction-linked installment plans. Great for price appreciation before completion (expected in 12–24 months).
+* 🚀 **New Launch (Pre-Launch & Early Stage):** Secure the lowest introductory prices and first pick of premium corner units and high-floor apartments.
+* 📜 **Open Plots:** Available with **Immediate Registration** at the Sub-Registrar Office (SRO).`,
+    linkUrl: 'https://openplotsandvillas.com/properties/',
+    linkLabel: 'Explore Properties by Possession Stage ↗'
+  },
+
+  // 21. ZONE-WISE PROPERTIES & GROWTH CORRIDORS IN HYDERABAD
+  {
+    id: 'zone_wise_hyderabad',
+    patterns: /\b(zone|zones|corridors?|regions?|west\s*hyderabad|south\s*hyderabad|north\s*hyderabad|east\s*hyderabad|growth\s*zones?|investment\s*zones?)\b/i,
+    title: 'Zone-Wise Properties & Growth Corridors in Hyderabad',
+    content: `### 🗺️ Zone-Wise Real Estate Growth Zones in Hyderabad
+**Target High-Appreciation Growth Corridors Mapped by Strategic Infrastructure.**
+
+* 🌇 **West Hyderabad (Tech & Luxury Corridor):**
+  * Hitec City, Madhapur, Gachibowli, Financial District, Kokapet (Neopolis), Tellapur, Mokila, and Shankarpally.
+  * *High rental yields, luxury high-rises, and prime villa communities.*
+* ✈️ **South Hyderabad (Airport & Industrial Corridor):**
+  * Shamshabad, Kothur, Shadnagar, Lemoor, Maheshwaram (Electronic City), and Kadthal.
+  * *Fast-growing open plot ventures, Pharma City corridor, and regional ring road (RRR) connectivity.*
+* 🌳 **North Hyderabad (Residential & Educational Hub):**
+  * Kompally, Medchal, Nizampet, Bachupally, and Gundlapochampally.
+  * *Affordable gated communities, peaceful green surroundings, and excellent schools.*
+* 🏭 **East Hyderabad (IT & Defense Corridor):**
+  * Uppal, Pocharam (Infosys SEZ), Ghatkesar, and Adibatla (Aerospace SEZ).
+  * *High-value plotted ventures and mid-segment apartments.*`,
+    linkUrl: 'https://openplotsandvillas.com/properties/',
+    linkLabel: 'Explore Zone-Wise Properties ↗'
+  },
+
+  // 22. YOUTUBE VIDEO TOURS & SHORTS
+  {
+    id: 'youtube_shorts_tours',
+    patterns: /\b(youtube|shorts|video\s*tour|walkthrough|watch\s*video|videos)\b/i,
+    title: 'OPV Real Estate Video Tours & YouTube Shorts',
+    content: `### 🎥 OPV YouTube Shorts & Virtual Property Tours
+**Experience Verified Layouts and Luxury Villas in High Definition Before Visiting.**
+
+* 📹 **Virtual Walkthroughs:** Watch comprehensive drone aerial views, entrance arch dimensions, blacktop CC roads, and clubhouse amenities.
+* 💡 **Investment Insights:** Quick 60-second YouTube Shorts explaining upcoming infrastructure, SEZs, HMDA master plans, and price growth forecasts.
+* 🔴 **Official Channel:** Subscribe to [@openplotsandvillas](https://www.youtube.com/@openplotsandvillas/shorts) on YouTube to get notified of newly launched venture walk-throughs.`,
+    linkUrl: 'https://www.youtube.com/@openplotsandvillas/shorts',
+    linkLabel: 'Watch YouTube Shorts & Tours ↗'
   }
 ];
 
