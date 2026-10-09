@@ -8,13 +8,11 @@ import {
   MessageSquare,
   Clock,
   CheckCircle2,
-  ExternalLink,
-  FileSpreadsheet,
   ChevronDown
 } from 'lucide-react';
 import { PropertyItem } from '../types/chat';
 import { submitPropertyLead } from '../services/supabaseService';
-import { submitBuyerEnquiry, openGoogleSheetInNewTab, getGoogleSheetUrl, isGoogleSheetsWebhookConfigured } from '../services/googleSheetsService';
+import { submitBuyerEnquiry } from '../services/googleSheetsService';
 import { OPV_FALLBACK_IMAGE } from '../data/propertyData';
 
 interface EnquiryModalProps {
@@ -115,17 +113,9 @@ export const EnquiryModal: React.FC<EnquiryModalProps> = ({
       }).catch(err => console.warn('Supabase lead sync logged:', err));
 
       setSubmitted(true);
-
-      // 3. Automatically open Google Sheets in a new tab as requested
-      setTimeout(() => {
-        openGoogleSheetInNewTab();
-      }, 300);
     } catch (err: any) {
       console.warn('Enquiry submission handled with local safety buffer:', err);
       setSubmitted(true);
-      setTimeout(() => {
-        openGoogleSheetInNewTab();
-      }, 300);
     } finally {
       setIsSubmitting(false);
     }

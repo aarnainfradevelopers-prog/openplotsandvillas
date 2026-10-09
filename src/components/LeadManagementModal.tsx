@@ -40,14 +40,25 @@ export const LeadManagementModal: React.FC<LeadManagementModalProps> = ({
     let tsv = '';
     if (activeTab === 'BUYERS') {
       const headers = [
-        'Buyer Lead ID', 'Buyer Name', 'Email', 'Phone Number', 'City',
-        'Preferred Location', 'Property Type', 'Budget', 'Message', 'Property ID',
-        'Property Title', 'Source', 'Enquiry Date', 'Lead Status', 'Assigned To', 'Notes'
+        'Property ID', 'Name', 'Email', 'Contact Number', 'Property Title',
+        'Property Location', 'Property Budget', 'City', 'Source', 'Enquiry Date',
+        'Time', 'Lead Status', 'Assigned To', 'Notes/Messages'
       ];
-      const rows = leads.buyers.map(b => [
-        b.buyerLeadId, b.buyerName, b.email, b.phoneNumber, b.city,
-        b.preferredLocation, b.propertyType, b.budget, b.message, b.propertyId,
-        b.propertyTitle, b.source, b.enquiryDate, b.leadStatus, b.assignedTo, b.notes
+      const rows = leads.buyers.map((b: any) => [
+        b.propertyId || '',
+        b.name || b.buyerName || '',
+        b.email || '',
+        b.contactNumber || b.phoneNumber || b.phone || '',
+        b.propertyTitle || '',
+        b.propertyLocation || b.preferredLocation || '',
+        b.propertyBudget || b.budget || '',
+        b.city || 'Hyderabad',
+        b.source || 'OPV Chatbot',
+        b.enquiryDate || '',
+        b.time || '',
+        b.leadStatus || 'New',
+        b.assignedTo || 'Unassigned',
+        b.notesMessages || [b.notes, b.message].filter(Boolean).join(' | ') || ''
       ]);
       tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
     } else if (activeTab === 'ENQUIRIES') {
@@ -101,14 +112,25 @@ export const LeadManagementModal: React.FC<LeadManagementModalProps> = ({
 
     if (activeTab === 'BUYERS') {
       const headers = [
-        'Buyer Lead ID', 'Buyer Name', 'Email', 'Phone Number', 'City',
-        'Preferred Location', 'Property Type', 'Budget', 'Message', 'Property ID',
-        'Property Title', 'Source', 'Enquiry Date', 'Lead Status', 'Assigned To', 'Notes'
+        'Property ID', 'Name', 'Email', 'Contact Number', 'Property Title',
+        'Property Location', 'Property Budget', 'City', 'Source', 'Enquiry Date',
+        'Time', 'Lead Status', 'Assigned To', 'Notes/Messages'
       ];
-      const rows = leads.buyers.map(b => [
-        b.buyerLeadId, b.buyerName, b.email, b.phoneNumber, b.city,
-        b.preferredLocation, b.propertyType, b.budget, b.message, b.propertyId,
-        b.propertyTitle, b.source, b.enquiryDate, b.leadStatus, b.assignedTo, b.notes
+      const rows = leads.buyers.map((b: any) => [
+        b.propertyId || '',
+        b.name || b.buyerName || '',
+        b.email || '',
+        b.contactNumber || b.phoneNumber || b.phone || '',
+        b.propertyTitle || '',
+        b.propertyLocation || b.preferredLocation || '',
+        b.propertyBudget || b.budget || '',
+        b.city || 'Hyderabad',
+        b.source || 'OPV Chatbot',
+        b.enquiryDate || '',
+        b.time || '',
+        b.leadStatus || 'New',
+        b.assignedTo || 'Unassigned',
+        b.notesMessages || [b.notes, b.message].filter(Boolean).join(' | ') || ''
       ]);
       csv = [headers.map(escapeCsv).join(','), ...rows.map(r => r.map(escapeCsv).join(','))].join('\n');
     } else if (activeTab === 'ENQUIRIES') {
@@ -273,36 +295,50 @@ export const LeadManagementModal: React.FC<LeadManagementModalProps> = ({
                 <p className="text-xs text-slate-500 mt-1">Submit the View Number or Contact Agent form to test.</p>
               </div>
             ) : (
-              <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-x-auto shadow-xs">
+                <table className="w-full text-left text-xs whitespace-nowrap">
                   <thead className="bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 font-bold border-b border-emerald-200 dark:border-emerald-800">
                     <tr>
-                      <th className="p-3">Buyer Lead ID</th>
-                      <th className="p-3">Buyer Name</th>
-                      <th className="p-3">Phone Number</th>
+                      <th className="p-3">Property ID</th>
+                      <th className="p-3">Name</th>
                       <th className="p-3">Email</th>
+                      <th className="p-3">Contact Number</th>
                       <th className="p-3">Property Title</th>
-                      <th className="p-3">Preferred Location</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3">Status</th>
+                      <th className="p-3">Property Location</th>
+                      <th className="p-3">Property Budget</th>
+                      <th className="p-3">City</th>
+                      <th className="p-3">Source</th>
+                      <th className="p-3">Enquiry Date</th>
+                      <th className="p-3">Time</th>
+                      <th className="p-3">Lead Status</th>
+                      <th className="p-3">Assigned To</th>
+                      <th className="p-3">Notes/Messages</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {leads.buyers.map((b, idx) => (
+                    {leads.buyers.map((b: any, idx) => (
                       <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <td className="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">{b.buyerLeadId}</td>
-                        <td className="p-3 font-bold text-slate-900 dark:text-white">{b.buyerName}</td>
-                        <td className="p-3 font-semibold text-slate-700 dark:text-slate-300">{b.phoneNumber}</td>
+                        <td className="p-3 font-mono text-[11px] text-slate-500">{b.propertyId || '—'}</td>
+                        <td className="p-3 font-bold text-slate-900 dark:text-white">{b.name || b.buyerName || '—'}</td>
                         <td className="p-3 text-slate-500">{b.email || '—'}</td>
+                        <td className="p-3 font-semibold text-slate-700 dark:text-slate-300">{b.contactNumber || b.phoneNumber || b.phone || '—'}</td>
                         <td className="p-3 text-slate-800 dark:text-slate-200 max-w-[200px] truncate" title={b.propertyTitle}>
                           {b.propertyTitle || 'General Listing'}
                         </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-400">{b.preferredLocation || 'Hyderabad'}</td>
-                        <td className="p-3 text-slate-500 font-mono text-[11px]">{b.enquiryDate}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-400">{b.propertyLocation || b.preferredLocation || '—'}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300 font-medium">{b.propertyBudget || b.budget || '—'}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-400">{b.city || 'Hyderabad'}</td>
+                        <td className="p-3 text-slate-500">{b.source || 'OPV Chatbot'}</td>
+                        <td className="p-3 text-slate-500 font-mono text-[11px]">{b.enquiryDate || '—'}</td>
+                        <td className="p-3 text-slate-500 font-mono text-[11px]">{b.time || '—'}</td>
                         <td className="p-3">
                           <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px]">
                             {b.leadStatus || 'New'}
                           </span>
+                        </td>
+                        <td className="p-3 text-slate-600 dark:text-slate-400">{b.assignedTo || 'Unassigned'}</td>
+                        <td className="p-3 text-slate-500 max-w-[220px] truncate" title={b.notesMessages || b.notes || b.message}>
+                          {b.notesMessages || b.notes || b.message || '—'}
                         </td>
                       </tr>
                     ))}

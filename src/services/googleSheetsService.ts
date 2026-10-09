@@ -124,37 +124,51 @@ async function dispatchToGoogleSheets(action: string, payload: any): Promise<{ s
 /**
  * 1. SAVE BUYER LEAD (TAB 2: BUYERS)
  */
-export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord> & { phone?: string; mobileNumber?: string; buyerPhone?: string }): Promise<{ success: boolean; buyerLeadId: string; error?: string }> {
+export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord> & { phone?: string; mobileNumber?: string; buyerPhone?: string; contactNumber?: string; name?: string; propertyLocation?: string; propertyBudget?: string; time?: string; notesMessages?: string }): Promise<{ success: boolean; buyerLeadId: string; error?: string }> {
   const buyerLeadId = buyer.buyerLeadId || generateLeadId('BUY');
-  const rawPhone = (buyer.phoneNumber || buyer.phone || buyer.mobileNumber || buyer.buyerPhone || '').trim();
+  const rawPhone = (buyer.contactNumber || buyer.phoneNumber || buyer.phone || buyer.mobileNumber || buyer.buyerPhone || '').trim();
   const displayPhone = rawPhone.replace(/^'+/, '');
   // Leading single quote forces Google Sheets to treat +countryCode as plain text, preventing #ERROR! formula errors
   const sheetPhone = rawPhone ? (rawPhone.startsWith("'") ? rawPhone : `'${rawPhone}`) : '';
+  const now = new Date();
+  const currentDate = buyer.enquiryDate || getCurrentDateISO();
+  const currentTime = buyer.time || getCurrentTimeStr();
+  const combinedNotes = buyer.notesMessages || [buyer.notes, buyer.message].filter(Boolean).join(' | ');
 
   const localRecord: any = {
-    buyerLeadId,
-    buyerName: buyer.buyerName || 'Prospective Buyer',
+    // 14 columns standard fields:
+    propertyId: buyer.propertyId || '',
+    name: buyer.name || buyer.buyerName || 'Prospective Buyer',
     email: buyer.email || '',
+    contactNumber: displayPhone,
+    propertyTitle: buyer.propertyTitle || '',
+    propertyLocation: buyer.propertyLocation || buyer.preferredLocation || '',
+    propertyBudget: buyer.propertyBudget || buyer.budget || '',
+    city: buyer.city || 'Hyderabad',
+    source: buyer.source || 'OPV Chatbot',
+    enquiryDate: currentDate,
+    time: currentTime,
+    leadStatus: buyer.leadStatus || 'New',
+    assignedTo: buyer.assignedTo || 'Unassigned',
+    notesMessages: combinedNotes,
+
+    // Backward compatibility aliases:
+    buyerLeadId,
+    buyerName: buyer.name || buyer.buyerName || 'Prospective Buyer',
     phoneNumber: displayPhone,
     phone: displayPhone,
     mobileNumber: displayPhone,
     buyerPhone: displayPhone,
-    city: buyer.city || 'Hyderabad',
-    preferredLocation: buyer.preferredLocation || '',
+    preferredLocation: buyer.propertyLocation || buyer.preferredLocation || '',
     propertyType: buyer.propertyType || 'Apartment',
-    budget: buyer.budget || '',
+    budget: buyer.propertyBudget || buyer.budget || '',
     message: buyer.message || '',
-    propertyId: buyer.propertyId || '',
-    propertyTitle: buyer.propertyTitle || '',
-    source: buyer.source || 'OPV Chatbot',
-    enquiryDate: buyer.enquiryDate || getCurrentDateISO(),
-    leadStatus: buyer.leadStatus || 'New',
-    assignedTo: buyer.assignedTo || 'Unassigned',
     notes: buyer.notes || ''
   };
 
   const sheetRecord: any = {
     ...localRecord,
+    contactNumber: sheetPhone,
     phoneNumber: sheetPhone,
     phone: sheetPhone,
     mobileNumber: sheetPhone,
@@ -320,26 +334,45 @@ export async function submitBuyerEnquiry(params: {
     const sellerType = params.property?.sellerType || 'Owner';
 
     const fullPhone = (params.phone || '').trim();
+    const currentDate = getCurrentDateISO();
+    const currentTime = getCurrentTimeStr();
+    const propLocation = params.preferredLocation || params.property?.location || '';
+    const propBudget = params.property?.price || '';
+    const notesContent = [
+      params.serviceType ? `Service: ${params.serviceType}` : '',
+      params.preferredDate ? `Visit Date: ${params.preferredDate}` : '',
+      params.message ? `Message: ${params.message}` : ''
+    ].filter(Boolean).join(' | ');
+
     const buyerLead: any = {
+      // 14 columns standard fields:
+      propertyId: propId,
+      name: params.buyerName,
+      email: params.email || '',
+      contactNumber: fullPhone,
+      propertyTitle: propTitle,
+      propertyLocation: propLocation,
+      propertyBudget: propBudget,
+      city: params.property?.city || 'Hyderabad',
+      source: 'OPV Chatbot',
+      enquiryDate: currentDate,
+      time: currentTime,
+      leadStatus: 'New',
+      assignedTo: 'Unassigned',
+      notesMessages: notesContent || 'Interested in property',
+
+      // Backward compatibility aliases:
       buyerLeadId,
       buyerName: params.buyerName,
       phoneNumber: fullPhone,
       phone: fullPhone,
       mobileNumber: fullPhone,
       buyerPhone: fullPhone,
-      email: params.email || '',
-      city: params.property?.city || 'Hyderabad',
-      preferredLocation: params.preferredLocation || params.property?.location || '',
+      preferredLocation: propLocation,
       propertyType: params.property?.type || 'Property',
-      budget: params.property?.price || '',
+      budget: propBudget,
       message: params.message || 'I am interested in this property. Please help me connect.',
-      propertyId: propId,
-      propertyTitle: propTitle,
-      source: 'OPV Chatbot',
-      enquiryDate: getCurrentDateISO(),
-      leadStatus: 'New',
-      assignedTo: 'Unassigned',
-      notes: `${params.serviceType ? 'Service: ' + params.serviceType + '. ' : ''}${params.preferredDate ? 'Visit Date: ' + params.preferredDate : ''}`
+      notes: notesContent
     };
 
     // 1. Record single lead in "Leads information" sheet
@@ -583,16 +616,10 @@ export function setCustomGoogleSheetUrl(url: string): void {
 }
 
 /**
- * Automatically opens the Google Spreadsheet in a new browser tab upon buyer/seller form submission
+ * Google Spreadsheet helper - Auto-open disabled per requirements.
+ * User details are stored securely in the Google Sheet via background webhook without exposing the sheet URL to users.
  */
 export function openGoogleSheetInNewTab(): void {
-  try {
-    if (typeof window !== 'undefined') {
-      const targetUrl = getGoogleSheetUrl();
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
-    }
-  } catch (err) {
-    console.warn('Auto-open Google Sheets failed:', err);
-  }
+  // Intentionally disabled: visitors only submit the form, Google Sheet stays private
 }
 

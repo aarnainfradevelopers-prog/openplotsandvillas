@@ -54,7 +54,7 @@ function apiPlugin() {
                   const trimmed = val.trim();
                   return (trimmed.startsWith('+') && !trimmed.startsWith("'")) ? `'${trimmed}` : trimmed;
                 };
-                ['phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
+                ['contactNumber', 'phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
                   if (payload.data[k]) payload.data[k] = sanitizePhone(payload.data[k]);
                 });
               }
@@ -177,7 +177,7 @@ function apiPlugin() {
                   const trimmed = val.trim();
                   return (trimmed.startsWith('+') && !trimmed.startsWith("'")) ? `'${trimmed}` : trimmed;
                 };
-                ['phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
+                ['contactNumber', 'phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
                   if (payload.data[k]) payload.data[k] = sanitizePhone(payload.data[k]);
                 });
               }

@@ -47,7 +47,7 @@ Our website provides verified property discovery, investor advisory, and end-to-
     content: `### 🏢 About Open Plots & Villas (OPV)
 **India's First AI-Powered Real Estate Platform — Simple • Transparent • Reliable.**
 
-Open Plots & Villas (OPV) is India's AI-powered verified real estate platform that revolutionizes the way people **discover, buy, sell, rent, and invest** in real estate.
+Open Plots & Villas (OPV) is India's first AI-powered verified real estate platform that revolutionizes the way people **discover, buy, sell, rent, and invest** in real estate.
 
 * **Our Purpose:** Making property discovery simpler, safer, and fully transparent. We connect buyers, sellers, landlords, and developers with verified properties and trusted real estate services all in one place.
 * **What We Offer:** Verified Open Plots, Luxury Villas, Gated Communities, High-Rise Apartments, Agricultural Farm Lands, and Prime Commercial Spaces across Hyderabad.

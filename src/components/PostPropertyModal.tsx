@@ -12,12 +12,10 @@ import {
   Tag,
   Phone,
   Mail,
-  FileCheck,
-  FileSpreadsheet,
-  ExternalLink
+  FileCheck
 } from 'lucide-react';
 import { PropertyItem } from '../types/chat';
-import { submitSellerPostProperty, openGoogleSheetInNewTab, getGoogleSheetUrl } from '../services/googleSheetsService';
+import { submitSellerPostProperty } from '../services/googleSheetsService';
 import { addDynamicProperty } from '../data/propertyData';
 import { MAJOR_INDIAN_CITIES } from '../data/locationData';
 
@@ -214,18 +212,12 @@ export const PostPropertyModal: React.FC<PostPropertyModalProps> = ({
         addDynamicProperty(newPropertyItem);
         onPropertyPosted?.(newPropertyItem);
         setIsSuccess(true);
-        setTimeout(() => {
-          openGoogleSheetInNewTab();
-        }, 300);
       } else {
         setErrorMessage(result.error || 'Unable to submit property right now. Please try again.');
       }
     } catch (err: any) {
       console.warn('Post property exception, fallback:', err);
       setIsSuccess(true);
-      setTimeout(() => {
-        openGoogleSheetInNewTab();
-      }, 300);
     } finally {
       setIsSubmitting(false);
     }
@@ -351,21 +343,6 @@ export const PostPropertyModal: React.FC<PostPropertyModalProps> = ({
                   Pending (Under OPV Review)
                 </span>
               </div>
-            </div>
-
-            {/* Google Sheets / Excel Direct Open Action */}
-            <div className="w-full pt-1">
-              <a
-                href={getGoogleSheetUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
-                title="Open live Google Sheets database"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>View Live Entry in Google Sheets / Excel</span>
-                <ExternalLink className="w-3.5 h-3.5 ml-1" />
-              </a>
             </div>
 
             <button

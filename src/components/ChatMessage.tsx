@@ -362,10 +362,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const formatInline = (text: string) => {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-950">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="italic text-slate-600">$1</em>')
-      .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-xs">$1</code>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-800 underline underline-offset-2 font-semibold">$1</a>');
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-950 dark:text-white">$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em class="italic text-slate-600 dark:text-slate-300">$1</em>')
+      .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono text-xs">$1</code>')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 underline underline-offset-2 font-semibold">$1</a>');
   };
 
   // If this is a User Message: render user bubble and action row matching reference screenshot

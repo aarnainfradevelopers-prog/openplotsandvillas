@@ -8,12 +8,10 @@ import {
   MessageSquare,
   Clock,
   CheckCircle2,
-  ExternalLink,
-  FileSpreadsheet,
   ChevronDown
 } from 'lucide-react';
 import { PropertyItem } from '../types/chat';
-import { submitBuyerEnquiry, openGoogleSheetInNewTab, getGoogleSheetUrl, isGoogleSheetsWebhookConfigured } from '../services/googleSheetsService';
+import { submitBuyerEnquiry } from '../services/googleSheetsService';
 
 interface ViewNumberModalProps {
   isOpen: boolean;
@@ -97,17 +95,9 @@ export const ViewNumberModal: React.FC<ViewNumberModalProps> = ({
       });
 
       setIsSuccess(true);
-
-      // 2. Automatically open Google Sheets in a new tab as requested
-      setTimeout(() => {
-        openGoogleSheetInNewTab();
-      }, 300);
     } catch (err: any) {
       console.warn('View number submission fallback:', err);
       setIsSuccess(true);
-      setTimeout(() => {
-        openGoogleSheetInNewTab();
-      }, 300);
     } finally {
       setIsSubmitting(false);
     }

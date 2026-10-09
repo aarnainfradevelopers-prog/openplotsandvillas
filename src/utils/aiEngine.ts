@@ -367,7 +367,8 @@ export function processChatQuery(
 
     const langObj = OPV_LANGUAGES.find(l => l.code === language) || OPV_LANGUAGES[0];
     return {
-      content: `### ${langObj.welcomeGreeting}
+      content: `${langObj.welcomeGreeting}
+
 ${langObj.welcomeSubtitle}
 
 Tell me what type of property, location, or budget you are searching for.`,

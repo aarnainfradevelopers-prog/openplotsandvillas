@@ -99,7 +99,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={`w-full ${containerClassName || 'max-w-4xl'} mx-auto px-3 sm:px-6 pb-3`}>
+    <div className={`w-full ${containerClassName || 'max-w-4xl'} mx-auto px-3 sm:px-6 pb-0`}>
       {/* Hidden file input */}
       <input
         ref={fileInputRef}

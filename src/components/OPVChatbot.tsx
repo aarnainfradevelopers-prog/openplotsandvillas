@@ -814,17 +814,11 @@ export const OPVChatbot: React.FC = () => {
         {currentSession.messages.length === 0 ? (
           <div className="flex-1 w-full flex flex-col items-center justify-center px-4 sm:px-6 overflow-y-auto">
             <div className="w-full max-w-3xl sm:max-w-[760px] flex flex-col items-center text-center -translate-y-6 sm:-translate-y-10 my-auto">
-              {/* Top Pill Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-3 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{locale.platformBadge}</span>
-              </div>
-
-              {/* Hero Heading: Hello! (top) + OPV Plots AI Assistance (below) */}
-              <h1 className="tracking-tight text-center mb-2.5">
+              {/* Hero Heading: Hello! (top) + OPV AI Assistant (below) */}
+              <h1 className="tracking-tight text-center" style={{ marginBottom: '10px' }}>
                 {currentLanguage === 'en' ? (
                   <>
-                    <span className="block text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200 mb-0.5">
+                    <span className="block text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200" style={{ marginBottom: '4px' }}>
                       Hello 👋
                     </span>
                     <span className="block text-2xl sm:text-[34px] font-black text-slate-900 dark:text-white leading-tight">
@@ -838,13 +832,28 @@ export const OPVChatbot: React.FC = () => {
                 )}
               </h1>
 
-              {/* Subtitle */}
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 text-center max-w-xl mx-auto mb-6 sm:mb-8 font-normal leading-relaxed">
+              {/* Pill Badge: India's First AI-Powered Real Estate Platform */}
+              <div
+                className="inline-flex items-center gap-2.5 px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-300/80 dark:border-emerald-700/80 text-sm sm:text-[15px] font-bold text-emerald-800 dark:text-emerald-300 shadow-xs"
+                style={{ marginTop: '4px', marginBottom: '12px' }}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span>{locale.platformBadge}</span>
+              </div>
+
+              {/* Subtitle - crisp breathing room so it is NOT attached to the search bar */}
+              <p
+                className="text-sm sm:text-base text-slate-600 dark:text-slate-400 text-center max-w-xl mx-auto font-normal leading-relaxed"
+                style={{ marginTop: '0px', marginBottom: '20px' }}
+              >
                 {currentLangConfig.welcomeSubtitle}
               </p>
 
-              {/* Centered User Prompt Bar with balanced, compact length */}
-              <div className="w-full max-w-3xl sm:max-w-[740px] mx-auto mb-6" style={{ marginBottom: '24px' }}>
+              {/* Centered User Prompt Bar with balanced spacing */}
+              <div
+                className="w-full max-w-3xl sm:max-w-[740px] mx-auto"
+                style={{ marginTop: '0px', marginBottom: '16px' }}
+              >
                 <ChatInput
                   currentLanguage={currentLanguage}
                   onLanguageChange={handleLanguageChange}
@@ -857,8 +866,11 @@ export const OPVChatbot: React.FC = () => {
                 />
               </div>
 
-              {/* Quick-Action Options matching exact specs: White bg, thin dark-gray border, 10px rounded, 40px height, ~140px width */}
-              <div className="w-full max-w-3xl sm:max-w-[740px] mx-auto px-3 sm:px-6 pt-2" style={{ marginTop: '24px' }}>
+              {/* Quick-Action Options - clean, balanced gap below search bar */}
+              <div
+                className="w-full max-w-3xl sm:max-w-[740px] mx-auto px-3 sm:px-6"
+                style={{ marginTop: '0px', paddingTop: '0px' }}
+              >
                 <div className="flex items-center justify-center gap-2.5 sm:gap-3 flex-wrap">
                   {suggestionChips.map((chip, idx) => {
                     const IconComponent = typeof chip.icon !== 'string' ? chip.icon : null;
