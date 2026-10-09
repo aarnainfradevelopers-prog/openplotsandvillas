@@ -84,6 +84,7 @@ function saveLocalStore(store: LocalLeadStore): void {
  * Falls back to local storage queue if backend is unreachable or script is in test mode.
  */
 async function dispatchToGoogleSheets(action: string, payload: any): Promise<{ success: boolean; data?: any; message?: string }> {
+  let proxyResult: any = null;
   try {
     const url = typeof window !== 'undefined' ? '/api/leads' : 'http://localhost:5173/api/leads';
     const response = await fetch(url, {
@@ -93,14 +94,16 @@ async function dispatchToGoogleSheets(action: string, payload: any): Promise<{ s
     });
 
     if (response.ok) {
-      const json = await response.json();
-      return { success: true, data: json };
+      proxyResult = await response.json();
+      if (proxyResult?.googleSheetResult?.status === 'success') {
+        return { success: true, data: proxyResult };
+      }
     }
   } catch (err) {
-    console.warn('Direct /api/leads endpoint unreachable. Storing in local Google Sheets buffer:', err);
+    console.warn('Direct /api/leads endpoint unreachable:', err);
   }
 
-  // If direct Google Webhook URL is provided directly in client env (optional)
+  // Dual-dispatch: if direct Google Webhook URL is available, dispatch directly
   if (GOOGLE_WEBHOOK_URL) {
     try {
       await fetch(GOOGLE_WEBHOOK_URL, {
@@ -109,26 +112,34 @@ async function dispatchToGoogleSheets(action: string, payload: any): Promise<{ s
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, data: payload })
       });
-      return { success: true, message: 'Dispatched to Google Apps Script (no-cors)' };
+      return { success: true, message: 'Dispatched to Google Apps Script' };
     } catch (e) {
       console.warn('Direct Google Apps Script webhook failed:', e);
     }
   }
 
-  return { success: true, message: 'Saved to local buffer (Google Sheets mock mode)' };
+  return { success: true, data: proxyResult || { message: 'Saved to local buffer' } };
 }
 
 /**
  * 1. SAVE BUYER LEAD (TAB 2: BUYERS)
  */
-export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord>): Promise<{ success: boolean; buyerLeadId: string; error?: string }> {
+export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord> & { phone?: string; mobileNumber?: string; buyerPhone?: string }): Promise<{ success: boolean; buyerLeadId: string; error?: string }> {
   const buyerLeadId = buyer.buyerLeadId || generateLeadId('BUY');
-  const record: BuyerLeadRecord = {
+  const rawPhone = (buyer.phoneNumber || buyer.phone || buyer.mobileNumber || buyer.buyerPhone || '').trim();
+  const displayPhone = rawPhone.replace(/^'+/, '');
+  // Leading single quote forces Google Sheets to treat +countryCode as plain text, preventing #ERROR! formula errors
+  const sheetPhone = rawPhone ? (rawPhone.startsWith("'") ? rawPhone : `'${rawPhone}`) : '';
+
+  const localRecord: any = {
     buyerLeadId,
     buyerName: buyer.buyerName || 'Prospective Buyer',
     email: buyer.email || '',
-    phoneNumber: buyer.phoneNumber || '',
-    city: buyer.city || 'Mumbai',
+    phoneNumber: displayPhone,
+    phone: displayPhone,
+    mobileNumber: displayPhone,
+    buyerPhone: displayPhone,
+    city: buyer.city || 'Hyderabad',
     preferredLocation: buyer.preferredLocation || '',
     propertyType: buyer.propertyType || 'Apartment',
     budget: buyer.budget || '',
@@ -142,12 +153,20 @@ export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord>): Promise<{ 
     notes: buyer.notes || ''
   };
 
+  const sheetRecord: any = {
+    ...localRecord,
+    phoneNumber: sheetPhone,
+    phone: sheetPhone,
+    mobileNumber: sheetPhone,
+    buyerPhone: sheetPhone
+  };
+
   // Local backup
   const store = getLocalStore();
-  store.buyers.push(record);
+  store.buyers.push(localRecord);
   saveLocalStore(store);
 
-  await dispatchToGoogleSheets('save_buyer', record);
+  await dispatchToGoogleSheets('save_lead', sheetRecord);
 
   return { success: true, buyerLeadId };
 }
@@ -157,12 +176,17 @@ export async function saveBuyerLead(buyer: Partial<BuyerLeadRecord>): Promise<{ 
  */
 export async function saveSeller(seller: Partial<SellerRecord>): Promise<{ success: boolean; sellerId: string; error?: string }> {
   const sellerId = seller.sellerId || generateLeadId('SELL');
+  const rawMobile = (seller.mobileNumber || '').trim();
+  const rawWA = (seller.whatsappNumber || seller.mobileNumber || '').trim();
+  const sheetMobile = rawMobile ? (rawMobile.startsWith("'") ? rawMobile : `'${rawMobile}`) : '';
+  const sheetWA = rawWA ? (rawWA.startsWith("'") ? rawWA : `'${rawWA}`) : '';
+
   const record: SellerRecord = {
     sellerId,
     sellerName: seller.sellerName || 'Verified Seller',
     sellerType: seller.sellerType || 'Owner',
-    mobileNumber: seller.mobileNumber || '',
-    whatsappNumber: seller.whatsappNumber || seller.mobileNumber || '',
+    mobileNumber: rawMobile.replace(/^'+/, ''),
+    whatsappNumber: rawWA.replace(/^'+/, ''),
     email: seller.email || '',
     sellerAddress: seller.sellerAddress || '',
     propertyId: seller.propertyId || '',
@@ -180,7 +204,12 @@ export async function saveSeller(seller: Partial<SellerRecord>): Promise<{ succe
   store.sellers.push(record);
   saveLocalStore(store);
 
-  await dispatchToGoogleSheets('save_seller', record);
+  await dispatchToGoogleSheets('save_seller', {
+    ...record,
+    mobileNumber: sheetMobile,
+    whatsappNumber: sheetWA,
+    phone: sheetMobile
+  });
 
   return { success: true, sellerId };
 }
@@ -290,10 +319,14 @@ export async function submitBuyerEnquiry(params: {
     const sellerName = params.property?.sellerName || params.property?.agent?.name || 'OPV Verified Listing Partner';
     const sellerType = params.property?.sellerType || 'Owner';
 
-    const buyerLead: BuyerLeadRecord = {
+    const fullPhone = (params.phone || '').trim();
+    const buyerLead: any = {
       buyerLeadId,
       buyerName: params.buyerName,
-      phoneNumber: params.phone,
+      phoneNumber: fullPhone,
+      phone: fullPhone,
+      mobileNumber: fullPhone,
+      buyerPhone: fullPhone,
       email: params.email || '',
       city: params.property?.city || 'Hyderabad',
       preferredLocation: params.preferredLocation || params.property?.location || '',
@@ -309,9 +342,10 @@ export async function submitBuyerEnquiry(params: {
       notes: `${params.serviceType ? 'Service: ' + params.serviceType + '. ' : ''}${params.preferredDate ? 'Visit Date: ' + params.preferredDate : ''}`
     };
 
-    // 1. Record Buyer in BUYERS sheet
+    // 1. Record single lead in "Leads information" sheet
     await saveBuyerLead(buyerLead);
 
+    // Keep local buffer copy for in-app history
     const enquiryRecord: EnquiryRecord = {
       enquiryId,
       buyerLeadId,
@@ -331,8 +365,9 @@ export async function submitBuyerEnquiry(params: {
       notes: `Preferred visit date: ${params.preferredDate || 'N/A'}`
     };
 
-    // 2. Record Enquiry in ENQUIRIES sheet (linked with Buyer, Property and Seller)
-    await saveEnquiry(enquiryRecord);
+    const store = getLocalStore();
+    store.enquiries.push(enquiryRecord);
+    saveLocalStore(store);
 
     return {
       success: true,

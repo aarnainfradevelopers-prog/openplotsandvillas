@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { OPV_LANGUAGES } from '../data/chatConfig';
 import { LanguageCode, AttachedFile } from '../types/chat';
+import { extractCleanTranscript, deduplicateRepeatedPhrases } from '../utils/speechUtils';
 
 declare global {
   interface Window {
@@ -456,7 +457,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         recognitionRef.current = null;
       }
 
-      const speechToCommit = lastSpokenTextRef.current.trim();
+      const rawSpeech = lastSpokenTextRef.current.trim();
+      const speechToCommit = deduplicateRepeatedPhrases(rawSpeech);
       setIsListening(false);
       setInterimText('');
 
@@ -507,7 +509,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
       try {
         const recognition = new SpeechRecognition();
-        recognition.continuous = true;
+        // Set continuous to false so the recognizer takes the sentence exactly once without looping
+        recognition.continuous = false;
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
@@ -527,33 +530,20 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         };
 
         recognition.onresult = (event: any) => {
-          let finalPiece = '';
-          let interimPiece = '';
-
-          for (let i = 0; i < event.results.length; ++i) {
-            const result = event.results[i];
-            const text = result[0]?.transcript || '';
-            if (result.isFinal) {
-              finalPiece += (finalPiece ? ' ' : '') + text.trim();
-            } else {
-              interimPiece += (interimPiece ? ' ' : '') + text.trim();
-            }
-          }
-
-          const fullSpoken = (finalPiece + (interimPiece ? (finalPiece ? ' ' : '') + interimPiece : '')).trim();
+          const fullSpoken = extractCleanTranscript(event.results);
 
           if (fullSpoken) {
             lastSpokenTextRef.current = fullSpoken;
             setInterimText(fullSpoken);
             onTranscript(fullSpoken, false);
 
-            // Auto-send after 2.5 seconds of silence once speech has been recognized
+            // Auto-send after 2 seconds of silence once speech has been recognized
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = setTimeout(() => {
               if (lastSpokenTextRef.current.trim()) {
                 stopListening(true);
               }
-            }, 2500);
+            }, 2000);
           }
         };
 
@@ -607,7 +597,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
           }
-          const speechToCommit = lastSpokenTextRef.current.trim();
+          const rawSpeech = lastSpokenTextRef.current.trim();
+          const speechToCommit = deduplicateRepeatedPhrases(rawSpeech);
           if (speechToCommit && speechToCommit !== committedTextRef.current) {
             stopListening(true);
           } else {

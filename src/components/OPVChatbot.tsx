@@ -704,12 +704,6 @@ export const OPVChatbot: React.FC = () => {
       }))
       : [
         {
-          label: 'Post Property (Seller)',
-          query: 'post property',
-          icon: '📝',
-          subtitle: 'List Flat, Villa, Plot'
-        },
-        {
           label: 'Apartments in Hyderabad',
           query: 'apartments in hyd',
           icon: '🏢',
@@ -808,35 +802,11 @@ export const OPVChatbot: React.FC = () => {
             <div>
               <div className="text-sm font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 leading-snug">
                 <span>{currentLanguage === 'en' ? 'Open Plots & Villas' : locale.brandTitle}</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hidden sm:inline">• {locale.brandSubtitle}</span>
               </div>
               <div className="text-[11px] text-slate-400 dark:text-slate-500 leading-none">
                 {locale.headerTagline}
               </div>
             </div>
-          </div>
-
-          {/* Right Corner: Leads Database & Post Property buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsLeadModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
-              title="View all captured buyer and seller leads in Google Sheets format"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Leads Sheet</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsPostPropertyModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer"
-              title="Post your property with OPV"
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Post Property</span>
-            </button>
           </div>
         </header>
 

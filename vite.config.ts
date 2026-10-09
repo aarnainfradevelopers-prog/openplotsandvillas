@@ -2,6 +2,8 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { handleChatRequest } from './server/chatHandler';
+import fs from 'fs';
+import path from 'path';
 
 function apiPlugin() {
   return {
@@ -45,8 +47,27 @@ function apiPlugin() {
                 console.warn('Leads JSON parse note:', parseErr);
                 payload = {};
               }
+
+              if (payload && payload.data) {
+                const sanitizePhone = (val: any) => {
+                  if (!val || typeof val !== 'string') return val;
+                  const trimmed = val.trim();
+                  return (trimmed.startsWith('+') && !trimmed.startsWith("'")) ? `'${trimmed}` : trimmed;
+                };
+                ['phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
+                  if (payload.data[k]) payload.data[k] = sanitizePhone(payload.data[k]);
+                });
+              }
+
               const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
-              const webhookUrl = env.VITE_GOOGLE_SHEETS_WEBHOOK_URL || env.GOOGLE_SHEETS_WEBHOOK_URL || process.env.GOOGLE_SHEETS_WEBHOOK_URL || '';
+              let webhookUrl = env.VITE_GOOGLE_SHEETS_WEBHOOK_URL || env.GOOGLE_SHEETS_WEBHOOK_URL || process.env.GOOGLE_SHEETS_WEBHOOK_URL || '';
+              if (!webhookUrl) {
+                try {
+                  const envContent = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf8');
+                  const match = envContent.match(/VITE_GOOGLE_SHEETS_WEBHOOK_URL=(.+)/);
+                  if (match) webhookUrl = match[1].trim();
+                } catch (e) {}
+              }
 
               if (webhookUrl) {
                 try {
@@ -150,6 +171,16 @@ function apiPlugin() {
           req.on('end', async () => {
             try {
               const payload = JSON.parse(bodyStr || '{}');
+              if (payload && payload.data) {
+                const sanitizePhone = (val: any) => {
+                  if (!val || typeof val !== 'string') return val;
+                  const trimmed = val.trim();
+                  return (trimmed.startsWith('+') && !trimmed.startsWith("'")) ? `'${trimmed}` : trimmed;
+                };
+                ['phoneNumber', 'phone', 'mobileNumber', 'buyerPhone', 'whatsappNumber'].forEach(k => {
+                  if (payload.data[k]) payload.data[k] = sanitizePhone(payload.data[k]);
+                });
+              }
               const env = loadEnv('production', process.cwd(), '');
               const webhookUrl = env.VITE_GOOGLE_SHEETS_WEBHOOK_URL || env.GOOGLE_SHEETS_WEBHOOK_URL || '';
               if (webhookUrl) {

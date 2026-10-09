@@ -1,32 +1,52 @@
 /**
- * OPV REAL ESTATE LEAD MANAGEMENT WEBHOOK
+ * OPV REAL ESTATE LEAD MANAGEMENT WEBHOOK (SINGLE UNIFIED SHEET: "Leads information")
+ * 
+ * Setup Instructions in Google Sheets:
+ * 1. In your Google Sheet, click Extensions -> Apps Script
+ * 2. Delete all existing code and paste this entire file
+ * 3. Press Ctrl + S (Save)
+ * 4. Click "Deploy" -> "Manage deployments" -> Edit (pencil icon) -> Set "Who has access" to "Anyone" -> Deploy
+ *    (Or click "Deploy" -> "New deployment" -> Select type "Web app" -> Set "Who has access" to "Anyone" -> Deploy)
+ * 5. Copy the Web App URL and set it in your .env as VITE_GOOGLE_SHEETS_WEBHOOK_URL
+ *
+ * NOTE: Both "View Number" button and "Contact Agent" button form data will now
+ * automatically go into the single sheet named: "Leads information"
  */
+
 const HEADERS = {
+  LEADS_INFORMATION: [
+    'Buyer Lead ID', 'Buyer Name', 'Email', 'Phone Number', 'City',
+    'Preferred Location', 'Property Type', 'Budget', 'Message', 'Property ID',
+    'Property Title', 'Source', 'Enquiry Date', 'Lead Status', 'Assigned To', 'Notes'
+  ],
   SELLERS: [
     'Seller ID', 'Seller Name', 'Seller Type', 'Mobile Number', 'WhatsApp Number',
     'Email', 'Seller Address', 'Property ID', 'Property Type', 'Property Title',
     'Property Address', 'City', 'State', 'Created Date', 'Verification Status', 'Listing Status'
-  ],
-  BUYERS: [
-    'Buyer Lead ID', 'Buyer Name', 'Email', 'Phone Number', 'City',
-    'Preferred Location', 'Property Type', 'Budget', 'Message', 'Property ID',
-    'Property Title', 'Source', 'Enquiry Date', 'Lead Status', 'Assigned To', 'Notes'
   ],
   PROPERTIES: [
     'Property ID', 'Property Type', 'Property Title', 'Price', 'Area', 'Area Unit',
     'Address', 'Locality', 'City', 'State', 'Pincode', 'Seller ID', 'Seller Name',
     'Approval Type', 'RERA Number', 'HMDA Number', 'DTCP Number', 'Listing Status',
     'Verification Status', 'Created Date'
-  ],
-  ENQUIRIES: [
-    'Enquiry ID', 'Buyer Lead ID', 'Buyer Name', 'Buyer Phone', 'Property ID',
-    'Property Title', 'Seller ID', 'Seller Name', 'Enquiry Type', 'Message',
-    'Date', 'Time', 'Status', 'Assigned To', 'Follow Up Date', 'Notes'
   ]
 };
 
+/**
+ * Finds an existing sheet (case-insensitive) or creates a new one with styled headers
+ */
 function getOrCreateSheet(ss, sheetName, headers) {
-  let sheet = ss.getSheetByName(sheetName);
+  const sheets = ss.getSheets();
+  let sheet = null;
+  const targetLower = sheetName.trim().toLowerCase();
+
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().trim().toLowerCase() === targetLower) {
+      sheet = sheets[i];
+      break;
+    }
+  }
+
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
     sheet.appendRow(headers);
@@ -35,7 +55,15 @@ function getOrCreateSheet(ss, sheetName, headers) {
     range.setBackground('#d1fae5');
     range.setFontColor('#065f46');
     sheet.setFrozenRows(1);
+  } else if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+    const range = sheet.getRange(1, 1, 1, headers.length);
+    range.setFontWeight('bold');
+    range.setBackground('#d1fae5');
+    range.setFontColor('#065f46');
+    sheet.setFrozenRows(1);
   }
+
   return sheet;
 }
 
@@ -47,14 +75,25 @@ function doPost(e) {
     const action = body.action;
     const data = body.data || {};
 
-    if (action === 'save_buyer') {
-      const sheet = getOrCreateSheet(ss, 'BUYERS', HEADERS.BUYERS);
+    // UNIFIED: Both "View Number" and "Contact Agent" form submissions go directly into "Leads information"
+    if (action === 'save_lead' || action === 'save_buyer' || action === 'save_enquiry') {
+      const sheet = getOrCreateSheet(ss, 'Leads information', HEADERS.LEADS_INFORMATION);
+
+      // Extract phone number from any potential field name
+      var rawPhone = (data.phoneNumber || data.phone || data.mobileNumber || data.buyerPhone || data.mobile || '').toString().trim();
+      
+      // CRITICAL FOR GOOGLE SHEETS:
+      // Strings starting with "+" (like +91 9876543210) are evaluated as formulas by Google Sheets (=+91...),
+      // which causes formula syntax errors and leaves the phone cell blank.
+      // Prepending a single quote "'" instructs Google Sheets to store and display it as plain text.
+      var safePhone = rawPhone ? ("'" + rawPhone.replace(/^'+/, '')) : '';
+
       sheet.appendRow([
-        data.buyerLeadId || '',
-        data.buyerName || '',
+        data.buyerLeadId || data.leadId || '',
+        data.buyerName || data.name || '',
         data.email || '',
-        data.phoneNumber || '',
-        data.city || '',
+        safePhone,
+        data.city || 'Hyderabad',
         data.preferredLocation || '',
         data.propertyType || '',
         data.budget || '',
@@ -67,34 +106,27 @@ function doPost(e) {
         data.assignedTo || 'Unassigned',
         data.notes || ''
       ]);
-    } else if (action === 'save_enquiry') {
-      const sheet = getOrCreateSheet(ss, 'ENQUIRIES', HEADERS.ENQUIRIES);
-      sheet.appendRow([
-        data.enquiryId || '',
-        data.buyerLeadId || '',
-        data.buyerName || '',
-        data.buyerPhone || '',
-        data.propertyId || '',
-        data.propertyTitle || '',
-        data.sellerId || '',
-        data.sellerName || '',
-        data.enquiryType || '',
-        data.message || '',
-        data.date || new Date().toISOString().split('T')[0],
-        data.time || new Date().toLocaleTimeString(),
-        data.status || 'New',
-        data.assignedTo || 'Unassigned',
-        data.followUpDate || '',
-        data.notes || ''
-      ]);
+
+      // Explicitly format column D cell as plain text to prevent formula evaluation
+      try {
+        var lastRow = sheet.getLastRow();
+        sheet.getRange(lastRow, 4).setNumberFormat('@');
+      } catch (fmtErr) {
+        // Ignore if formatting fails
+      }
     } else if (action === 'save_seller') {
       const sheet = getOrCreateSheet(ss, 'SELLERS', HEADERS.SELLERS);
+      var rawSellerMobile = (data.mobileNumber || data.phone || '').toString().trim();
+      var safeSellerMobile = rawSellerMobile ? ("'" + rawSellerMobile.replace(/^'+/, '')) : '';
+      var rawSellerWA = (data.whatsappNumber || data.mobileNumber || '').toString().trim();
+      var safeSellerWA = rawSellerWA ? ("'" + rawSellerWA.replace(/^'+/, '')) : '';
+
       sheet.appendRow([
         data.sellerId || '',
         data.sellerName || '',
         data.sellerType || 'Owner',
-        data.mobileNumber || '',
-        data.whatsappNumber || '',
+        safeSellerMobile,
+        safeSellerWA,
         data.email || '',
         data.sellerAddress || '',
         data.propertyId || '',
@@ -134,7 +166,7 @@ function doPost(e) {
     }
 
     return ContentService.createTextOutput(
-      JSON.stringify({ status: 'success', action: action })
+      JSON.stringify({ status: 'success', action: action, sheet: 'Leads information' })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService.createTextOutput(
@@ -145,6 +177,6 @@ function doPost(e) {
 
 function doGet(e) {
   return ContentService.createTextOutput(
-    JSON.stringify({ status: 'active', service: 'OPV Google Sheets Webhook' })
+    JSON.stringify({ status: 'active', service: 'OPV Google Sheets Webhook', defaultSheet: 'Leads information' })
   ).setMimeType(ContentService.MimeType.JSON);
 }

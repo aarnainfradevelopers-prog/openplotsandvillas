@@ -4,6 +4,7 @@ import { MicrophoneButton } from './MicrophoneButton';
 import { LanguageDropdown } from './LanguageDropdown';
 import { LanguageCode, AttachedFile } from '../types/chat';
 import { OPV_LANGUAGES } from '../data/chatConfig';
+import { deduplicateRepeatedPhrases } from '../utils/speechUtils';
 
 interface ChatInputProps {
   currentLanguage: LanguageCode;
@@ -56,9 +57,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleVoiceTranscript = (transcript: string, autoSend: boolean = false) => {
+    const cleanTranscript = deduplicateRepeatedPhrases(transcript);
     if (autoSend) {
-      if (transcript.trim() && !isLoading) {
-        onSendMessage(transcript.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
+      if (cleanTranscript.trim() && !isLoading) {
+        onSendMessage(cleanTranscript.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
         setInputText('');
         setAttachedFiles([]);
         if (textareaRef.current) {
@@ -66,7 +68,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       }
     } else {
-      setInputText(transcript);
+      setInputText(cleanTranscript);
     }
   };
 
